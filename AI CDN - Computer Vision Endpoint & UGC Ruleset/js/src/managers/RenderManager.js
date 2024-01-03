@@ -8,7 +8,7 @@ import { GammaCorrectionShader } from 'https://unpkg.com/three/examples/jsm/shad
 
 export default class RenderManager
 {
-    constructor(canvas, canvasBuffer, params = {
+    constructor(canvas, videoUrl, params = {
         fov: 45,
         postEffects: {
             enabled: true,
@@ -27,10 +27,10 @@ export default class RenderManager
     {
         THREE.Cache.enabled = true
         this.canvas = canvas;
-        this.canvasBuffer = canvasBuffer;
         this.copyPass = null;
 
-        this.canvasTexture = new THREE.CanvasTexture(this.canvasBuffer);
+        console.log("RenderManager constructor");
+        console.log("canvas: ", canvas);
 
         if (!this.canvas)
         {
@@ -41,37 +41,63 @@ export default class RenderManager
         this.isPostEffectsEnabled = params.postEffects.enabled;
         this.isAntialiasEnabled = params.postEffects.antialias.enabled && this.isPostEffectsEnabled;
 
-        this.width = this.canvasBuffer.clientWidth
-        this.height = this.canvasBuffer.clientHeight
+        this.width = this.canvas.clientWidth
+        this.height = this.canvas.clientHeight
 
         this.camera = new THREE.PerspectiveCamera(params.fov, this.width / this.height, 0.1, 10000);
         this.camera.position.set(0, 0, -10);
         this.camera.lookAt(0, 0, 0);
         this.scene = new THREE.Scene();
-        this.scene.background = new THREE.Color(0xaaaaaa);
+        this.scene.background = new THREE.Color(0, 0, 0, 0);
 
-        // add a plane to the scene colored green
-        const planeGeometry = new THREE.PlaneGeometry(5, 5, 1, 1);
-        const planeMaterial = new THREE.MeshBasicMaterial({
-            color: 0x00ff00,
-            side: THREE.DoubleSide
+        //render the video url to a texture
+        this.video = document.createElement('video');
+        this.video.playsInline = true;
+        this.video.crossOrigin = "Anonymous";
+        this.video.loop = true;
+        this.video.preload = "auto";
+        this.video.autoplay = false;
+        this.video.volume = 1;
+        this.video.src = videoUrl;
+
+        const scope = this;
+
+        this.video.addEventListener('canplay', () =>
+        {
+            scope.videoTexture = new THREE.VideoTexture(scope.video);
+            scope.videoTexture.minFilter = THREE.LinearFilter;
+            scope.videoTexture.magFilter = THREE.LinearFilter;
+
+            // const testMaterial = new THREE.ShaderMaterial({
+            //     uniforms: {
+            //         tDiffuse: { value: scope.videoTexture },
+            //     },
+            //     vertexShader: `
+            //         varying vec2 vUv;
+            //         void main() {
+            //             vUv = uv;
+            //             gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+            //     }`,
+            //     fragmentShader: `
+            //         uniform sampler2D tDiffuse;
+            //         varying vec2 vUv;
+            //         void main() {
+            //             vec4 texel = texture2D( tDiffuse, vUv );
+            //             gl_FragColor = texel;
+            //     }`
+            //     , side: THREE.DoubleSide
+            // });
+
+            this.video.play();
+
+            // // add a plane to the scene colored green
+            // const planeGeometry = new THREE.PlaneGeometry(5, 5, 1, 1);
+
+            // const plane = new THREE.Mesh(planeGeometry, testMaterial);
+            // plane.position.set(0, 0, 0);
+            // this.scene.add(plane);
         });
-        const plane = new THREE.Mesh(planeGeometry, planeMaterial);
-        // plane.rotation.x = -0.5 * Math.PI;
-        plane.position.set(-2.5, 0, 0);
-        this.scene.add(plane);
 
-
-
-        const canvasTextureMaterial = new THREE.MeshBasicMaterial({
-            map: this.canvasTexture,
-            side: THREE.DoubleSide
-        });
-        const planeGeometry1 = new THREE.PlaneGeometry(5, 5, 1, 1);
-        const plane1 = new THREE.Mesh(planeGeometry1, canvasTextureMaterial);
-
-        plane1.position.set(2.5, 0, 0);
-        this.scene.add(plane1);
 
 
         this.renderer = null;
@@ -113,7 +139,7 @@ export default class RenderManager
         // A pass that copies the texture on the bufferCanvas to the main canvas
         this.copyPass = new ShaderPass({
             uniforms: {
-                tDiffuse: { value: this.canvasTexture },
+                tDiffuse: { value: this.videoTexture },
             },
             vertexShader: `
                 varying vec2 vUv;
@@ -128,17 +154,18 @@ export default class RenderManager
                     vec4 texel = texture2D( tDiffuse, vUv );
                     gl_FragColor = texel;
                 }`
+            , side: THREE.DoubleSide
         });
-        // this.copyPass.renderToScreen = true
+        this.copyPass.renderToScreen = true
 
         this.finalComposer = new EffectComposer(this.renderer)
         this.finalComposer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
         this.finalComposer.setSize(this.width, this.height)
 
-        this.renderer.domElement.style.width = this.width;
-        this.renderer.domElement.style.height = this.height;
-        this.renderer.domElement.width = this.width
-        this.renderer.domElement.height = this.height
+        // this.renderer.domElement.style.width = this.width;
+        // this.renderer.domElement.style.height = this.height;
+        // this.renderer.domElement.width = this.width
+        // this.renderer.domElement.height = this.height
 
         this.finalComposer.addPass(renderScene);
         // this.finalComposer.addPass(this.copyPass);
@@ -177,9 +204,9 @@ export default class RenderManager
 
     render()
     {
-        // this.canvasTexture = new THREE.CanvasTexture(this.canvasBuffer);
-        // this.canvasTexture.needsUpdate = true;
-        // this.copyPass.uniforms.tDiffuse.value = this.canvasTexture;
         this.finalComposer.render();
+
+        if (!this.videoTexture) return;
+        this.videoTexture.needsUpdate = true;
     }
 }

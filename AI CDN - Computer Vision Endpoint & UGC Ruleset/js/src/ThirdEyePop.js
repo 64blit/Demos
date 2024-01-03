@@ -4,12 +4,27 @@ import Stats from 'https://unpkg.com/three/examples/jsm/libs/stats.module.js';
 import * as THREE from 'https://unpkg.com/three/build/three.module.js';
 
 
+// "objects":
+//     [
+//         {
+//         "classLabel": "person",
+//         "keyPoints": [
+//          {
+//           "classLabel": "left eye",
+//           "x":0.5, "y":0.5,
+//           "confidence":0.5
+//          }
+//          ]
+//         }
+//      ]
+//  }
+//]
 export default class ThirdEyePop
 {
     constructor({
         DEBUG = true,
         canvas = null,
-        canvasBuffer = null,
+        videoUrl = null,
         frameData = null
     })
     {
@@ -17,7 +32,6 @@ export default class ThirdEyePop
         console.log("DEBUG: ", DEBUG);
         console.log("canvas: ", canvas);
         console.log("frameData: ", frameData);
-        console.log("canvasBuffer: ", canvasBuffer);
 
         window.DEBUG_thirdEyePop = DEBUG;
 
@@ -43,7 +57,7 @@ export default class ThirdEyePop
             clock = new THREE.Clock();
             renderManager = new RenderManager(
                 canvas,
-                canvasBuffer,
+                videoUrl
             );
         }
 
@@ -74,7 +88,7 @@ export default class ThirdEyePop
                     // clearTimeout(resizeTimeout)
                     // resizeTimeout = setTimeout(() =>
                     // {
-                    canvasNeedsReset = true
+                    canvasNeedsReset = true;
                     // }, 100)
                 },
                 true
@@ -117,7 +131,7 @@ export default class ThirdEyePop
             resetCanvas(false);
 
             DEBUG && stats.end();
-            // requestAnimationFrame(update);
+            requestAnimationFrame(render);
         }
 
 
@@ -131,10 +145,13 @@ export default class ThirdEyePop
 
         // //////////////////// end SETUP /////////////////////////////
 
-        // //////////////////// MEMBER FUNCTIONS /////////////////////////////
+
+        // //////////////////// API /////////////////////////////
 
         scope.setup = setup;
         scope.render = render;
+
+        // //////////////////// end API /////////////////////////////
 
     }
 }
