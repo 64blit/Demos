@@ -131,6 +131,7 @@
 
             EyePopSDK.EyePopAPI.instance.OnDrawFrame = function ()
             {
+                console.log("OnDrawFrame")
                 var closestIndex = findClosestIndex(cached_data, video.currentTime);
                 if (!closestIndex || closestIndex == -1)
                     return
@@ -139,7 +140,13 @@
 
                 //console.log(video.currentTime, el, cached_data.length);
                 EyePopSDK.EyePopAPI.instance.lastmsg = el;
+            }
 
+            EyePopSDK.EyePopAPI.instance.OnDrawFrameEnd = function (data)
+            {
+                console.log("OnDrawFrameEnd")
+                if (!thirdEyePop) return;
+                thirdEyePop.render();
             }
         }
 
@@ -150,6 +157,22 @@
 
         document.getElementById("btnPost").addEventListener("click", run);
 
+
+        // "objects": 
+        //     [ 
+        //         {
+        //         "classLabel": "person", 
+        //         "keyPoints": [ 
+        //          { 
+        //           "classLabel": "left eye", 
+        //           "x":0.5, "y":0.5, 
+        //           "confidence":0.5 
+        //          }
+        //          ]
+        //         }
+        //      ]
+        //  }
+        //]
 
         function findClosestIndex(bufferedTimes, currentTime)
         {
