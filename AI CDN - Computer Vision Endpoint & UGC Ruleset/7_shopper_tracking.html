@@ -165,12 +165,11 @@
 
                 EyePopSDK.EyePopAPI.instance.OnPrediction = function (data)
                 {
-                    // console.log(data);
                     data.timestamp = data.timestamp / 1000000000;
 
                     percentBuffered = data.seconds / video.duration;
                     analyzedPercentText.innerHTML = Math.floor(percentBuffered * 100) + "%";
-
+                    console.log(data)
                     cached_data.push(data);
                 };
 

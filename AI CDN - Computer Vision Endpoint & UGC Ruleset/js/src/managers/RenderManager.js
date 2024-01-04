@@ -30,7 +30,7 @@ export default class RenderManager
         this.copyPass = null;
 
         console.log("RenderManager constructor");
-        console.log("canvas: ", canvas);
+
 
         if (!this.canvas)
         {
@@ -44,11 +44,11 @@ export default class RenderManager
         this.width = this.canvas.clientWidth
         this.height = this.canvas.clientHeight
 
-        this.camera = new THREE.PerspectiveCamera(params.fov, this.width / this.height, 0.1, 10000);
+        this.camera = new THREE.OrthographicCamera(-1, 1, 1, -1);
         this.camera.position.set(0, 0, -10);
         this.camera.lookAt(0, 0, 0);
+
         this.scene = new THREE.Scene();
-        this.scene.background = new THREE.Color(0, 0, 0, 0);
 
         //render the video url to a texture
         this.video = document.createElement('video');
@@ -59,45 +59,27 @@ export default class RenderManager
         this.video.autoplay = false;
         this.video.volume = 1;
         this.video.src = videoUrl;
+        this.video.load();
+        this.video.play();
 
         const scope = this;
 
-        this.video.addEventListener('canplay', () =>
+        this.video.addEventListener('loadedmetadata', () =>
         {
             scope.videoTexture = new THREE.VideoTexture(scope.video);
+            scope.videoTexture.crossOrigin = "Anonymous";
             scope.videoTexture.minFilter = THREE.LinearFilter;
             scope.videoTexture.magFilter = THREE.LinearFilter;
+            scope.videoTexture.generateMipmaps = false;
+            scope.videoTexture.flipY = true;
 
-            // const testMaterial = new THREE.ShaderMaterial({
-            //     uniforms: {
-            //         tDiffuse: { value: scope.videoTexture },
-            //     },
-            //     vertexShader: `
-            //         varying vec2 vUv;
-            //         void main() {
-            //             vUv = uv;
-            //             gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
-            //     }`,
-            //     fragmentShader: `
-            //         uniform sampler2D tDiffuse;
-            //         varying vec2 vUv;
-            //         void main() {
-            //             vec4 texel = texture2D( tDiffuse, vUv );
-            //             gl_FragColor = texel;
-            //     }`
-            //     , side: THREE.DoubleSide
-            // });
+            const planeGeometry = new THREE.PlaneGeometry(1, 1, 1, 1);
+            const plane = new THREE.Mesh(planeGeometry, new THREE.MeshBasicMaterial({ map: scope.videoTexture, side: THREE.DoubleSide }));
+            // this.scene.add(plane);
 
             this.video.play();
-
-            // // add a plane to the scene colored green
-            // const planeGeometry = new THREE.PlaneGeometry(5, 5, 1, 1);
-
-            // const plane = new THREE.Mesh(planeGeometry, testMaterial);
-            // plane.position.set(0, 0, 0);
-            // this.scene.add(plane);
+            this.setupPostEffects();
         });
-
 
 
         this.renderer = null;
@@ -105,13 +87,6 @@ export default class RenderManager
         this.bloomPass = null;
 
         this.setupRenderer();
-
-        if (!this.isPostEffectsEnabled)
-        {
-            return;
-        }
-
-        this.setupPostEffects();
     }
 
     setupRenderer()
@@ -121,7 +96,9 @@ export default class RenderManager
             powerPreference: 'high-performance',
             failIfMajorPerformanceCaveat: true,
             antialias: this.isAntialiasEnabled,
-        })
+            alpha: true,
+        });
+
         this.renderer.shadowMap.enabled = false;
         this.renderer.toneMapping = THREE.NoToneMapping;
 
@@ -129,46 +106,6 @@ export default class RenderManager
 
         this.renderer.setSize(this.width, this.height)
         this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
-    }
-
-    // TODO: modularize post effects and split this into multiple functions
-    setupPostEffects()
-    {
-        const renderScene = new RenderPass(this.scene, this.camera)
-
-        // A pass that copies the texture on the bufferCanvas to the main canvas
-        this.copyPass = new ShaderPass({
-            uniforms: {
-                tDiffuse: { value: this.videoTexture },
-            },
-            vertexShader: `
-                varying vec2 vUv;
-                void main() {
-                    vUv = uv;
-                    gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
-                }`,
-            fragmentShader: `
-                uniform sampler2D tDiffuse;
-                varying vec2 vUv;
-                void main() {
-                    vec4 texel = texture2D( tDiffuse, vUv );
-                    gl_FragColor = texel;
-                }`
-            , side: THREE.DoubleSide
-        });
-        this.copyPass.renderToScreen = true
-
-        this.finalComposer = new EffectComposer(this.renderer)
-        this.finalComposer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
-        this.finalComposer.setSize(this.width, this.height)
-
-        // this.renderer.domElement.style.width = this.width;
-        // this.renderer.domElement.style.height = this.height;
-        // this.renderer.domElement.width = this.width
-        // this.renderer.domElement.height = this.height
-
-        this.finalComposer.addPass(renderScene);
-        // this.finalComposer.addPass(this.copyPass);
     }
 
     onWindowResized()
@@ -199,14 +136,60 @@ export default class RenderManager
 
     reset()
     {
-        this.onWindowResized()
+        this.onWindowResized();
     }
+
+    // TODO: modularize post effects and split this into multiple functions
+    setupPostEffects()
+    {
+        const renderScene = new RenderPass(this.scene, this.camera);
+        // A pass that copies the texture on the bufferCanvas to the main canvas
+        this.copyPass = new ShaderPass({
+            uniforms: {
+                tDiffuse: { value: null },
+                tImage: { value: this.videoTexture },
+            },
+            vertexShader: `
+                varying vec2 vUv;
+                void main() {
+                    vUv = uv;
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+                }`,
+            fragmentShader: `
+                uniform sampler2D tDiffuse;
+                uniform sampler2D tImage;
+                varying vec2 vUv;
+                void main() {
+                    vec2 uv = vUv;
+                    vec4 texelSrc = texture2D( tImage, vUv );
+                    vec4 texel = texture2D( tDiffuse, vUv );
+
+                    texel = mix(texelSrc, texel, texel.a);
+
+                    gl_FragColor = texel; // RGBA color
+
+                }`
+        });
+
+        this.finalComposer = new EffectComposer(this.renderer);
+        this.finalComposer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        this.finalComposer.setSize(this.width, this.height);
+
+        this.finalComposer.addPass(renderScene);
+        this.finalComposer.addPass(this.copyPass);
+    }
+
 
     render()
     {
+        if (this.videoTexture)
+        {
+            this.videoTexture.needsUpdate = true;
+            this.copyPass.uniforms.tDiffuse.value = this.videoTexture;
+        }
+
+        if (!this.finalComposer) return;
         this.finalComposer.render();
 
-        if (!this.videoTexture) return;
-        this.videoTexture.needsUpdate = true;
     }
 }
