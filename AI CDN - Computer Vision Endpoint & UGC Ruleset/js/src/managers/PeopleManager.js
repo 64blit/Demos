@@ -1,31 +1,31 @@
+import * as THREE from 'https://unpkg.com/three/build/three.module.js';
+
 // a class that contains a map of all the people in the scene and their history of positions
 import People from "../data/People.js";
 
 export default class PeopleManager
 {
-    constructor()
+    constructor(dimensions)
     {
         this.peopleMap = new Map();
         this.hotSpotMap = new Map();
+        this.dimensions = dimensions;
+        this.allPeoplePositions = [];
     }
 
-    normalizePosition(position, width, height, sourceWidth, sourceHeight)
+    normalizePosition(position, sourceWidth, sourceHeight)
     {
-        let normalizedX = position.x * (width / sourceWidth);
-        let normalizedY = position.y * (height / sourceHeight);
+        let normalizedX = position.x * (this.dimensions.width / sourceWidth);
+        let normalizedY = position.y * (this.dimensions.height / sourceHeight);
 
         // now map the normalized position to -1 to 1
-        normalizedX = (normalizedX / (width / 2)) - 1;
-        normalizedY = (normalizedY / (height / 2)) - 1;
-        // normalizedX *= -1;
-        // normalizedY *= -1;
+        normalizedX = (normalizedX / (this.dimensions.width / 2)) - 1;
+        normalizedY = (normalizedY / (this.dimensions.height / 2)) - 1;
 
-        if (!normalizedX)
-        {
-            debugger;
-        }
+        normalizedX *= -1;
+        normalizedY *= -1;
 
-        return { x: normalizedX, y: normalizedY };
+        return { y: normalizedX, x: normalizedY };
     }
 
     addPerson(person)
@@ -42,28 +42,33 @@ export default class PeopleManager
             return cachedPerson;
         }
 
-        let normalizedPosition = this.normalizePosition(person, person.width, person.height, person.source_width, person.source_height);
+        let normalizedTopLeft = this.normalizePosition(person, person.source_width, person.source_height);
 
         cachedPerson.traceId = person.traceId;
         cachedPerson.pose = person.objects;
-        cachedPerson.position.x = normalizedPosition.x;
-        cachedPerson.position.y = normalizedPosition.y;
 
-        if (person.objects && person.objects.length > 0 && person.objects[ 0 ].outline && person.objects[ 0 ].outline.length > 0)
-        {
+        // the top left position of the person
+        cachedPerson.topLeftPoint.x = normalizedTopLeft.x;
+        cachedPerson.topLeftPoint.y = normalizedTopLeft.y;
 
-            let boundPoint1 = this.normalizePosition(person.objects[ 0 ].outline[ 0 ], person.width, person.height, person.source_width, person.source_height);
-            let boundPoint2 = this.normalizePosition(person.objects[ 0 ].outline[ 1 ], person.width, person.height, person.source_width, person.source_height);
-            let boundPoint3 = this.normalizePosition(person.objects[ 0 ].outline[ 2 ], person.width, person.height, person.source_width, person.source_height);
-            let boundPoint4 = this.normalizePosition(person.objects[ 0 ].outline[ 3 ], person.width, person.height, person.source_width, person.source_height);
+        let maxX = person.x + person.width;
+        let maxY = person.y + person.height;
 
-            cachedPerson.boundingBox.min.x = boundPoint1.x;
-            cachedPerson.boundingBox.min.y = boundPoint1.y;
-            cachedPerson.boundingBox.max.x = boundPoint4.x;
-            cachedPerson.boundingBox.max.y = boundPoint4.y;
-        }
+        const normalizedBottomRight = this.normalizePosition(
+            { x: maxX, y: maxY },
+            person.source_width,
+            person.source_height
+        );
+
+        cachedPerson.bottomRightPoint.x = normalizedBottomRight.x;
+        cachedPerson.bottomRightPoint.y = normalizedBottomRight.y;
+
+        cachedPerson.position = new THREE.Vector3();
+        cachedPerson.position.x = (normalizedTopLeft.x + normalizedBottomRight.x) / 2;
+        cachedPerson.position.y = (normalizedTopLeft.y + normalizedBottomRight.y) / 2;
 
         cachedPerson.path.push(cachedPerson.position);
+        this.allPeoplePositions.push(cachedPerson.position);
 
         this.peopleMap.set(person.traceId, cachedPerson);
 
