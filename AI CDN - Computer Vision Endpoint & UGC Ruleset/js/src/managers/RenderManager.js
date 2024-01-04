@@ -264,7 +264,6 @@ export default class RenderManager
             this.videoTexture.needsUpdate = true;
             this.copyPass.uniforms.tDiffuse.value = this.videoTexture;
             this.time = this.video.currentTime;
-            console.log("this.time", this.time);
         }
 
         if (!this.finalComposer) return;

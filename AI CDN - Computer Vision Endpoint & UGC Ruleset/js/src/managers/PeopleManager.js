@@ -13,6 +13,18 @@ export default class PeopleManager
     {
         let normalizedX = position.x * (width / sourceWidth);
         let normalizedY = position.y * (height / sourceHeight);
+
+        // now map the normalized position to -1 to 1
+        normalizedX = (normalizedX / (width / 2)) - 1;
+        normalizedY = (normalizedY / (height / 2)) - 1;
+        normalizedX *= -1;
+        normalizedY *= -1;
+
+        if (!normalizedX)
+        {
+            debugger;
+        }
+
         return { x: normalizedX, y: normalizedY };
     }
 
@@ -25,6 +37,11 @@ export default class PeopleManager
             cachedPerson = new People();
         }
 
+        if (!person.source_width || !person.source_height)
+        {
+            return cachedPerson;
+        }
+
         let normalizedPosition = this.normalizePosition(person, person.width, person.height, person.source_width, person.source_height);
 
         cachedPerson.traceId = person.traceId;
@@ -34,7 +51,6 @@ export default class PeopleManager
 
         if (person.objects && person.objects.length > 0 && person.objects[ 0 ].outline && person.objects[ 0 ].outline.length > 0)
         {
-
 
             let boundPoint1 = this.normalizePosition(person.objects[ 0 ].outline[ 0 ], person.width, person.height, person.source_width, person.source_height);
             let boundPoint2 = this.normalizePosition(person.objects[ 0 ].outline[ 1 ], person.width, person.height, person.source_width, person.source_height);

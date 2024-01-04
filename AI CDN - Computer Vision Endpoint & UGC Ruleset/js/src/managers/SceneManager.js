@@ -12,21 +12,11 @@ export default class SceneManager
         this.camera = camera;
         this.people = [];
         this.peopleManager = new PeopleManager();
-
-        //create a sphere at 0,0,0 to see if the scene is working
-        let geometry = new THREE.SphereGeometry(0.1, 32, 32);
-        let material = new THREE.MeshBasicMaterial({ color: 0xffff00 });
-        let sphere = new THREE.Mesh(geometry, material);
-        sphere.position.x = -1;
-        sphere.position.y = 1;
-        sphere.position.z = 0;
-        this.scene.add(sphere);
-
     }
 
     update(frameData)
     {
-        console.log(frameData)
+        // console.log(frameData)
         for (let i = 0; i < frameData.objects.length; i++)
         {
             let objects = frameData.objects[ i ];
@@ -35,23 +25,33 @@ export default class SceneManager
                 // console.log("person: ", objects);
                 const person = this.peopleManager.addPerson(objects);
                 this.drawPoint(person);
-                console.log(person)
+                // console.log(person)
             }
 
 
         }
+
     }
 
     drawPoint(person)
     {
+        if (!person) return;
+
+        let sphere = person.midPoint;
+
+        if (!sphere)
+        {
+            let geometry = new THREE.SphereGeometry(0.025, 32, 32);
+            let material = new THREE.MeshBasicMaterial({ color: 0xffff00 });
+            sphere = new THREE.Mesh(geometry, material);
+            this.scene.add(sphere);
+            person.midPoint = sphere;
+            this.scene.add(sphere);
+        }
         let point = person.position;
-        let geometry = new THREE.SphereGeometry(0.1, 32, 32);
-        let material = new THREE.MeshBasicMaterial({ color: 0xffff00 });
-        let sphere = new THREE.Mesh(geometry, material);
-        sphere.position.x = point.x;
-        sphere.position.y = point.y;
+        sphere.position.x = point.y;
+        sphere.position.y = point.x;
         sphere.position.z = 0;
-        this.scene.add(sphere);
     }
 
     drawPath(person)
