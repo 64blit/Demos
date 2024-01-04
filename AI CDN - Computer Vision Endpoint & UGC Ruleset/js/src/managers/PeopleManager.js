@@ -17,8 +17,8 @@ export default class PeopleManager
         // now map the normalized position to -1 to 1
         normalizedX = (normalizedX / (width / 2)) - 1;
         normalizedY = (normalizedY / (height / 2)) - 1;
-        normalizedX *= -1;
-        normalizedY *= -1;
+        // normalizedX *= -1;
+        // normalizedY *= -1;
 
         if (!normalizedX)
         {

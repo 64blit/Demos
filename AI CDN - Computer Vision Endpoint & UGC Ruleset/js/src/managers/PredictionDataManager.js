@@ -28,6 +28,11 @@ export default class PredictionDataManager
         return this.currentFrame;
     }
 
+    getLastFrameTime()
+    {
+        return this.frameData[ this.frameData.length - 1 ].timestamp;
+    }
+
     getCurrentFrameTime()
     {
         return this.currentFrame.timestamp;

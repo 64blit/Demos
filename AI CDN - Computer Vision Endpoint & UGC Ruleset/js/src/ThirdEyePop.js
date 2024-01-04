@@ -4,21 +4,12 @@ import RenderManager from './managers/RenderManager.js';
 import PredictionDataManager from './managers/PredictionDataManager.js';
 import SceneManager from './managers/SceneManager.js';
 
-// "objects":
-//     [
-//         {
-//         "classLabel": "person",
-//         "keyPoints": [
-//          {
-//           "classLabel": "left eye",
-//           "x":0.5, "y":0.5,
-//           "confidence":0.5
-//          }
-//          ]
-//         }
-//      ]
-//  }
-//]
+
+// TODO: 
+//   - Add workflow for dispose and reset of objects
+//   - 
+//   - 
+
 export default class ThirdEyePop
 {
     constructor({
@@ -130,16 +121,24 @@ export default class ThirdEyePop
 
         function bufferVideo()
         {
+            // check if we need to buffer video
 
-            // Pause video to buffer more prediction frames
-            if (Math.abs(predictionDataManager.getCurrentFrameTime() - time) > 0.1)
+            // If we are more than 0.1 seconds away from the current frame
+            // or if the last frame time is greater than the video time
+            // then we need to buffer more video
+
+            const time = renderManager.getVideoTime();
+            const currentFrameTime = predictionDataManager.getCurrentFrameTime();
+            const currentFrameTimeDiff = Math.abs(currentFrameTime - time);
+            const lastFrameTime = predictionDataManager.getLastFrameTime();
+
+            if (currentFrameTimeDiff > 0.1 && lastFrameTime < time)
             {
                 renderManager.pauseVideo();
             } else
             {
                 renderManager.playVideo();
             }
-
 
         }
 
@@ -149,6 +148,7 @@ export default class ThirdEyePop
 
 
             if (!canvasNeedsReset) return;
+            if (!renderManager) return;
 
             canvasNeedsReset = false;
             renderManager.reset();
@@ -188,7 +188,7 @@ export default class ThirdEyePop
             bufferVideo();
 
             // We also reset the canvas when window size changes
-            resetCanvas(false);
+            resetCanvas();
 
             autoRender && requestAnimationFrame(render);
             DEBUG && stats.end();

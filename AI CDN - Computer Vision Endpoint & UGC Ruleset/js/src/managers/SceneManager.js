@@ -26,7 +26,7 @@ export default class SceneManager
                 const person = this.peopleManager.addPerson(objects);
                 this.drawPoint(person);
                 // this.drawBoundingBox(person);
-                this.drawPath(person);
+                // this.drawPath(person);
             }
 
 
@@ -42,8 +42,8 @@ export default class SceneManager
 
         if (!sphere)
         {
-            let geometry = new THREE.SphereGeometry(0.025, 32, 32);
-            let material = new THREE.MeshBasicMaterial({ color: 0xffff00 });
+            let geometry = new THREE.SphereGeometry(0.025, 8, 8);
+            let material = new THREE.MeshNormalMaterial();
             sphere = new THREE.Mesh(geometry, material);
             this.scene.add(sphere);
             person.midPoint = sphere;

@@ -122,12 +122,6 @@
                     dlAnchorElem.href = url;
                     dlAnchorElem.download = urlInput.value + ".json";
                     dlAnchorElem.click();
-
-                    setTimeout(function ()
-                    {
-                        document.body.removeChild(dlAnchorElem);
-                        window.URL.revokeObjectURL(url);
-                    }, 1000);
                 };
             }
 

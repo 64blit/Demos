@@ -92,7 +92,6 @@ export default class RenderManager
         this.video.volume = 1;
         this.video.src = videoUrl;
         this.video.load();
-        this.video.play();
 
         const scope = this;
 
@@ -113,9 +112,9 @@ export default class RenderManager
             const plane = new THREE.Mesh(planeGeometry, new THREE.MeshBasicMaterial({ map: scope.videoTexture, side: THREE.DoubleSide }));
             // this.scene.add(plane);
 
-            this.video.play();
-            this.setupRenderer();
-            this.setupPostEffects();
+            scope.setupRenderer();
+            scope.setupPostEffects();
+            scope.onWindowResized();
         });
 
     }
