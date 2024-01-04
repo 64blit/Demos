@@ -15,6 +15,7 @@ export default class People
         this.line = null;
         this.point = null;
         this.midPoint = null;
+        this.bounds = null;
     }
 
     addPathPoint(point)

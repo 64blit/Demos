@@ -25,7 +25,8 @@ export default class SceneManager
                 // console.log("person: ", objects);
                 const person = this.peopleManager.addPerson(objects);
                 this.drawPoint(person);
-                // console.log(person)
+                // this.drawBoundingBox(person);
+                this.drawPath(person);
             }
 
 
@@ -56,16 +57,41 @@ export default class SceneManager
 
     drawPath(person)
     {
+        let line = person.line;
+
+
         let path = person.path;
         let geometry = new THREE.BufferGeometry().setFromPoints(path);
         let material = new THREE.LineBasicMaterial({ color: 0xff0000 });
-        let line = new THREE.Line(geometry, material);
 
-        if (!person.line)
+        if (!line)
         {
+            line = new THREE.Line(geometry, material);
             this.scene.add(line);
-            person.line = line;
         }
+
+        line.material = material;
+        line.geometry = geometry;
+    }
+
+    drawBoundingBox(person)
+    {
+        let cube = person.bounds;
+
+        let boundingBox = person.boundingBox;
+        let geometry = new THREE.BoxGeometry(boundingBox.max.x - boundingBox.min.x, boundingBox.max.y - boundingBox.min.y, boundingBox.max.z - boundingBox.min.z);
+        let material = new THREE.MeshBasicMaterial({ color: 0x00ff00, opacity: 0.5 });
+
+        if (!cube)
+        {
+            cube = new THREE.Mesh(geometry, material);
+            person.bounds = cube;
+            this.scene.add(cube);
+        }
+
+        cube.geometry = geometry;
+
+
     }
 
 }
