@@ -57,7 +57,7 @@ export default class ThirdEyePop
 
             predictionDataManager = new PredictionDataManager(frameData);
 
-            sceneManager = new SceneManager(renderManager.getScene(), renderManager.getCamera());
+            sceneManager = new SceneManager(renderManager.getScene(), renderManager.getCamera(), renderManager.getDimensions());
         }
 
 
@@ -129,10 +129,12 @@ export default class ThirdEyePop
 
             const time = renderManager.getVideoTime();
             const currentFrameTime = predictionDataManager.getCurrentFrameTime();
-            const currentFrameTimeDiff = Math.abs(currentFrameTime - time);
-            const lastFrameTime = predictionDataManager.getLastFrameTime();
+            const onlyHaveOldFrames = Math.abs(currentFrameTime - time) > 0.1;
+            const needsMoreFrames = predictionDataManager.getLastFrameTime() < time;
+            const videoPlaying = renderManager.video.duration <= time - 1;
 
-            if (currentFrameTimeDiff > 0.1 && lastFrameTime < time)
+
+            if (videoPlaying && needsMoreFrames && onlyHaveOldFrames)
             {
                 renderManager.pauseVideo();
             } else
@@ -190,9 +192,9 @@ export default class ThirdEyePop
             // We also reset the canvas when window size changes
             resetCanvas();
 
-            autoRender && requestAnimationFrame(render);
             DEBUG && stats.end();
 
+            autoRender && requestAnimationFrame(render);
 
         }
 
