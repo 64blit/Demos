@@ -1,8 +1,7 @@
-import SceneBuilder from './builders/SceneBuilder.js';
-import RenderManager from './managers/RenderManager.js';
-import Stats from 'https://unpkg.com/three/examples/jsm/libs/stats.module.js';
 import * as THREE from 'https://unpkg.com/three/build/three.module.js';
-
+import Stats from 'https://unpkg.com/three/examples/jsm/libs/stats.module.js';
+import RenderManager from './managers/RenderManager.js';
+import PredictionDataManager from './managers/PredictionDataManager.js';
 
 // "objects":
 //     [
@@ -25,7 +24,7 @@ export default class ThirdEyePop
         DEBUG = true,
         canvas = null,
         videoUrl = null,
-        frameData = null
+        frameData = []
     })
     {
         console.log("ThirdEyePop constructor");
@@ -34,13 +33,13 @@ export default class ThirdEyePop
         console.log("frameData: ", frameData);
 
         window.DEBUG_thirdEyePop = DEBUG;
-
-        let scope = this
+        let scope = this;
         let renderManager = null;
-        let clock = null
-        let deltaTime = null
-        let stats = null
+        let predictionDataManager = null;
+
+        let stats = null;
         let canvasNeedsReset = false
+        let autoRender = frameData.length > 0 ? true : false;
 
         // ///////////////////// SETUP /////////////////////////////
         async function setup()
@@ -49,16 +48,18 @@ export default class ThirdEyePop
 
             initManagers();
             initEventListeners();
+
+            autoRender && render();
         }
 
         function initManagers()
         {
-            // Setup managers
-            clock = new THREE.Clock();
             renderManager = new RenderManager(
                 canvas,
                 videoUrl
             );
+
+            predictionDataManager = new PredictionDataManager(frameData);
         }
 
 
@@ -69,9 +70,11 @@ export default class ThirdEyePop
                 if (event.key == "ArrowLeft")
                 {
                     console.log("Left key");
+                    renderManager.setTime(renderManager.getTime() - 1);
                 } else if (event.key == "ArrowRight")
                 {
                     console.log("Right key");
+                    renderManager.setTime(renderManager.getTime() + 1);
                 } else if (event.key == "-")
                 {
                     setupDebuggingTools()
@@ -107,31 +110,35 @@ export default class ThirdEyePop
                 s.setAttribute('src', src)
                 s.async = true
                 document.body.appendChild(s)
-            }
+            };
 
             addScript(
                 'https://markknol.github.io/console-log-viewer/console-log-viewer.js?align=bottom?minimized=true'
-            )
-            stats = new Stats()
-            stats.showPanel(0) // 0: fps, 1: ms, 2: mb, 3+: custom
-            document.body.appendChild(stats.dom)
+            );
+            stats = new Stats();
+            stats.showPanel(0); // 0: fps, 1: ms, 2: mb, 3+: custom
+            document.body.appendChild(stats.dom);
 
         }
 
         // Main loop
         function render()
         {
-            DEBUG && stats.begin()
-
-            deltaTime = clock.getDelta();
+            DEBUG && stats.begin();
 
             // Update managers
-            renderManager.render()
+            renderManager.render();
+
+            const time = renderManager.getVideoTime();
+            const frame = predictionDataManager.getClosestFrame(time);
+            console.log("frame: ", frame);
+
 
             resetCanvas(false);
 
+
+            autoRender && requestAnimationFrame(render);
             DEBUG && stats.end();
-            requestAnimationFrame(render);
         }
 
 
@@ -143,6 +150,11 @@ export default class ThirdEyePop
             renderManager.reset()
         }
 
+        function pushFrameData(frame)
+        {
+            predictionDataManager.pushFrameData(frame);
+        }
+
         // //////////////////// end SETUP /////////////////////////////
 
 
@@ -150,6 +162,7 @@ export default class ThirdEyePop
 
         scope.setup = setup;
         scope.render = render;
+        scope.pushFrameData = pushFrameData;
 
         // //////////////////// end API /////////////////////////////
 
