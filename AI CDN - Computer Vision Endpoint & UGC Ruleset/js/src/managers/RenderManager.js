@@ -70,6 +70,14 @@ export default class RenderManager
         this.setupVideo(videoUrl);
     }
 
+    getDimensions()
+    {
+        return {
+            width: this.width,
+            height: this.height
+        }
+    }
+
     getCamera()
     {
         return this.camera;
@@ -201,6 +209,22 @@ export default class RenderManager
         this.onWindowResized();
     }
 
+    resetScene()
+    {
+        this.scene.children.forEach((child) =>
+        {
+            child.traverse((node) =>
+            {
+                if (node.type == "Mesh")
+                {
+                    node.position.x = -1000;
+                    node.position.y = -1000;
+                }
+            });
+
+        });
+    }
+
     // TODO: modularize post effects and split this into multiple functions
     setupPostEffects()
     {
@@ -263,6 +287,12 @@ export default class RenderManager
             this.videoTexture.needsUpdate = true;
             this.copyPass.uniforms.tDiffuse.value = this.videoTexture;
             this.time = this.video.currentTime;
+        }
+
+        // if the video restarts, reset the time
+        if (this.time == 0)
+        {
+            this.resetScene();
         }
 
         if (!this.finalComposer) return;
