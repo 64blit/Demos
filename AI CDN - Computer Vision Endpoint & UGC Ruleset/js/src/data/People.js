@@ -9,12 +9,15 @@ export default class People
     {
         this.traceId = null;
         this.boundingBox = new THREE.Box3();
+
         this.position = new THREE.Vector3();
+        this.topLeftPoint = new THREE.Vector3();
+        this.bottomRightPoint = new THREE.Vector3();
+
         this.path = [];
 
-        this.line = null;
-        this.point = null;
-        this.midPoint = null;
+        this.pathLine = null;
+        this.centerSphere = null;
         this.bounds = null;
     }
 
@@ -22,7 +25,7 @@ export default class People
     {
         this.path.push(point);
 
-        this.path = this.path.slice(-1000);
+        this.path = this.path.slice(-100);
     }
 
 }
