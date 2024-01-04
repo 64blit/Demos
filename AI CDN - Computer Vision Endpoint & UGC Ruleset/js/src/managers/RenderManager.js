@@ -29,6 +29,11 @@ export default class RenderManager
         this.canvas = canvas;
         this.copyPass = null;
 
+        this.renderer = null;
+        this.finalComposer = null;
+        this.bloomPass = null;
+        this.time = 0;
+
         console.log("RenderManager constructor");
 
 
@@ -49,7 +54,13 @@ export default class RenderManager
         this.camera.lookAt(0, 0, 0);
 
         this.scene = new THREE.Scene();
+        this.video = null;
+        this.videoTexture = null;
+        this.setupVideo(videoUrl);
+    }
 
+    setupVideo(videoUrl)
+    {
         //render the video url to a texture
         this.video = document.createElement('video');
         this.video.playsInline = true;
@@ -73,20 +84,19 @@ export default class RenderManager
             scope.videoTexture.generateMipmaps = false;
             scope.videoTexture.flipY = true;
 
+
+            scope.width = scope.video.videoWidth;
+            scope.height = scope.video.videoHeight;
+
             const planeGeometry = new THREE.PlaneGeometry(1, 1, 1, 1);
             const plane = new THREE.Mesh(planeGeometry, new THREE.MeshBasicMaterial({ map: scope.videoTexture, side: THREE.DoubleSide }));
             // this.scene.add(plane);
 
             this.video.play();
+            this.setupRenderer();
             this.setupPostEffects();
         });
 
-
-        this.renderer = null;
-        this.finalComposer = null;
-        this.bloomPass = null;
-
-        this.setupRenderer();
     }
 
     setupRenderer()
@@ -104,19 +114,28 @@ export default class RenderManager
 
         this.camera.layers.enableAll();
 
+        const clientAspect = this.canvas.clientWidth / this.canvas.clientHeight;
+        const videoAspect = this.video.videoWidth / this.video.videoHeight;
+
+        this.width = this.canvas.clientWidth * (videoAspect / clientAspect);
+        this.height = this.canvas.clientHeight * (clientAspect / videoAspect);
+
         this.renderer.setSize(this.width, this.height)
         this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     }
 
     onWindowResized()
     {
-        this.width = this.canvas.clientWidth
-        this.height = this.canvas.clientHeight
+        const clientAspect = this.canvas.clientWidth / this.canvas.clientHeight;
+        const videoAspect = this.video.videoWidth / this.video.videoHeight;
 
-        this.camera.aspect = this.width / this.height
-        this.camera.updateProjectionMatrix()
+        this.width = this.canvas.clientWidth * (videoAspect / clientAspect);
+        this.height = this.canvas.clientHeight * (clientAspect / videoAspect);
 
-        this.renderer.setSize(this.width, this.height)
+        this.camera.aspect = this.width / this.height;
+        this.camera.updateProjectionMatrix();
+
+        this.renderer.setSize(this.width, this.height);
 
         this.renderer.domElement.style.width = this.width;
         this.renderer.domElement.style.height = this.height;
@@ -179,6 +198,20 @@ export default class RenderManager
         this.finalComposer.addPass(this.copyPass);
     }
 
+    getVideoTime()
+    {
+        return this.time;
+    }
+
+    setTime(time)
+    {
+        if (!this.video) return;
+
+        if (time < 0) time = 0;
+        if (time > this.video.duration) time = this.video.duration;
+
+        this.video.currentTime = time;
+    }
 
     render()
     {
@@ -186,6 +219,8 @@ export default class RenderManager
         {
             this.videoTexture.needsUpdate = true;
             this.copyPass.uniforms.tDiffuse.value = this.videoTexture;
+            this.time = this.video.currentTime;
+            console.log("this.time", this.time);
         }
 
         if (!this.finalComposer) return;
