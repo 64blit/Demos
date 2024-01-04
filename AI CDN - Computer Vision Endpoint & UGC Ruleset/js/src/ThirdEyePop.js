@@ -2,6 +2,7 @@ import * as THREE from 'https://unpkg.com/three/build/three.module.js';
 import Stats from 'https://unpkg.com/three/examples/jsm/libs/stats.module.js';
 import RenderManager from './managers/RenderManager.js';
 import PredictionDataManager from './managers/PredictionDataManager.js';
+import SceneManager from './managers/SceneManager.js';
 
 // "objects":
 //     [
@@ -36,10 +37,14 @@ export default class ThirdEyePop
         let scope = this;
         let renderManager = null;
         let predictionDataManager = null;
+        let sceneManager = null;
 
         let stats = null;
         let canvasNeedsReset = false
         let autoRender = frameData.length > 0 ? true : false;
+
+        let time = 0;
+        let currentFrame = null;
 
         // ///////////////////// SETUP /////////////////////////////
         async function setup()
@@ -60,6 +65,8 @@ export default class ThirdEyePop
             );
 
             predictionDataManager = new PredictionDataManager(frameData);
+
+            sceneManager = new SceneManager(renderManager.getScene(), renderManager.getCamera());
         }
 
 
@@ -121,39 +128,74 @@ export default class ThirdEyePop
 
         }
 
-        // Main loop
-        function render()
+        function bufferVideo()
         {
-            DEBUG && stats.begin();
 
-            // Update managers
-            renderManager.render();
-
-            const time = renderManager.getVideoTime();
-            const frame = predictionDataManager.getClosestFrame(time);
-            console.log("frame: ", frame);
-
-
-            resetCanvas(false);
+            // Pause video to buffer more prediction frames
+            if (Math.abs(predictionDataManager.getCurrentFrameTime() - time) > 0.1)
+            {
+                renderManager.pauseVideo();
+            } else
+            {
+                renderManager.playVideo();
+            }
 
 
-            autoRender && requestAnimationFrame(render);
-            DEBUG && stats.end();
         }
 
 
         function resetCanvas()
         {
+
+
             if (!canvasNeedsReset) return;
 
             canvasNeedsReset = false;
-            renderManager.reset()
+            renderManager.reset();
+
+
         }
+
 
         function pushFrameData(frame)
         {
             predictionDataManager.pushFrameData(frame);
         }
+
+
+        // Main loop
+        function render()
+        {
+
+
+            DEBUG && stats.begin();
+
+            time = renderManager.getVideoTime();
+
+            // This is where we handle the rendering, including video playback
+            renderManager.render();
+
+            // This is a simple data frame manager
+            predictionDataManager.setCurrentFrame(time);
+
+            // This is where we draw and manage meshes
+            sceneManager.update(
+                predictionDataManager.getCurrentFrame()
+            );
+
+
+            // We buffer video if we need more prediction frames
+            bufferVideo();
+
+            // We also reset the canvas when window size changes
+            resetCanvas(false);
+
+            autoRender && requestAnimationFrame(render);
+            DEBUG && stats.end();
+
+
+        }
+
 
         // //////////////////// end SETUP /////////////////////////////
 

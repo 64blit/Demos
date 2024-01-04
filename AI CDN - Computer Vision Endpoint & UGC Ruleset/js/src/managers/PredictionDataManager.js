@@ -5,6 +5,7 @@ export default class PredictionDataManager
     constructor(frameData = [])
     {
         this.frameData = frameData;
+        this.currentFrame = null;
     }
 
     setFrameData(frameData)
@@ -22,19 +23,31 @@ export default class PredictionDataManager
         return this.frameData;
     }
 
-    getClosestFrame(time)
+    getCurrentFrame()
+    {
+        return this.currentFrame;
+    }
+
+    getCurrentFrameTime()
+    {
+        return this.currentFrame.timestamp;
+    }
+
+    setCurrentFrame(time)
     {
         let closestFrame = null;
         let closestTime = null;
         this.frameData.forEach((frame) =>
         {
-            let frameTime = frame.time;
+            let frameTime = frame.timestamp;
             if (closestTime === null || Math.abs(frameTime - time) < Math.abs(closestTime - time))
             {
                 closestFrame = frame;
                 closestTime = frameTime;
             }
         });
+        this.currentFrame = closestFrame;
+
         return closestFrame;
     }
 

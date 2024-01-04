@@ -50,6 +50,17 @@ export default class RenderManager
         this.height = this.canvas.clientHeight
 
         this.camera = new THREE.OrthographicCamera(-1, 1, 1, -1);
+        // Calculate the aspect ratio of the canvas
+
+        // Adjust the camera's frustum planes
+        this.camera.left = -1;
+        this.camera.right = 1;
+        this.camera.top = 1;
+        this.camera.bottom = -1;
+
+        // Update the camera's projection matrix
+        this.camera.updateProjectionMatrix();
+
         this.camera.position.set(0, 0, -10);
         this.camera.lookAt(0, 0, 0);
 
@@ -57,6 +68,16 @@ export default class RenderManager
         this.video = null;
         this.videoTexture = null;
         this.setupVideo(videoUrl);
+    }
+
+    getCamera()
+    {
+        return this.camera;
+    }
+
+    getScene()
+    {
+        return this.scene;
     }
 
     setupVideo(videoUrl)
@@ -99,6 +120,19 @@ export default class RenderManager
 
     }
 
+    pauseVideo()
+    {
+        if (this.video.paused) return;
+        this.video.pause();
+    }
+
+    playVideo()
+    {
+        if (!this.video.paused) return;
+
+        this.video.play();
+    }
+
     setupRenderer()
     {
         this.renderer = new THREE.WebGLRenderer({
@@ -113,6 +147,16 @@ export default class RenderManager
         this.renderer.toneMapping = THREE.NoToneMapping;
 
         this.camera.layers.enableAll();
+        // Calculate the aspect ratio of the canvas
+
+        // Adjust the camera's frustum planes
+        this.camera.left = -1;
+        this.camera.right = 1;
+        this.camera.top = 1;
+        this.camera.bottom = -1;
+
+        // Update the camera's projection matrix
+        this.camera.updateProjectionMatrix();
 
         const clientAspect = this.canvas.clientWidth / this.canvas.clientHeight;
         const videoAspect = this.video.videoWidth / this.video.videoHeight;
