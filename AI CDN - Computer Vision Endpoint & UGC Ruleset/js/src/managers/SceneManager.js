@@ -13,6 +13,18 @@ export default class SceneManager
         this.peopleManager = new PeopleManager(dimensions);
         this.activePeople = [];
 
+        this.showPoint = true;
+        this.showPath = true;
+        this.showBounds = true;
+        this.showPose = true;
+
+
+        this.boxMaterial = new THREE.MeshBasicMaterial({ color: 0x0aaaff, transparent: true, opacity: 0.45 });
+        this.pointMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
+        this.pathMaterial = new THREE.LineBasicMaterial({ color: 0xfaa61a, linewidth: 100, });
+
+        this.boxQueue = [];
+
     }
 
     getAllPathPoints()
@@ -35,10 +47,10 @@ export default class SceneManager
 
                 this.activePeople.push(person);
 
-                this.drawPoint(person);
-                this.drawPath(person);
-                this.drawBoundingBox(person);
-                this.drawPose(person);
+                this.showPoint && this.drawPoint(person);
+                this.showPath && this.drawPath(person);
+                this.showBounds && this.drawBoundingBox(person);
+                this.showPose && this.drawPose(person);
             }
         }
 
@@ -66,6 +78,19 @@ export default class SceneManager
         }
     }
 
+    toggleVisibility(name)
+    {
+        console.log("toggleVisibility: ", name);
+        this.scene.traverse((child) =>
+        {
+            if (child.name === name)
+            {
+                child.visible = !child.visible;
+                child.material.visible = !child.material.visible;
+            }
+        });
+    }
+
     drawPoint(person)
     {
         if (!person) return;
@@ -75,14 +100,14 @@ export default class SceneManager
         if (!sphere)
         {
             let geometry = new THREE.SphereGeometry(0.01, 8, 8);
-            let material = new THREE.MeshBasicMaterial({ color: 0x00fa00, transparent: true, opacity: 0.8 });
-            sphere = new THREE.Mesh(geometry, material);
+            sphere = new THREE.Mesh(geometry, this.pointMaterial);
 
             this.scene.add(sphere);
             person.centerSphere = sphere;
 
             sphere = person.centerSphere;
         }
+        sphere.name = "point";
 
         let point = person.position;
         sphere.position.x = point.x;
@@ -103,17 +128,13 @@ export default class SceneManager
 
         if (!line)
         {
-            const pathMaterial = new THREE.LineBasicMaterial({
-                color: 0xfaa61a,
-                linewidth: 10,
-            });
-
-            person.pathLine = new THREE.Line(pathGeometry, pathMaterial);
+            person.pathLine = new THREE.Line(pathGeometry, this.pathMaterial);
 
             this.scene.add(person.pathLine);
         }
         else 
         {
+            line.name = "path";
             line.geometry.copy(pathGeometry);
             line.geometry.verticesNeedUpdate = true;
         }
@@ -131,23 +152,23 @@ export default class SceneManager
         let width = bounds.max.x - bounds.min.x;
         let height = bounds.max.y - bounds.min.y;
 
-        const boxGeometry = new THREE.BoxGeometry(width, height, 0);
-        const boxMaterial = new THREE.MeshBasicMaterial({ color: 0x0000ff, opacity: 0.5, transparent: true });
-        const boxMesh = new THREE.Mesh(boxGeometry, boxMaterial);
+        const boxGeometry = new THREE.BoxGeometry(width, height, 1);
+        const boxMesh = new THREE.Mesh(boxGeometry, this.boxMaterial);
 
         boxMesh.position.x = person.position.x;
         boxMesh.position.y = person.position.y;
-        boxMesh.position.z = 0;
+        boxMesh.position.z = 50;
 
         if (!boundsBox)
         {
+            boxMesh.name = "bounds";
             this.scene.add(boxMesh);
             person.boundsBox = boxMesh;
         }
         else 
         {
             boundsBox.geometry = boxGeometry;
-            boundsBox.material = boxMaterial;
+            boundsBox.material = this.boxMaterial;
             boundsBox.position.x = boxMesh.position.x;
             boundsBox.position.y = boxMesh.position.y;
             boundsBox.position.z = boxMesh.position.z;

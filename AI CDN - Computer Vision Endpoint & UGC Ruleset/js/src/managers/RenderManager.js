@@ -34,9 +34,11 @@ export default class RenderManager
         this.finalComposer = null;
         this.bloomPass = null;
         this.time = 0;
-        this.showHeatmap = true;
         this.heatmapPoints = [];
         this.maxHeatmapPoints = 10000;
+
+        this.showHeatmap = true;
+        this.heatmapIntensity = 0.5;
 
         console.log("RenderManager constructor");
 
@@ -72,30 +74,38 @@ export default class RenderManager
         this.setupVideo(videoUrl);
     }
 
-    toggleHeatmap()
-    {
-        this.showHeatmap = !this.showHeatmap;
-        this.heatmapPass.uniforms.uShowHeatmap.value = this.showHeatmap ? 1.0 : 0.0;
-    }
-
     updateHeatmapPoints(points)
     {
+        if (!points) return;
         if (!this.heatmapPass) return;
 
-        this.heatmapPoints = points.slice(0, this.maxHeatmapPoints);
+        let gridSpacesX = 25.0;
+        let gridSpacesY = 25.0;
+        let heatGrid = new Float32Array(gridSpacesX * gridSpacesY).fill(0.0);
+        let maxHeat = 0;
 
-        // if the heatmap points length is less than this.maxHeatmapPoints, fill it with 0s until it is this.maxHeatmapPoints
-        if (this.heatmapPoints.length < this.maxHeatmapPoints)
+        // loop through each point, and increment the heatGrid point that it's closest to
+        for (let i = 0; i < points.length; i++)
         {
-            const diff = this.maxHeatmapPoints - this.heatmapPoints.length;
-            for (let i = 0; i < diff; i++)
-            {
-                this.heatmapPoints.push(new THREE.Vector3(-1000, -1000, -1000));
-            }
+            let gridX = gridSpacesX - 1 - Math.floor((0.5 + 0.5 * points[ i ].x) * gridSpacesX);
+            let gridY = Math.floor((0.5 + 0.5 * points[ i ].y) * gridSpacesY);
+
+            heatGrid[ gridX + gridY * gridSpacesX ] += 1;
+
+            maxHeat = Math.max(maxHeat, heatGrid[ gridX + gridY * gridSpacesX ]);
         }
 
-        this.heatmapPass.uniforms.uPoints.value = this.heatmapPoints;
-        this.heatmapPass.uniforms.uPointsLength.value = this.heatmapPoints.length - 1;
+        // normalize the heatGrid
+        for (let i = 0; i < heatGrid.length; i++)
+        {
+            heatGrid[ i ] /= maxHeat;
+        }
+
+
+
+        this.heatmapPass.uniforms.uGridSpacesX.value = gridSpacesX;
+        this.heatmapPass.uniforms.uGridSpacesY.value = gridSpacesY;
+        this.heatmapPass.uniforms.uHeatGrid.value = heatGrid;
     }
 
     getDimensions()
@@ -289,10 +299,11 @@ export default class RenderManager
         this.heatmapPass = new ShaderPass({
             uniforms: {
                 tDiffuse: { value: null },
-                uPoints: { value: new Array(1000).fill(new THREE.Vector3()) }, // array of x,y coordinates
-                uPointsLength: { value: 0 }, // array of x,y coordinates
-                uGridSize: { value: .1 }, // size of the grid
-                uShowHeatmap: { value: this.showHeatmap ? 1.0 : 0.0 }
+                uGridSpacesX: { value: 25.0 },
+                uGridSpacesY: { value: 25.0 },
+                uIntensity: { value: 0.5 },
+                uHeatGrid: { value: new Array(625).fill(0.5) },
+                uShowHeatmap: { value: this.showHeatmap }
             },
             vertexShader: `
                 varying vec2 vUv;
@@ -303,29 +314,28 @@ export default class RenderManager
             `,
             fragmentShader:
                 `
-                #define POINTSMAX 1000
                 uniform sampler2D tDiffuse;
-                uniform int uPointsLength;
-                uniform vec3 uPoints[1000];
-                uniform float uGridSize;
-                uniform float uShowHeatmap;
+                uniform float uGridSpacesX;
+                uniform float uGridSpacesY;
+                uniform float uIntensity;
+                uniform float uHeatGrid[625];
+                uniform bool uShowHeatmap;
 
                 varying vec2 vUv;
                 void main() {
                     vec4 texel = texture2D(tDiffuse, vUv);
-                    float maxPoints = 0.0;
-                    float gridX = floor(vUv.x * uGridSize);
-                    float gridY = floor(vUv.y * uGridSize);
-                    for (int i = 0; i < uPointsLength; i++) {
-                        float pointX = floor(uPoints[i].x * uGridSize);
-                        float pointY = floor(uPoints[i].y * uGridSize);
-                        if (gridX == pointX && gridY == pointY) {
-                            maxPoints += 1.0;
-                        }
-                    }
-
-                    if (uShowHeatmap == 1.0) {
-                        texel.r = mix(texel.r,  maxPoints / 100.0, 0.5);
+                    float gridX = floor(vUv.x * uGridSpacesX);
+                    float gridY = floor(vUv.y * uGridSpacesY);
+                    // for (int i = 0; i < uPointsLength; i++) {
+                    //     float pointX = floor(uPoints[i].x * uGridSize);
+                    //     float pointY = floor(uPoints[i].y * uGridSize);
+                    //     if (gridX == pointX && gridY == pointY) {
+                    //         points += 1.0;
+                    //     }
+                    // }
+                    float heat = uHeatGrid[ int(gridX + gridY * uGridSpacesX) ];
+                    if (uShowHeatmap && heat > 0.0) {
+                        texel = mix(texel, vec4(0.5 + 0.5 * heat, 0, 0, 1), uIntensity);
                     }
                     
                     gl_FragColor = texel;
@@ -366,6 +376,8 @@ export default class RenderManager
             this.videoTexture.needsUpdate = true;
             this.copyPass.uniforms.tDiffuse.value = this.videoTexture;
             this.time = this.video.currentTime;
+            this.heatmapPass.uniforms.uIntensity.value = this.heatmapIntensity;
+            this.heatmapPass.uniforms.uShowHeatmap.value = this.showHeatmap;
         }
 
         // if the video restarts, reset the time

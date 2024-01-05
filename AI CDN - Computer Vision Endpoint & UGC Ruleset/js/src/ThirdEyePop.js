@@ -124,8 +124,11 @@ export default class ThirdEyePop
             gui.add(renderManager.video, 'currentTime', 0, renderManager.video.duration).name('Video Time');
             gui.add(playObj, 'Play');
             gui.add(pauseObj, 'Pause');
-            gui.add(heatMapObj, 'ToggleHeatmap');
-
+            gui.add(renderManager, 'heatmapIntensity', 0, 1).name('Heatmap Opacity');
+            gui.add(renderManager, 'showHeatmap').name('Show Heatmap');
+            gui.add(sceneManager, 'showPoint').name('Show Center Sphere').onChange(function (value) { sceneManager.toggleVisibility('point') });
+            gui.add(sceneManager, 'showPath').name('Show Path Lines').onChange(function (value) { sceneManager.toggleVisibility('path') });
+            gui.add(sceneManager, 'showBounds').name('Show Bounds').onChange(function (value) { sceneManager.toggleVisibility('bounds') });
 
         }
 
