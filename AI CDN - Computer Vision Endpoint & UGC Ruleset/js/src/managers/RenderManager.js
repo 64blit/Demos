@@ -302,7 +302,7 @@ export default class RenderManager
                 }
             `,
             fragmentShader:
-                `#define POINTSMAX 10000
+                `#define POINTSMAX 1000
                 uniform sampler2D tDiffuse;
                 uniform int uPointsLength;
                 uniform vec3 uPoints[POINTSMAX];
