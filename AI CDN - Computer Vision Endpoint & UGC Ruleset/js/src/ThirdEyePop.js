@@ -118,7 +118,7 @@ export default class ThirdEyePop
 
             const gui = new GUI();
             var playObj = { Play: function () { pause = false; renderManager.playVideo(); } };
-            var pauseObj = { Pause: function () { pause = true; renderManager.playVideo(); } };
+            var pauseObj = { Pause: function () { pause = true; renderManager.pauseVideo(); } };
             var heatMapObj = { ToggleHeatmap: function () { renderManager.toggleHeatmap() } };
 
             gui.add(renderManager.video, 'currentTime', 0, renderManager.video.duration).name('Video Time');

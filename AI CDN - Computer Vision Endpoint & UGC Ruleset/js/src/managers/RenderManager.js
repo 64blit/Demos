@@ -291,7 +291,7 @@ export default class RenderManager
                 tDiffuse: { value: null },
                 uPoints: { value: new Array(1000).fill(new THREE.Vector3()) }, // array of x,y coordinates
                 uPointsLength: { value: 0 }, // array of x,y coordinates
-                uGridSize: { value: .01 }, // size of the grid
+                uGridSize: { value: .1 }, // size of the grid
                 uShowHeatmap: { value: this.showHeatmap ? 1.0 : 0.0 }
             },
             vertexShader: `
