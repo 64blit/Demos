@@ -25,6 +25,7 @@ export default class SceneManager
 
         this.boxQueue = [];
 
+        this.personGeometry
     }
 
     getAllPathPoints()
@@ -162,7 +163,7 @@ export default class SceneManager
         if (!boundsBox)
         {
             boxMesh.name = "bounds";
-            this.scene.add(boxMesh);
+            //this.scene.add(boxMesh);
             person.boundsBox = boxMesh;
         }
         else 
