@@ -25,8 +25,9 @@ export default class SceneManager
 
         this.boxQueue = [];
 
-        this.maxPersons = 1000;
+        this.maxPersons = 100;
         this.personBoxMesh = new Array(this.maxPersons).fill(null);
+        this.personPathGeometry = new Array(this.maxPersons).fill(null);
     }
 
     getAllPathPoints()
@@ -56,7 +57,6 @@ export default class SceneManager
                 this.showPose && this.drawPose(person);
             }
         }
-        console.log(this.activePeople.length);
 
         this.hideInactivePeople(previousActivePeople);
 
@@ -123,25 +123,20 @@ export default class SceneManager
 
     drawPath(person)
     {
-        let path = person.path;
-        if (path.length < 4) return;
+        if (person.path.length < 4) return;
 
-        let line = person.pathLine;
-
-        const pathGeometry = new THREE.BufferGeometry().setFromPoints(path);
-
-        if (!line)
+        if (this.personPathGeometry[person.index] === null)
         {
-            person.pathLine = new THREE.Line(pathGeometry, this.pathMaterial);
-
-            this.scene.add(person.pathLine);
+            this.personPathGeometry[person.index] = new THREE.BufferGeometry().setFromPoints(person.path);
+            person.pathLine = new THREE.Line(this.personPathGeometry[person.index], this.pathMaterial);
+            person.pathLine.name = "path";
+            this.scene.add(person.pathLine)
         }
-        else 
+        else
         {
-            line.name = "path";
-            line.geometry.copy(pathGeometry);
-            line.geometry.verticesNeedUpdate = true;
+            this.personPathGeometry[person.index].setFromPoints(person.path);
         }
+        this.personPathGeometry[person.index].verticesNeedUpdate = true;
     }
 
 
@@ -151,8 +146,6 @@ export default class SceneManager
         const bounds = person.bounds;
         if (!bounds) return;
 
-        const boundsBox = person.boundsBox;
-
         let width = bounds.max.x - bounds.min.x;
         let height = bounds.max.y - bounds.min.y;
 
@@ -160,6 +153,7 @@ export default class SceneManager
         {
             let boxGeometry = new THREE.BoxGeometry(width, height, 1);
             this.personBoxMesh[person.index] = new THREE.Mesh(boxGeometry, this.boxMaterial);
+            this.personBoxMesh[person.index].name = "bounds";
             this.scene.add(this.personBoxMesh[person.index]);
         } else {
             this.personBoxMesh[person.index].geometry.parameters.width = width;
@@ -169,23 +163,9 @@ export default class SceneManager
         this.personBoxMesh[person.index].position.x = person.position.x;
         this.personBoxMesh[person.index].position.y = person.position.y;
         this.personBoxMesh[person.index].position.z = 50;
-
-        if (!boundsBox)
-        {
-            this.personBoxMesh[person.index].name = "bounds";
-            person.boundsBox = this.personBoxMesh[person.index];
-        }
-        else 
-        {
-            boundsBox.geometry = this.personBoxMesh[person.index].geometry;
-            boundsBox.material = this.boxMaterial;
-            boundsBox.position.x = this.personBoxMesh[person.index].position.x;
-            boundsBox.position.y = this.personBoxMesh[person.index].position.y;
-            boundsBox.position.z = this.personBoxMesh[person.index].position.z;
-
-            boundsBox.geometry.verticesNeedUpdate = true;
-        }
-
+        this.personBoxMesh[person.index].geometry.verticesNeedUpdate = true;
+        
+        person.boundsBox = this.personBoxMesh[person.index];
     }
 
 
