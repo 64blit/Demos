@@ -25,7 +25,8 @@ export default class SceneManager
 
         this.boxQueue = [];
 
-        this.personGeometry
+        this.maxPersons = 1000;
+        this.personBoxMesh = new Array(this.maxPersons).fill(null);
     }
 
     getAllPathPoints()
@@ -39,13 +40,14 @@ export default class SceneManager
         this.activePeople = [];
 
         // console.log(frameData)
-        for (let i = 0; i < frameData.objects.length; i++)
+        for (let i = 0; i < frameData.objects.length && this.activePeople.length < this.maxPersons; i++)
         {
             let objects = frameData.objects[ i ];
             if (objects.classLabel === "person")
             {
                 const person = this.peopleManager.addPerson(objects);
 
+                person.index = this.activePeople.length;
                 this.activePeople.push(person);
 
                 this.showPoint && this.drawPoint(person);
@@ -54,6 +56,7 @@ export default class SceneManager
                 this.showPose && this.drawPose(person);
             }
         }
+        console.log(this.activePeople.length);
 
         this.hideInactivePeople(previousActivePeople);
 
@@ -153,26 +156,32 @@ export default class SceneManager
         let width = bounds.max.x - bounds.min.x;
         let height = bounds.max.y - bounds.min.y;
 
-        const boxGeometry = new THREE.BoxGeometry(width, height, 1);
-        const boxMesh = new THREE.Mesh(boxGeometry, this.boxMaterial);
+        if (this.personBoxMesh[person.index] === null)
+        {
+            let boxGeometry = new THREE.BoxGeometry(width, height, 1);
+            this.personBoxMesh[person.index] = new THREE.Mesh(boxGeometry, this.boxMaterial);
+            this.scene.add(this.personBoxMesh[person.index]);
+        } else {
+            this.personBoxMesh[person.index].geometry.parameters.width = width;
+            this.personBoxMesh[person.index].geometry.parameters.height = height;
+        }
 
-        boxMesh.position.x = person.position.x;
-        boxMesh.position.y = person.position.y;
-        boxMesh.position.z = 50;
+        this.personBoxMesh[person.index].position.x = person.position.x;
+        this.personBoxMesh[person.index].position.y = person.position.y;
+        this.personBoxMesh[person.index].position.z = 50;
 
         if (!boundsBox)
         {
-            boxMesh.name = "bounds";
-            //this.scene.add(boxMesh);
-            person.boundsBox = boxMesh;
+            this.personBoxMesh[person.index].name = "bounds";
+            person.boundsBox = this.personBoxMesh[person.index];
         }
         else 
         {
-            boundsBox.geometry = boxGeometry;
+            boundsBox.geometry = this.personBoxMesh[person.index].geometry;
             boundsBox.material = this.boxMaterial;
-            boundsBox.position.x = boxMesh.position.x;
-            boundsBox.position.y = boxMesh.position.y;
-            boundsBox.position.z = boxMesh.position.z;
+            boundsBox.position.x = this.personBoxMesh[person.index].position.x;
+            boundsBox.position.y = this.personBoxMesh[person.index].position.y;
+            boundsBox.position.z = this.personBoxMesh[person.index].position.z;
 
             boundsBox.geometry.verticesNeedUpdate = true;
         }
