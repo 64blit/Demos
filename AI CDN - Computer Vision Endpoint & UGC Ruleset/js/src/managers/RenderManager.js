@@ -27,12 +27,16 @@ export default class RenderManager
     {
         THREE.Cache.enabled = true
         this.canvas = canvas;
+        this.heatmapPass = null;
         this.copyPass = null;
 
         this.renderer = null;
         this.finalComposer = null;
         this.bloomPass = null;
         this.time = 0;
+        this.showHeatmap = true;
+        this.heatmapPoints = [];
+        this.maxHeatmapPoints = 10000;
 
         console.log("RenderManager constructor");
 
@@ -50,8 +54,6 @@ export default class RenderManager
         this.height = this.canvas.clientHeight
 
         this.camera = new THREE.OrthographicCamera(-1, 1, 1, -1);
-        // Calculate the aspect ratio of the canvas
-
         // Adjust the camera's frustum planes
         this.camera.left = -1;
         this.camera.right = 1;
@@ -68,6 +70,32 @@ export default class RenderManager
         this.video = null;
         this.videoTexture = null;
         this.setupVideo(videoUrl);
+    }
+
+    toggleHeatmap()
+    {
+        this.showHeatmap = !this.showHeatmap;
+        this.heatmapPass.uniforms.uShowHeatmap.value = this.showHeatmap ? 1.0 : 0.0;
+    }
+
+    updateHeatmapPoints(points)
+    {
+        if (!this.heatmapPass) return;
+
+        this.heatmapPoints = points.slice(0, this.maxHeatmapPoints);
+
+        // if the heatmap points length is less than this.maxHeatmapPoints, fill it with 0s until it is this.maxHeatmapPoints
+        if (this.heatmapPoints.length < this.maxHeatmapPoints)
+        {
+            const diff = this.maxHeatmapPoints - this.heatmapPoints.length;
+            for (let i = 0; i < diff; i++)
+            {
+                this.heatmapPoints.push(new THREE.Vector3(-1000, -1000, -1000));
+            }
+        }
+
+        this.heatmapPass.uniforms.uPoints.value = this.heatmapPoints;
+        this.heatmapPass.uniforms.uPointsLength.value = this.heatmapPoints.length - 1;
     }
 
     getDimensions()
@@ -257,12 +285,62 @@ export default class RenderManager
                 }`
         });
 
+
+        this.heatmapPass = new ShaderPass({
+            uniforms: {
+                tDiffuse: { value: null },
+                uPoints: { value: null }, // array of x,y coordinates
+                uPointsLength: { value: 0 }, // array of x,y coordinates
+                uGridSize: { value: .01 }, // size of the grid
+                uShowHeatmap: { value: this.showHeatmap ? 1.0 : 0.0 }
+            },
+            vertexShader: `
+                varying vec2 vUv;
+                void main() {
+                    vUv = uv;
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                }
+            `,
+            fragmentShader:
+                `#define POINTSMAX 10000
+                uniform sampler2D tDiffuse;
+                uniform int uPointsLength;
+                uniform vec3 uPoints[POINTSMAX];
+                uniform float uGridSize;
+                uniform float uShowHeatmap;
+
+                varying vec2 vUv;
+                void main() {
+                    vec4 texel = texture2D(tDiffuse, vUv);
+                    float maxPoints = 0.0;
+                    float gridX = floor(vUv.x * uGridSize);
+                    float gridY = floor(vUv.y * uGridSize);
+                    for (int i = 0; i < uPointsLength; i++) {
+                        float pointX = floor(uPoints[i].x * uGridSize);
+                        float pointY = floor(uPoints[i].y * uGridSize);
+                        if (gridX == pointX && gridY == pointY) {
+                            maxPoints += 1.0;
+                        }
+                    }
+
+                    if (uShowHeatmap == 1.0) {
+                        texel.r = mix(texel.r,  maxPoints / 100.0, 0.5);
+                    }
+                    
+                    gl_FragColor = texel;
+                }
+            `
+        });
+
+        // Add the shader pass to the composer
+
         this.finalComposer = new EffectComposer(this.renderer);
         this.finalComposer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         this.finalComposer.setSize(this.width, this.height);
 
         this.finalComposer.addPass(renderScene);
         this.finalComposer.addPass(this.copyPass);
+        this.finalComposer.addPass(this.heatmapPass);
     }
 
     getVideoTime()

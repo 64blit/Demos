@@ -35,7 +35,7 @@ export default class ThirdEyePop
         let canvasNeedsReset = false
         let autoRender = frameData.length > 0 ? true : false;
 
-        let time = 0;
+        let videoTime = 0;
         let pause = false;
 
         // ///////////////////// SETUP /////////////////////////////
@@ -119,10 +119,12 @@ export default class ThirdEyePop
             const gui = new GUI();
             var playObj = { Play: function () { pause = false; renderManager.playVideo(); } };
             var pauseObj = { Pause: function () { pause = true; renderManager.playVideo(); } };
+            var heatMapObj = { ToggleHeatmap: function () { renderManager.toggleHeatmap() } };
 
+            gui.add(renderManager.video, 'currentTime', 0, renderManager.video.duration).name('Video Time');
             gui.add(playObj, 'Play');
             gui.add(pauseObj, 'Pause');
-            gui.add(renderManager.video, 'currentTime', 0, renderManager.video.duration).name('Video Time');
+            gui.add(heatMapObj, 'ToggleHeatmap');
 
 
         }
@@ -132,14 +134,13 @@ export default class ThirdEyePop
             // check if we need to buffer video
 
             // If we are more than 0.1 seconds away from the current frame
-            // or if the last frame time is greater than the video time
+            // or if the last frame videoTime is greater than the video videoTime
             // then we need to buffer more video
 
-            const time = renderManager.getVideoTime();
             const currentFrameTime = predictionDataManager.getCurrentFrameTime();
-            const onlyHaveOldFrames = Math.abs(currentFrameTime - time) > 0.1;
-            const needsMoreFrames = predictionDataManager.getLastFrameTime() < time;
-            const videoPlaying = renderManager.video.duration <= time - 1;
+            const onlyHaveOldFrames = Math.abs(currentFrameTime - videoTime) > 0.1;
+            const needsMoreFrames = predictionDataManager.getLastFrameTime() < videoTime;
+            const videoPlaying = renderManager.video.duration <= videoTime - 1;
 
 
             if (videoPlaying && needsMoreFrames && onlyHaveOldFrames)
@@ -184,19 +185,23 @@ export default class ThirdEyePop
 
             DEBUG && stats.begin();
 
-            time = renderManager.getVideoTime();
+            videoTime = renderManager.getVideoTime();
 
             // This is where we handle the rendering, including video playback
             renderManager.render();
 
             // This is a simple data frame manager
-            predictionDataManager.setCurrentFrame(time);
+            predictionDataManager.setCurrentFrame(videoTime);
 
             // This is where we draw and manage meshes
             sceneManager.update(
                 predictionDataManager.getCurrentFrame()
             );
 
+            // Now we update the heatmap with the new path points
+            renderManager.updateHeatmapPoints(
+                sceneManager.getAllPathPoints()
+            );
 
             // We buffer video if we need more prediction frames
             bufferVideo();

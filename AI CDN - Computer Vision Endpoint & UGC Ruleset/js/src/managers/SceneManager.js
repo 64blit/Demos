@@ -15,6 +15,11 @@ export default class SceneManager
 
     }
 
+    getAllPathPoints()
+    {
+        return this.peopleManager.getAllPathPoints();
+    }
+
     update(frameData)
     {
         const previousActivePeople = [ ...this.activePeople ];

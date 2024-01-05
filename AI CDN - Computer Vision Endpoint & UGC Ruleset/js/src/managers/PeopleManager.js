@@ -105,6 +105,11 @@ export default class PeopleManager
         return Array.from(this.peopleMap.values());
     }
 
+    getAllPathPoints()
+    {
+        return this.allPeoplePositions;
+    }
+
     getPeoplePositions()
     {
         let positions = [];
