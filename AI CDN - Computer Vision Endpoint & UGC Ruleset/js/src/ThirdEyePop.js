@@ -1,5 +1,6 @@
 import * as THREE from 'https://unpkg.com/three/build/three.module.js';
 import Stats from 'https://unpkg.com/three/examples/jsm/libs/stats.module.js';
+import { GUI } from 'https://unpkg.com/dat.gui/build/dat.gui.module.js';
 import RenderManager from './managers/RenderManager.js';
 import PredictionDataManager from './managers/PredictionDataManager.js';
 import SceneManager from './managers/SceneManager.js';
@@ -35,16 +36,15 @@ export default class ThirdEyePop
         let autoRender = frameData.length > 0 ? true : false;
 
         let time = 0;
-        let currentFrame = null;
+        let pause = false;
 
         // ///////////////////// SETUP /////////////////////////////
         async function setup()
         {
-            DEBUG && setupDebuggingTools();
-
             initManagers();
             initEventListeners();
 
+            DEBUG && setupDebuggingTools();
             autoRender && render();
         }
 
@@ -67,12 +67,12 @@ export default class ThirdEyePop
             {
                 if (event.key == "ArrowLeft")
                 {
-                    console.log("Left key");
-                    renderManager.setTime(renderManager.getTime() - 1);
+                    console.log("Skip Backwards 1s");
+                    renderManager.setTime(renderManager.getVideoTime() - 1);
                 } else if (event.key == "ArrowRight")
                 {
-                    console.log("Right key");
-                    renderManager.setTime(renderManager.getTime() + 1);
+                    console.log("Skip Forwards 1s");
+                    renderManager.setTime(renderManager.getVideoTime() + 1);
                 } else if (event.key == "-")
                 {
                     setupDebuggingTools()
@@ -94,7 +94,6 @@ export default class ThirdEyePop
                 },
                 true
             )
-
         }
 
         function setupDebuggingTools()
@@ -116,6 +115,15 @@ export default class ThirdEyePop
             stats = new Stats();
             stats.showPanel(0); // 0: fps, 1: ms, 2: mb, 3+: custom
             document.body.appendChild(stats.dom);
+
+            const gui = new GUI();
+            var playObj = { Play: function () { pause = false; renderManager.playVideo(); } };
+            var pauseObj = { Pause: function () { pause = true; renderManager.playVideo(); } };
+
+            gui.add(playObj, 'Play');
+            gui.add(pauseObj, 'Pause');
+            gui.add(renderManager.video, 'currentTime', 0, renderManager.video.duration).name('Video Time');
+
 
         }
 
@@ -168,7 +176,11 @@ export default class ThirdEyePop
         // Main loop
         function render()
         {
-
+            if (pause)
+            {
+                autoRender && requestAnimationFrame(render);
+                return;
+            }
 
             DEBUG && stats.begin();
 
