@@ -18,14 +18,27 @@ export default class People
 
         this.pathLine = null;
         this.centerSphere = null;
+        this.boundsBox = null;
         this.bounds = null;
     }
 
     addPathPoint(point)
     {
+        // If there is a large jump in the path, reset it
+        if (this.path.length > 0)
+        {
+            const lastPoint = this.path[ this.path.length - 1 ];
+            const distance = lastPoint.distanceTo(point);
+
+            if (distance > 0.1)
+            {
+                this.path = [];
+            }
+        }
+
         this.path.push(point);
 
-        this.path = this.path.slice(-100);
+        this.path = this.path.slice(-1000);
     }
 
 }
