@@ -289,7 +289,7 @@ export default class RenderManager
         this.heatmapPass = new ShaderPass({
             uniforms: {
                 tDiffuse: { value: null },
-                uPoints: { value: null }, // array of x,y coordinates
+                uPoints: { value: new Array(1000).fill(new THREE.Vector3()) }, // array of x,y coordinates
                 uPointsLength: { value: 0 }, // array of x,y coordinates
                 uGridSize: { value: .01 }, // size of the grid
                 uShowHeatmap: { value: this.showHeatmap ? 1.0 : 0.0 }
@@ -302,10 +302,11 @@ export default class RenderManager
                 }
             `,
             fragmentShader:
-                `#define POINTSMAX 1000
+                `
+                #define POINTSMAX 1000
                 uniform sampler2D tDiffuse;
                 uniform int uPointsLength;
-                uniform vec3 uPoints[POINTSMAX];
+                uniform vec3 uPoints[1000];
                 uniform float uGridSize;
                 uniform float uShowHeatmap;
 
