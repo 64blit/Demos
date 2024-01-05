@@ -25,7 +25,7 @@ export default class PeopleManager
         normalizedX *= -1;
         normalizedY *= -1;
 
-        return { y: normalizedX, x: normalizedY };
+        return { x: normalizedX, y: normalizedY };
     }
 
     addPerson(person)
@@ -41,6 +41,8 @@ export default class PeopleManager
         {
             return cachedPerson;
         }
+
+        // Flip the X, Y coordinates to match THREE.js
 
         let normalizedTopLeft = this.normalizePosition(person, person.source_width, person.source_height);
 
@@ -63,11 +65,18 @@ export default class PeopleManager
         cachedPerson.bottomRightPoint.x = normalizedBottomRight.x;
         cachedPerson.bottomRightPoint.y = normalizedBottomRight.y;
 
+        cachedPerson.bounds = new THREE.Box3();
+        cachedPerson.bounds.min.x = normalizedTopLeft.x;
+        cachedPerson.bounds.min.y = normalizedTopLeft.y;
+        cachedPerson.bounds.max.x = normalizedBottomRight.x;
+        cachedPerson.bounds.max.y = normalizedBottomRight.y;
+
+
         cachedPerson.position = new THREE.Vector3();
         cachedPerson.position.x = (normalizedTopLeft.x + normalizedBottomRight.x) / 2;
         cachedPerson.position.y = (normalizedTopLeft.y + normalizedBottomRight.y) / 2;
 
-        cachedPerson.path.push(cachedPerson.position);
+        cachedPerson.addPathPoint(cachedPerson.position);
         this.allPeoplePositions.push(cachedPerson.position);
 
         this.peopleMap.set(person.traceId, cachedPerson);
