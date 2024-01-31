@@ -22,6 +22,7 @@ export default class ThirdEyePop
         videoUrl = null,
         predictionData = [],
         frameBufferSize = 1,
+        smoothingAmount = 5,
         drawParams: {
             bgCanvas = null,
             showHeatmap = false,
@@ -109,6 +110,7 @@ export default class ThirdEyePop
                 renderManager.getScene(),
                 renderManager.getCamera(),
                 renderManager.getDimensions(),
+                smoothingAmount,
                 {
                     showPoint,
                     showPath,

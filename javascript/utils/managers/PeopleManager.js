@@ -10,12 +10,13 @@ import People from "../data/People.js";
 
 export default class PeopleManager
 {
-    constructor(dimensions, showPath = false)
+    constructor(dimensions, showPath = false, smoothingAmount = 10)
     {
         this.peopleMap = new Map();
         this.hotSpotMap = new Map();
         this.dimensions = dimensions;
         this.showPath = showPath;
+        this.smoothingAmount = smoothingAmount;
 
         this.maxPeoplePositions = 50000;
         this.allPeoplePositions = [];
@@ -368,7 +369,7 @@ export default class PeopleManager
 
             // create a rolling average of the keyPoints[i] in the smoothedPoints[i] array
             trackedPerson.poseData.smoothedPoints[ i ].points.push(normalizedPoint);
-            if (trackedPerson.poseData.smoothedPoints[ i ].points.length > 5)
+            if (trackedPerson.poseData.smoothedPoints[ i ].points.length > this.smoothingAmount)
             {
                 trackedPerson.poseData.smoothedPoints[ i ].points.shift();
             }

@@ -22,6 +22,7 @@ export default class SceneManager
         scene,
         camera,
         dimensions,
+        smoothingAmount = 10,
         drawParams = {
             showPoint: false,
             showPath: false,
@@ -36,7 +37,7 @@ export default class SceneManager
         this.scene = scene;
         this.camera = camera;
         this.dimensions = dimensions;
-        this.peopleManager = new PeopleManager(dimensions, drawParams.showPath);
+        this.peopleManager = new PeopleManager(dimensions, drawParams.showPath, smoothingAmount);
         this.activePeople = [];
 
         this.showPoint = drawParams.showPoint;
