@@ -268,25 +268,25 @@ const handleCamera = (controls) =>
     controls.polarAngle = THREE.MathUtils.DEG2RAD * 80;
     controls.azimuthAngle = THREE.MathUtils.DEG2RAD * 180;
 
-    // let timeLine = gsap.timeline({ repeat: -1, yoyo: true });
-    // timeLine.to(controls, {
-    //     duration: 10,
-    //     azimuthAngle: THREE.MathUtils.DEG2RAD * 190,
-    //     ease: "sine.inOut",
-    // });
-    // timeLine.to(controls, {
-    //     duration: 10,
-    //     azimuthAngle: THREE.MathUtils.DEG2RAD * 170,
-    //     ease: "sine.inOut",
-    // });
-    // // use gsap to move the polar angle like a sine wave
-    // gsap.to(controls, {
-    //     duration: 25,
-    //     polarAngle: THREE.MathUtils.DEG2RAD * 90,
-    //     ease: "sine.inOut",
-    //     repeat: -1,
-    //     yoyo: true,
-    // });
+    let timeLine = gsap.timeline({ repeat: -1, yoyo: true });
+    timeLine.to(controls, {
+        duration: 10,
+        azimuthAngle: THREE.MathUtils.DEG2RAD * 190,
+        ease: "sine.inOut",
+    });
+    timeLine.to(controls, {
+        duration: 10,
+        azimuthAngle: THREE.MathUtils.DEG2RAD * 170,
+        ease: "sine.inOut",
+    });
+    // use gsap to move the polar angle like a sine wave
+    gsap.to(controls, {
+        duration: 25,
+        polarAngle: THREE.MathUtils.DEG2RAD * 90,
+        ease: "sine.inOut",
+        repeat: -1,
+        yoyo: true,
+    });
 };
 
 const setupDebugging = (thirdEyePop, scene, avatars) =>
