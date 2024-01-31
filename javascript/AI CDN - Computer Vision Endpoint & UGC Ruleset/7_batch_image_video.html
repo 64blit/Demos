@@ -7,14 +7,14 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 
-<body class="overflow-hidden d-flex bg-black flex-row justify-content-center gap-5"
+<body class="overflow-hidden d-flex bg-white flex-row justify-content-center gap-5"
     style="width: 100vw; height: 100vh; scale: .9;">
 
     <!-- A spinning loading animation -->
     <div id="loading"
         class="position-absolute w-100 h-100 d-flex align-items-center justify-content-center bg-black flex-column"
         style="z-index: 1000; scale: 1.3;">
-        <div class="text-white text-start p-5">Loading Pop...</div>
+        <div class="text-blac text-start p-5">Loading Pop...</div>
         <div class="spinner-border text-light align-self-center" role="status">
 
             <span class="visually-hidden">Loading...</span>
@@ -27,8 +27,8 @@
             <a href="1_upload_image.html">
                 <img src="css/images/eyepop-logo.svg" alt="EyePop.ai Logo" class="p-2" style="height: 70px;">
             </a>
-            <h1 class="p-2 text-center text-white">Batch Image / Video Tester</h1>
-            <h6 id="popConfigName" class="text-center text-white">test</h6>
+            <h1 class="p-2 text-center text-blac">Batch Image / Video Tester</h1>
+            <h6 id="popConfigName" class="text-center text-blac">test</h6>
         </div>
     </header>
 
@@ -61,7 +61,7 @@
                 <button id="togglePlay" class="btn btn-primary" type="button">Pause</button>
                 <button id="saveButton" class="btn btn-primary" type="button">Save</button>
 
-                <div class="form-check d-flex justify-content-center align-content-center  text-white">
+                <div class="form-check d-flex justify-content-center align-content-center  text-blac">
                     <div class="form-check d-flex justify-content-center align-self-center">
                         <input class="form-check-input" type="radio" name="positiveNegativeRadio" id="positiveRadio"
                             value="positive">
@@ -84,14 +84,14 @@
 
         <div class="d-flex gap-1 w-100" style="height: 10rem;">
             <h3 class="text-info">name: </h3>
-            <h3 id="mediaName" class="text-white">Video</h3>
+            <h3 id="mediaName" class="text-blac">Video</h3>
             <h3 class="text-info">( file #: </h3>
-            <h3 id="mediaIndex" class="text-white">0</h3>
+            <h3 id="mediaIndex" class="text-blac">0</h3>
             <h3 class=""> / </h3>
-            <h3 id="totalFiles" class="text-white">0</h3>
+            <h3 id="totalFiles" class="text-blac">0</h3>
             <h3 class="text-info"> ) </h3>
             <h3 class="text-info">frame #: </h3>
-            <h3 id="mediaTime" class="text-white">0</h3>
+            <h3 id="mediaTime" class="text-blac">0</h3>
         </div>
 
         <video id="myLocalVideo" playsinline controls muted class="position-absolute"

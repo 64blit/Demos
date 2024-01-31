@@ -56,13 +56,14 @@
                     </div>
                 </div>
                 <div class="col-md-6 d-flex">
-                    <pre id="txt_json" class="form-control h-100 overflow-scroll"
-                        style="max-height:400px;"><span class="text-muted">...a list of objects will go here...</span></pre>
+                    <json-viewer id="txt_json" class="align-self-center"
+                        style="width: 100%; height: 40rem; overflow: auto;"></json-viewer>
                 </div>
             </div>
         </div>
     </div>
 
+    <script src="https://unpkg.com/@alenaksu/json-viewer/dist/json-viewer.bundle.js"></script>
     <script src="config.js"></script>
     <script>
         var cached_data = [];
@@ -96,11 +97,14 @@
 
             percentBuffered = 0;
 
+            var currentFrame = null;
+
             EyePopSDK.EyePopAPI.instance.OnPrediction = function (data)
             {
-                jsonPreviewBox.innerHTML = JSON.stringify(data, null, 2);
+                jsonPreviewBox.data = data;
 
                 data.timestamp = data.timestamp / 1000000000;
+
 
                 percentBuffered = data.seconds / video.duration;
                 analyzedPercentText.innerHTML = Math.floor(percentBuffered * 100) + "% analyzed."
@@ -109,23 +113,26 @@
                 {
                     analyzedPercentText.innerHTML = "100% analyzed."
                 }
-
                 cached_data.push(data);
+
+                EyePopSDK.EyePopAPI.instance.lastmsg = currentFrame;
             };
 
-            EyePopSDK.EyePopAPI.instance.OnDrawFrame = function ()
+            video.addEventListener('timeupdate', function ()
             {
+                console.log("video: " + video.currentTime)
+
+                // EyePopSDK.EyePopAPI.instance.OnDrawFrame = function ()
                 var closestIndex = findClosestIndex(cached_data, video.currentTime);
                 if (!closestIndex || closestIndex == -1)
                     return
 
-                var el = cached_data[ closestIndex ];
-                jsonPreviewBox.innerHTML = JSON.stringify(el, null, 2);
+                currentFrame = cached_data[ closestIndex ];
+                jsonPreviewBox.data = currentFrame;
 
-                //console.log(video.currentTime, el, cached_data.length);
-                EyePopSDK.EyePopAPI.instance.lastmsg = el;
-            }
-
+                //console.log(video.currentTime, currentFrame, cached_data.length);
+                EyePopSDK.EyePopAPI.instance.lastmsg = currentFrame;
+            });
         }
 
         EyePopSDK.EyePopAPI.FetchPopConfig(pop_endpoint, token)
@@ -146,15 +153,16 @@
 
                 const diff = Math.abs(currentTime - bufferedTimes[ i ].timestamp);
 
-                //diff <= (1/24) && 
                 if (diff < closestDiff)
                 {
                     closestDiff = diff;
                     closestIndex = i;
                 }
+
             }
 
-            return closestIndex;
+            return { closestIndex, closestIndex };
+
         }
 
         // Listen to the 'keydown' event like you're eavesdropping on a juicy conversation

@@ -47,16 +47,18 @@
             <div class="row">
                 <div class="col-md-6 d-flex">
                     <canvas id="maincanvas" src="css/images/empty.png" alt="Image Preview"
-                        style="width: 100%;border: #eee solid 1px;"></canvas>
+                        style="width: 100%;border: #eee solid 1px; height: 25rem;"></canvas>
                 </div>
                 <div class="col-md-6 d-flex">
-                    <pre id="txt_json"
-                        class="form-control h-100"><span class="text-muted">...a list of objects will go here...</span></pre>
+                    <json-viewer id="txt_json" class="align-self-center"
+                        style="width: 100%; height: 40rem; overflow: auto;"></json-viewer>
                 </div>
             </div>
         </div>
     </div>
 
+
+    <!-- <script src="https://unpkg.com/@alenaksu/json-viewer/dist/json-viewer.bundle.js"></script> -->
     <script src="config.js"></script>
     <script src="js/main.js"></script>
     <script src="js/excerptFromSDK.min.js"></script>
@@ -87,6 +89,7 @@
 
             const startTime = performance.now();
             ClearDisplay();
+            const jsonText = document.getElementById('txt_json');
 
             fetch(config.base_url + '/pipelines/' + config.pipeline_id + '/source?mode=preempt&processing=sync', {
                 method: 'POST',
@@ -102,8 +105,7 @@
                     document.getElementById("timing").innerHTML = Math.floor(performance.now() - startTime) + "ms";
 
                     console.log(data)
-                    document.getElementById('txt_json').innerHTML = JSON.stringify(data, " ", 2);
-                    return;
+                    // jsonText.data = data;
 
                     if (!data || !data[ 0 ])
                         return;
@@ -121,10 +123,9 @@
 
                     const classyLabels = data[ 0 ].objects.map(obj => obj.classLabel);
                     sortedObjects = sortAndCount(classyLabels);
-                    document.getElementById('txt_json').innerHTML = sortAndCountHTML(sortedObjects);
+                    jsonText.innerHTML = sortAndCountHTML(sortedObjects);
 
-                })
-                .catch(error => console.error('The party\'s over, there was an error:', error));
+                });
         }
     </script>
 </body>
