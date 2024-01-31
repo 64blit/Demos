@@ -61,6 +61,8 @@ export default class RenderManager
         this.camera.right = 1;
         this.camera.top = 1;
         this.camera.bottom = -1;
+        this.camera.position.set(0, 0, -10);
+        this.camera.lookAt(0, 0, 0);
 
         this.scene = new THREE.Scene();
         this.video = null;
@@ -318,12 +320,6 @@ export default class RenderManager
         this.renderer.shadowMap.enabled = true;
         this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
         this.renderer.backgroundColor = new THREE.Color(0x000000);
-
-        // this.camera = new THREE.PerspectiveCamera(10, window.innerWidth / window.innerHeight, 0.1, 1000);
-        this.camera = new THREE.OrthographicCamera(-1, 1, 1, -1);
-        this.camera.position.set(0, 0, -10);
-        this.camera.lookAt(0, 0, 0);
-        this.camera.layers.enableAll();
 
         // Adjust the camera's frustum planes
         this.camera.left = -1;
