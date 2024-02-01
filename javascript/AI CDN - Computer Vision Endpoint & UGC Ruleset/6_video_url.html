@@ -47,19 +47,36 @@
                 </div>
             </div>
             <div class="row">
+
                 <div class="col-md-6 d-flex align-top">
-                    <video id="myLocalVideo" playsinline controls muted style="width:1px;height:1px;"></video>
-                    <div style="height: 600px;width:600px;">
+
+                    <video id="myLocalVideo" muted class="visually-hidden" controls autoplay="false"></video>
+                    <div style="height: 600px; width: 600px;">
+
                         <canvas id="mobilecanvas"
                             style="background-color: transparent; opacity: 1; margin:auto auto;display:none;z-index:1000;"
-                            width="50%" height="100%"></canvas>
+                            width="50%" height="100%">
+
+                        </canvas>
+
+                        <div id="videoControls"
+                            class="visually-hidden d-flex flex-column justify-content-center text-center align-self-center">
+                            <button id="btnPlay" class="btn btn-primary">Play</button>
+                            <br>
+                            <span>Left and Right arrow keys skip.</span>
+                        </div>
                     </div>
+
                 </div>
+
                 <div class="col-md-6 d-flex">
                     <json-viewer id="txt_json" class="align-self-center"
                         style="width: 100%; height: 40rem; overflow: auto;"></json-viewer>
                 </div>
+
             </div>
+
+
         </div>
     </div>
 
@@ -71,6 +88,23 @@
         const urlInput = document.getElementById("txtUrl");
         const analyzedPercentText = document.getElementById("timing");
         const jsonPreviewBox = document.getElementById("txt_json");
+        const videoControls = document.getElementById("videoControls");
+
+        const playButton = document.getElementById("btnPlay");
+
+        playButton.addEventListener("click", function ()
+        {
+            if (video.paused)
+            {
+                playButton.innerText = "Pause";
+                video.play();
+            } else
+            {
+                playButton.innerText = "Play";
+                video.pause();
+            }
+        });
+
 
         const run = () =>
         {
@@ -99,12 +133,33 @@
 
             var currentFrame = null;
 
+            EyePopSDK.EyePopAPI.instance.OnDrawFrame = function (data)
+            {
+                videoControls.classList.remove("visually-hidden");
+
+                // We override the last message which will be drawn to the canvas to the current frame
+                EyePopSDK.EyePopAPI.instance.lastmsg = currentFrame;
+
+                var { closestIndex, closestDiff } = findClosestIndex(cached_data, video.currentTime);
+
+                if (!closestIndex || closestIndex == -1)
+                    return
+
+                if (closestDiff > 0.1)
+                {
+                    playButton.innerText = "Play";
+                    video.pause();
+                }
+
+                currentFrame = cached_data[ closestIndex ];
+                jsonPreviewBox.data = currentFrame;
+
+            }
+
             EyePopSDK.EyePopAPI.instance.OnPrediction = function (data)
             {
-                jsonPreviewBox.data = data;
 
                 data.timestamp = data.timestamp / 1000000000;
-
 
                 percentBuffered = data.seconds / video.duration;
                 analyzedPercentText.innerHTML = Math.floor(percentBuffered * 100) + "% analyzed."
@@ -113,36 +168,25 @@
                 {
                     analyzedPercentText.innerHTML = "100% analyzed."
                 }
-                cached_data.push(data);
 
-                EyePopSDK.EyePopAPI.instance.lastmsg = currentFrame;
+                // We store all the data in an array
+                if (data)
+                {
+                    cached_data.push(data);
+                }
+
             };
 
-            video.addEventListener('timeupdate', function ()
-            {
-                console.log("video: " + video.currentTime)
-
-                // EyePopSDK.EyePopAPI.instance.OnDrawFrame = function ()
-                var closestIndex = findClosestIndex(cached_data, video.currentTime);
-                if (!closestIndex || closestIndex == -1)
-                    return
-
-                currentFrame = cached_data[ closestIndex ];
-                jsonPreviewBox.data = currentFrame;
-
-                //console.log(video.currentTime, currentFrame, cached_data.length);
-                EyePopSDK.EyePopAPI.instance.lastmsg = currentFrame;
-            });
         }
 
         EyePopSDK.EyePopAPI.FetchPopConfig(pop_endpoint, token)
             .then(response => config = response)
             .then(() => { document.getElementById("title").innerHTML = config.name; })
-            .then(() => { run(); })
+            .then(() => { run(); });
 
         document.getElementById("btnPost").addEventListener("click", run);
 
-
+        // A simple helper function to find the closest index in an array of buffered times
         function findClosestIndex(bufferedTimes, currentTime)
         {
             let closestIndex = -1;
@@ -151,7 +195,7 @@
             for (let i = 0; i < bufferedTimes.length; i++)
             {
 
-                const diff = Math.abs(currentTime - bufferedTimes[ i ].timestamp);
+                const diff = Math.abs(currentTime - bufferedTimes[ i ].seconds);
 
                 if (diff < closestDiff)
                 {
@@ -161,7 +205,7 @@
 
             }
 
-            return { closestIndex, closestIndex };
+            return { closestIndex, closestDiff };
 
         }
 
@@ -178,23 +222,21 @@
                 case 'Space':
                     if (video.paused)
                     {
+                        playButton.innerText = "Pause";
                         video.play();
                     } else
                     {
+                        playButton.innerText = "Play";
                         video.pause();
                     }
                     break;
 
                 case 'ArrowLeft':
-                    video.pause();
                     video.currentTime = Math.max(video.currentTime - 1, 0);
-                    video.play();
                     break;
 
                 case 'ArrowRight':
-                    video.pause();
                     video.currentTime = Math.max(video.currentTime + 1, 0);
-                    video.play();
                     break;
 
                 default:
