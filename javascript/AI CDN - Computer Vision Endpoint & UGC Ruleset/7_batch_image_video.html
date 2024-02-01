@@ -8,13 +8,13 @@
 </head>
 
 <body class="overflow-hidden d-flex bg-white flex-row justify-content-center gap-5"
-    style="width: 100vw; height: 100vh; scale: .9;">
+    style="width: 100vw; height: 100vh; scale: .8;">
 
     <!-- A spinning loading animation -->
     <div id="loading"
         class="position-absolute w-100 h-100 d-flex align-items-center justify-content-center bg-black flex-column"
         style="z-index: 1000; scale: 1.3;">
-        <div class="text-blac text-start p-5">Loading Pop...</div>
+        <div id="loadingText" class="text-white text-start p-5">Loading Pop...</div>
         <div class="spinner-border text-light align-self-center" role="status">
 
             <span class="visually-hidden">Loading...</span>
@@ -22,25 +22,28 @@
         </div>
     </div>
 
-    <header id="canvasParent" class="position-absolute w-100 mx-auto z-3" style="top: -4rem;">
-        <div class="container-fluid d-flex align-items-center justify-content-between text-center">
+    <header id="canvasParent" class="position-absolute vw-100 mx-auto z-3" style="top: -3rem; width: 100vw;">
+        <div class="d-flex align-items-center justify-content-between text-center">
             <a href="1_upload_image.html">
-                <img src="css/images/eyepop-logo.svg" alt="EyePop.ai Logo" class="p-2" style="height: 70px;">
+                <img src="css/images/eyepop-logo.svg" alt="EyePop.ai Logo" class="" style="height: 70px;">
             </a>
             <h1 class="p-2 text-center text-blac">Batch Image / Video Tester</h1>
-            <h6 id="popConfigName" class="text-center text-blac">test</h6>
+            <h6 id="popConfigName" class="text-center text-blac"></h6>
         </div>
     </header>
 
 
-    <div class="d-flex align-self-center flex-column justify-content-center">
-
-        <div>
-            <canvas id="rendercanvas" class="bg-success object-fit-contain" width="640px" height="480px"></canvas>
+    <div class="d-flex align-self-center flex-column justify-content-start" style="margin-top: 15rem;">
+        <div class="d-flex flex-column text-center bg-black">
+            <span class="text-white">Canvas 1: 3D Overlay Rendering - Click and drag to rotate, press escape to
+                reset.</span>
+            <canvas id="rendercanvas" class="bg-gradient object-fit-contain" width="640px" height="480px"></canvas>
         </div>
 
-        <div>
-            <canvas id="mobilecanvas" class="bg-info object-fit-contain" width="640px" height="480px"></canvas>
+
+        <div class="d-flex flex-column text-center bg-black">
+            <span class="text-white">Canvas 2: HTML Canvas with Context2d Drawing</span>
+            <canvas id="mobilecanvas" class="bg-gradient object-fit-contain" width="640px" height="480px"></canvas>
         </div>
 
     </div>
@@ -49,24 +52,29 @@
         <!-- FORM UPLOAD ELEMENT: Centered, Full Width Row -->
         <div class="row justify-content-center">
 
+            <h4 class="text-black border-2 border-dark p-2"> 1. Select a folder:</h4>
+
             <form>
                 <input type="file" class="form-control" id="file_upload" webkitdirectory
                     accept="application/octet-stream">
             </form>
 
+            <h4 class="text-black border-2 border-dark p-2"> 2. Click Play. </h4>
             <form class="d-flex">
 
-                <input type="number" class="form-control" placeholder="Video Skip Seconds"
-                    aria-describedby="basic-addon2" id="framesToSkip">
                 <button id="togglePlay" class="btn btn-primary" type="button">Pause</button>
-                <button id="saveButton" class="btn btn-primary" type="button">Save</button>
+
+                <input type="number" class="form-control w-50" placeholder="Seconds to skip"
+                    aria-describedby="basic-addon2" id="framesToSkip">
+
+                <button id="saveButton" class="btn btn-info" type="button">save result</button>
 
                 <div class="form-check d-flex justify-content-center align-content-center  text-blac">
                     <div class="form-check d-flex justify-content-center align-self-center">
                         <input class="form-check-input" type="radio" name="positiveNegativeRadio" id="positiveRadio"
                             value="positive">
                         <label class="form-check-label" for="positiveRadio">
-                            +
+                            fp
                         </label>
                     </div>
 
@@ -74,7 +82,7 @@
                         <input class="form-check-input" type="radio" name="positiveNegativeRadio" id="negativeRadio"
                             value="negative">
                         <label class="form-check-label" for="negativeRadio">
-                            -
+                            fn
                         </label>
                     </div>
                 </div>
@@ -82,16 +90,16 @@
             </form>
         </div>
 
-        <div class="d-flex gap-1 w-100" style="height: 10rem;">
-            <h3 class="text-info">name: </h3>
-            <h3 id="mediaName" class="text-blac">Video</h3>
-            <h3 class="text-info">( file #: </h3>
-            <h3 id="mediaIndex" class="text-blac">0</h3>
-            <h3 class=""> / </h3>
-            <h3 id="totalFiles" class="text-blac">0</h3>
-            <h3 class="text-info"> ) </h3>
-            <h3 class="text-info">frame #: </h3>
-            <h3 id="mediaTime" class="text-blac">0</h3>
+        <div class="gap-1 w-100">
+            <span class="text-info">name: </span>
+            <span id="mediaName" class="text-blac">Video</span>
+            <span class="text-info">( file #: </span>
+            <span id="mediaIndex" class="text-blac">0</span>
+            <span class=""> / </span>
+            <span id="totalFiles" class="text-blac">0</span>
+            <span class="text-info"> ) </span>
+            <span class="text-info">frame #: </span>
+            <span id="mediaTime" class="text-blac">0</span>
         </div>
 
         <video id="myLocalVideo" playsinline controls muted class="position-absolute"
@@ -139,6 +147,7 @@
         var fileInput = document.getElementById('file_upload');
         const postButton = document.getElementById('btnPost');
         const loading = document.getElementById('loading');
+        const loadingText = document.getElementById('loadingText');
 
         const captureCanvas = document.createElement("canvas");
         const captureContext = captureCanvas.getContext("2d");
@@ -236,7 +245,7 @@
             document.getElementById("popConfigName").innerHTML = config.name;
             if (config.name)
             {
-                loading.remove();
+                loading.classList.add("visually-hidden");
             }
 
         });
@@ -405,6 +414,7 @@
             // only create a new json viewer if the lastmsg content is different, doing a deep comparison
             if (JSON.stringify(EyePopSDK.EyePopAPI.instance.lastmsg) != JSON.stringify(thirdEyePop.getPredictionData()))
             {
+                loading.classList.add("visually-hidden");
                 jsonText.data = EyePopSDK.EyePopAPI.instance.lastmsg;
             }
 
@@ -524,6 +534,9 @@
         async function processFile(file)
         {
             const popConfigFetch = EyePopSDK.EyePopAPI.FetchPopConfig(pop_endpoint, token);
+
+            loadingText.innerText = "Processing...";
+            loading.classList.remove("visually-hidden");
 
             let result = await popConfigFetch.then((response) =>
             {
