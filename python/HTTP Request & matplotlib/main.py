@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 import requests
 from PIL import Image
 
+matplotlib.use('TkAgg')
 
 def draw_eye_pop_reticle(obj, label, ax):
     mindim = min(obj['height'], obj['width'])
@@ -183,7 +184,7 @@ def fetch_pop_config(pop_endpoint, token):
 
 
 def get_json_from_eye_pop(config, token, url):
-    target_url = f"{config['url']}/pipelines/{config['pipeline_id']}/source?mode=preempt&processing=sync"
+    target_url = f"{config['base_url']}/pipelines/{config['pipeline_id']}/source?mode=preempt&processing=sync"
     headers = {
         'Accept': 'application/json',
         'Authorization': f'Bearer {token}'
@@ -210,7 +211,7 @@ def get_json_from_eye_pop_upload(config, token, file_path):
     with open(file_path, 'rb') as f:
         files = {'file': f}
 
-        target_url = f"{config['url']}/pipelines/{config['pipeline_id']}/source?mode=preempt&processing=sync"
+        target_url = f"{config['base_url']}/pipelines/{config['pipeline_id']}/source?mode=preempt&processing=sync"
         headers = {
             'Accept': 'application/json',
             'Authorization': f'Bearer {token}'
