@@ -1,5 +1,5 @@
 from eyepop import EyePopSdk, Job
-from EyePopPlot import EyePopPlot
+from EyePopPlotCV2 import EyePopPlotCV2
 
 import numpy as np
 import cv2
@@ -13,6 +13,7 @@ POP_API_SDK = """AAEzPwv0yF5H8UUgYcqbPxodZ0FBQUFBQmx2RG1BUXdBcVRjSlBGX1RRRXNTSF9
 SCREEN_NUMBER = 2
 
 class ScreenCaptureAnalyzer:
+
     """
     Class for capturing screen and analyzing the captured frames using EyePop API.
 
@@ -31,13 +32,13 @@ class ScreenCaptureAnalyzer:
     """
 
     def __init__(self, monitor_id):
+
         """
         Initializes a new instance of the ScreenCaptureAnalyzer class.
 
         Args:
             monitor_id (int): The ID of the monitor to capture the screen from.
         """
-
 
         self.sct = mss()
         self.monitor = self.sct.monitors[monitor_id]
@@ -47,6 +48,7 @@ class ScreenCaptureAnalyzer:
         self.ep_cv2_plotter = None
 
     def draw_results(self):
+
         """
         Draws the detected objects on the frame and returns the blended frame.
 
@@ -54,16 +56,18 @@ class ScreenCaptureAnalyzer:
             numpy.ndarray: The blended frame with the detected objects.
         """
 
-
         if self.result is None:
+            
             return self.frame
         
         if "objects" not in self.result:
+
             return self.frame
 
-        self.ep_cv2_plotter = EyePopPlot(self.frame)
+        self.ep_cv2_plotter = EyePopPlotCV2(self.frame)
 
         for obj in self.result['objects']:
+
             self.ep_cv2_plotter.object(obj)
         
         # Blend the original frame and the frame with objects
@@ -72,16 +76,17 @@ class ScreenCaptureAnalyzer:
         return blended_frame
 
     def capture_screen(self):
+
         """
         Captures the screen and converts it to a numpy array.
         """
-
 
         # get the screen shot of the monitor and convert it to a numpy array
         self.frame = self.sct.grab(self.monitor)
         self.frame = np.array(self.frame)
 
     def get_prediction_results(self, endpoint):
+
         """
         Uploads the captured frame to EyePop API and gets the prediction results.
 
@@ -93,20 +98,24 @@ class ScreenCaptureAnalyzer:
         """
 
         try:
+
             cv2.imwrite('temp.png', self.frame)
             self.result = endpoint.upload('temp.png').predict()
+
         except Exception as e:
+
             raise Exception("Error uploading frame or getting prediction results: " + str(e))
 
     def run(self):
+
         """
         Runs the screen capture and analysis loop.
         """
 
-
         with EyePopSdk.endpoint(pop_id=POP_UUID, secret_key=POP_API_SDK) as endpoint:
 
             cv2.namedWindow("screencap", cv2.WINDOW_NORMAL) 
+
             # infinite loop to capture the screen and send to EyePop API
             while True:
             
@@ -114,24 +123,30 @@ class ScreenCaptureAnalyzer:
 
                 drawing = self.draw_results()
                 
-                # resize the image to a quarter of the screen size
-                drawing = cv2.resize(drawing, (0, 0), fx=0.75, fy=0.75)
                 cv2.imshow('screencap', drawing)
 
                 # if the space key is pressed, upload the image to EyePop API
                 if cv2.waitKey(1) & 0xFF == ord(' '):
+
                     self.get_prediction_results(endpoint)
 
                 # if the window is closed, break the loop and close the window
                 if cv2.getWindowProperty('screencap', cv2.WND_PROP_VISIBLE) < 1:
+
                     break
 
+    def dispose(self):
 
+        """
+        Disposes the resources used by the ScreenCaptureAnalyzer.
+        """
+
+        self.sct.close()
+        cv2.destroyAllWindows()
 
 screen_capture_analyzer = ScreenCaptureAnalyzer(SCREEN_NUMBER)
 
 try:
-    screencapture_analyzer.run()
+    screen_capture_analyzer.run()
 finally:
-    screencapture_analyzer.sct.close()
-    cv2.destroyAllWindows()
+    screen_capture_analyzer.dispose()

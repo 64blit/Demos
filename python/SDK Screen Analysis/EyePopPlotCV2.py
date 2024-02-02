@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 
-class EyePopPlot:
+class EyePopPlotCV2:
     def __init__(self, frame):
         self.frame = frame.copy()
 
