@@ -1,39 +1,137 @@
+from eyepop import EyePopSdk, Job
+from EyePopPlot import EyePopPlot
+
+import numpy as np
+import cv2
+from mss import mss
 import os
-from eyepop import EyePopSdk
-from PIL import Image
-import matplotlib.pyplot as plt
-from eyepop import EyePopSdk
+
+POP_UUID = "ce5befb6fbb943178a8a495ab1b0a910"
+
+POP_API_SDK = """AAEzPwv0yF5H8UUgYcqbPxodZ0FBQUFBQmx2RG1BUXdBcVRjSlBGX1RRRXNTSF9JT3Q3QXp0eW03U0xhX2lmSThuMGlOUV9JN0p5cC02d281YXZFUnVadW5pd3Q5YTJ3ZHVnM0VMcjlJV3dfNVNlWXlPWHFNSFF2WEV4c0c5ek1OaWN5cXpDLWM9"""
+
+SCREEN_NUMBER = 2
+
+class ScreenCaptureAnalyzer:
+    """
+    Class for capturing screen and analyzing the captured frames using EyePop API.
+
+    Attributes:
+        sct (mss): The mss object for capturing screen.
+        monitor (dict): The monitor information for capturing screen.
+        result (dict): The result of the prediction from EyePop API.
+        frame (numpy.ndarray): The captured frame from the screen.
+        ep_cv2_plotter (EyePopPlot): The object for plotting the detected objects on the frame.
+
+    Methods:
+        draw_results(): Draws the detected objects on the frame and returns the blended frame.
+        capture_screen(): Captures the screen and converts it to a numpy array.
+        get_prediction_results(endpoint): Uploads the captured frame to EyePop API and gets the prediction results.
+        run(): Runs the screen capture and analysis loop.
+    """
+
+    def __init__(self, monitor_id):
+        """
+        Initializes a new instance of the ScreenCaptureAnalyzer class.
+
+        Args:
+            monitor_id (int): The ID of the monitor to capture the screen from.
+        """
 
 
-pop_uuid = "0718af53784840ebad5fc895c93c96ae"
-pop_api_key = "AAHiTQPKBjMQkKoM_T2VE7DeZ0FBQUFBQmx1dkpXNTBxV2YwV2hkS3BkWHJkRm1WNTltbDhZbVZXWklpOGduV3p1SUNZMWxkT1JfR2pDaVpsRGRyeERqbVRxX3hNMEREM1p4VDJtcWZBclMwMTBRTDBPUzdIOHRueW9GUjNnaDZnYVFTWGJRMDQ9"
-pop_token = """eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6InZUdzF6bi02cjFPcXg0NmNxRl9PMiJ9.eyJlbWFpbCI6ImVkbXVuZGR
-hb0BnbWFpbC5jb20iLCJodHRwczovL2NsYWltcy5leWVwb3AuYWkvZ3JhbnRzIjpbeyJwZXJtaXNzaW9uIjoiYWNjZXNzOmluZmVyZW5jZS1hcGkiLCJ0YXJnZXQiOiJ1c2VyOmF1dGgwfDY1YWVhYmExNTBkMzk1YTNjODA2OGVlZSJ9XSwiaXNzIjoiaHR0cHM6Ly
-9kZXYtZXllcG9wLnVzLmF1dGgwLmNvbS8iLCJzdWIiOiJhdXRoMHw2NWFlYWJhMTUwZDM5NWEzYzgwNjhlZWUiLCJhdWQiOlsiaHR0cHM6Ly9kZXYtYXBwLmV5ZXBvcC5haSIsImh0dHBzOi8vZGV2LWV5ZXBvcC51cy5hdXRoMC5jb20vdXNlcmluZm8iXSwiaWF0I
-joxNzA2NzQ0MTE3LCJleHAiOjE3MDY4MzA1MTcsImF6cCI6IklVdDBwczJtYVdaVWRFbUVPUFJhUEpLdmtRVHM2WVVFIiwic2NvcGUiOiJvcGVuaWQgcHJvZmlsZSBlbWFpbCIsInBlcm1pc3Npb25zIjpbXX0.gGnmMbCVHvyoUT3dzhFvoAiWDL5wJw2fgLV1HqXs
-WhZP8Se5cgIQF6SXK7ldqRw0JCvbyBNdcCm8fDz0zcSDg7tOld0guteZEZQ34cMobD9fxm-bcGa_rR6J2H-78DooVbnaucy-IjLPbK0iVcoNE91ATAnqTEosM_t_X6jHRn9NFdmCocFiHIbOl65vfqoin5tjg5t_aKarl1_pKK6kYqhSeryO6Gz6x9f87S0tcloyJLL
-DLBCuBTEsT2Akt7lImQU4hZ3RVL3JkvXGHWcyE0EbN7Quj7JJVb2Xt-v90wgdv97_LHduPLUpCLbBwQsWcmNqiUXhzs_BT1I4rAd69g"""
+        self.sct = mss()
+        self.monitor = self.sct.monitors[monitor_id]
 
-image_path = "../HTTP Request & matplotlib/test_images/morgan-freeman.jpeg"
+        self.result = None
+        self.frame = None
+        self.ep_cv2_plotter = None
 
-def main():
+    def draw_results(self):
+        """
+        Draws the detected objects on the frame and returns the blended frame.
 
-    endpoint = EyePopSdk.endpoint(
-        # This is the default and can be omitted
-        pop_id=pop_uuid, 
-        # This is the default and can be omitted
-        secret_key=pop_api_key,
-    )
+        Returns:
+            numpy.ndarray: The blended frame with the detected objects.
+        """
 
-    endpoint.connect()
-    # do work ....
-    endpoint.disconnect()
 
-    
-with EyePopSdk.endpoint() as endpoint:
-    result = endpoint.upload('examples/example.jpg').predict()
-with Image.open('examples/example.jpg') as image:
-    plt.imshow(image)
-plot = EyePopSdk.plot(plt.gca())
-plot.prediction(result)    
-plt.show()
+        if self.result is None:
+            return self.frame
+        
+        if "objects" not in self.result:
+            return self.frame
+
+        self.ep_cv2_plotter = EyePopPlot(self.frame)
+
+        for obj in self.result['objects']:
+            self.ep_cv2_plotter.object(obj)
+        
+        # Blend the original frame and the frame with objects
+        blended_frame = cv2.addWeighted(self.frame, 0.5, self.ep_cv2_plotter.frame, 0.5, 0)
+
+        return blended_frame
+
+    def capture_screen(self):
+        """
+        Captures the screen and converts it to a numpy array.
+        """
+
+
+        # get the screen shot of the monitor and convert it to a numpy array
+        self.frame = self.sct.grab(self.monitor)
+        self.frame = np.array(self.frame)
+
+    def get_prediction_results(self, endpoint):
+        """
+        Uploads the captured frame to EyePop API and gets the prediction results.
+
+        Args:
+            endpoint: The EyePop API endpoint.
+
+        Raises:
+            Exception: If there is an error uploading the frame or getting the prediction results.
+        """
+
+        try:
+            cv2.imwrite('temp.png', self.frame)
+            self.result = endpoint.upload('temp.png').predict()
+        except Exception as e:
+            raise Exception("Error uploading frame or getting prediction results: " + str(e))
+
+    def run(self):
+        """
+        Runs the screen capture and analysis loop.
+        """
+
+
+        with EyePopSdk.endpoint(pop_id=POP_UUID, secret_key=POP_API_SDK) as endpoint:
+
+            cv2.namedWindow("screencap", cv2.WINDOW_NORMAL) 
+            # infinite loop to capture the screen and send to EyePop API
+            while True:
+            
+                self.capture_screen()
+
+                drawing = self.draw_results()
+                
+                # resize the image to a quarter of the screen size
+                drawing = cv2.resize(drawing, (0, 0), fx=0.75, fy=0.75)
+                cv2.imshow('screencap', drawing)
+
+                # if the space key is pressed, upload the image to EyePop API
+                if cv2.waitKey(1) & 0xFF == ord(' '):
+                    self.get_prediction_results(endpoint)
+
+                # if the window is closed, break the loop and close the window
+                if cv2.getWindowProperty('screencap', cv2.WND_PROP_VISIBLE) < 1:
+                    break
+
+
+
+screen_capture_analyzer = ScreenCaptureAnalyzer(SCREEN_NUMBER)
+
+try:
+    screencapture_analyzer.run()
+finally:
+    screencapture_analyzer.sct.close()
+    cv2.destroyAllWindows()
