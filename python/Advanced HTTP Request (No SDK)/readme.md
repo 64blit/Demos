@@ -1,4 +1,4 @@
-# EyePop Image Analysis
+# EyePop Image Analysis without the SDK
 
 This Python project provides tools for analyzing images using the EyePop AI service. It includes functionality to draw visual reticles on detected objects and display images with annotations.
 

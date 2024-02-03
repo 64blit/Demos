@@ -12,6 +12,7 @@ This repository contains a demo of the EyePop Python SDK. The demo captures the 
 - cv2
 - mss
 - os
+- tk
 
 ## 🏃‍♂️ How to Run
 

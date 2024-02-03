@@ -1,5 +1,5 @@
 const pop_uuid = '';
-const pop_endpoint = "https://staging-api.eyepop.ai/pops/" + pop_uuid + "/config?auto_start=true";
+const pop_endpoint = "https://api.eyepop.ai/pops/" + pop_uuid + "/config?auto_start=true";
 
 // Do not expose your API key in production! You can leave this blank in development.
 const api_key = '';

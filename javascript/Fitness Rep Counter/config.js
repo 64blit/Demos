@@ -1,12 +1,12 @@
-const pop_uuid = '0718af53784840ebad5fc895c93c96ae';
-const pop_endpoint = "https://staging-api.eyepop.ai/pops/" + pop_uuid + "/config?auto_start=true";
+const pop_uuid = '';
+const pop_endpoint = "https://api.eyepop.ai/pops/" + pop_uuid + "/config?auto_start=true";
 
 // Do not expose your API key in production! You can leave this blank in development.
-const api_key = 'AAHI3tuHtOvPhPeXrrhOM5pPZ0FBQUFBQmx1cm9MYVBxY2t1c3hLcXB4VG1YS29ZMHNTZFlXT3l3eTNQNXhOVEk5cllpeDM2ZTZLR0xEa1JwcnRnWGIzOTFTV1JIY1BfYWNvYkNvZVZDZmdrRGVsQlUtWmdvdXg5blo0ZGNFZmlXeVFiX2x1YzQ9';
+const api_key = '';
 
 // You can create a temporary token for your users to authenticate with. Keeping this blank in development will allow you to login to authenticate.
 // https://docs.eyepop.ai/developer-documentation/api-key
-const token = 'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6InZUdzF6bi02cjFPcXg0NmNxRl9PMiJ9.eyJlbWFpbCI6ImVkbXVuZGRhb0BnbWFpbC5jb20iLCJodHRwczovL2NsYWltcy5leWVwb3AuYWkvZ3JhbnRzIjpbeyJwZXJtaXNzaW9uIjoiYWNjZXNzOmluZmVyZW5jZS1hcGkiLCJ0YXJnZXQiOiJ1c2VyOmF1dGgwfDY1YWVhYmExNTBkMzk1YTNjODA2OGVlZSJ9XSwiaXNzIjoiaHR0cHM6Ly9kZXYtZXllcG9wLnVzLmF1dGgwLmNvbS8iLCJzdWIiOiJhdXRoMHw2NWFlYWJhMTUwZDM5NWEzYzgwNjhlZWUiLCJhdWQiOlsiaHR0cHM6Ly9kZXYtYXBwLmV5ZXBvcC5haSIsImh0dHBzOi8vZGV2LWV5ZXBvcC51cy5hdXRoMC5jb20vdXNlcmluZm8iXSwiaWF0IjoxNzA2NzI5NDM3LCJleHAiOjE3MDY4MTU4MzcsImF6cCI6IklVdDBwczJtYVdaVWRFbUVPUFJhUEpLdmtRVHM2WVVFIiwic2NvcGUiOiJvcGVuaWQgcHJvZmlsZSBlbWFpbCIsInBlcm1pc3Npb25zIjpbXX0.Y1M_qS3QPCqgMWNVS6UgeokS6rtj8CjVqK6JdccPbEdXu83LnJqeN_wf4x6nocucl9ldp9ArrMl_3k1Oq8JHalH2x5Oku5zHPdWs09aJ18Fqk6zgcXxrkW76g0kukl7MLTM6bf52OFFF3NQ2hNTUwLAtfEWOP6s8v10uhcNCWeQ0TZ4Dx2zhhMW4VVO2fmCSs_HIVakK46HAUZKR0rcmMiG2GW3QliEj04ilO0jEKUCaYBpQVdtvYVXd060ATfz_w4DMKbkl762eQPwl92OkiBRLw4gpOuPXINKWTJqSo9m__k8UDwgBfR5yPhrMXEAOWtCDIMzm69ySYsivOUraEQ';
+const token = '';
 
 
 var config = {};
