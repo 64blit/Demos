@@ -20,7 +20,7 @@ Start your web server from within the **_parent_** directory and check out the e
 
 ## Overview
 
-<img src="./imgs/readme_example_heatmap.gif"  width="75%"/>
+<img src="./css/images/readme_example_heatmap.gif"  width="75%"/>
 
 In this documentation, we'll talk about the basic architecture choices to allow for advanced graphics drawing with the EyePopSDK.
 To get started let's dive into the [`1-heatmap_shoppers.html`](./1-heatmap_shoppers.html) demo.

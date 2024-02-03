@@ -18,7 +18,7 @@
 
 What if your CDN gave you intelligence on what is in the media you post?
 
-<img src="./AI CDN - Computer Vision Endpoint & UGC Ruleset/example_images/6.gif" width="50%" />
+<img src="./AI CDN - Computer Vision Endpoint & UGC Ruleset/images/6.gif" width="50%" />
 
 [Demo](./AI%20CDN%20-%20Computer%20Vision%20Endpoint%20%26%20UGC%20Ruleset/)
 

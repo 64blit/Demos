@@ -67,12 +67,14 @@ export default class ThirdEyePop
         let isWebcam = videoUrl == "webcam";
         let videoTime = 0;
         let pause = false;
-        // ///////////////////// END VARIABLES /////////////////////////////
 
         window.DEBUG_thirdEyePop = {
             pathDistanceThreshold: 0.1,
             showFootTraffic: true,
         };
+        // ///////////////////// END VARIABLES /////////////////////////////
+
+
 
         // ///////////////////// BODY /////////////////////////////
         async function setup()

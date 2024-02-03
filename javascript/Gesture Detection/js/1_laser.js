@@ -197,7 +197,7 @@ const hideInactiveElements = (lasers, activePeople) =>
 const setupDebugging = (thirdEyePop, scene, renderer) =>
 {
 
-    // load json file ./test_data/pose_capture_data.json and every 100ms push a frame to thirdEyePop
+    // load json file ./test_data/pose_capture_data.json and every 10ms push a frame to thirdEyePop
     let frames = [];
     fetch("./test_data/spider_capture.json")
         .then(response => response.json())
