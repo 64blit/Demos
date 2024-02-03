@@ -85,6 +85,14 @@
                             fn
                         </label>
                     </div>
+
+                    <div class="form-check d-flex justify-content-center  align-self-center">
+                        <input class="form-check-input" type="radio" name="positiveNegativeRadio"
+                            id="positiveNegativeRadio" value="negative">
+                        <label class="form-check-label" for="positiveNegativeRadio">
+                            fpn
+                        </label>
+                    </div>
                 </div>
 
             </form>
@@ -160,6 +168,7 @@
         const framesToSkip = document.getElementById("framesToSkip");
         const positiveRadio = document.getElementById("positiveRadio");
         const negativeRadio = document.getElementById("negativeRadio");
+        const positiveNegativeRadio = document.getElementById("positiveNegativeRadio");
         const playPause = document.getElementById("playPause");
 
         const mediaName = document.getElementById("mediaName");
@@ -178,16 +187,21 @@
         // Get the json-viewer element
         var viewer = document.querySelector('json-viewer');
 
-        var positiveNegativePrefix = "";
+        var positiveNegativePrefix = "fpn_";
 
         positiveRadio.addEventListener('change', function (e)
         {
-            positiveNegativePrefix = "positive_";
+            positiveNegativePrefix = "fp_";
         });
 
         negativeRadio.addEventListener('change', function (e)
         {
-            positiveNegativePrefix = "negative_";
+            positiveNegativePrefix = "fn_";
+        });
+
+        positiveNegativeRadio.addEventListener('change', function (e)
+        {
+            positiveNegativePrefix = "fpn_";
         });
 
 
@@ -254,20 +268,20 @@
         {
 
             // save the screen canvas
-            screenToPng(positiveNegativePrefix + mediaName.innerText + "_" + mediaIndex.innerText + "_" + mediaTime.innerText + "_screencapture");
+            screenToPng(positiveNegativePrefix + "_demo");
 
             if (isVideo)
             {
                 // save the canvas as a png
-                canvasToPng(videoCanvas, positiveNegativePrefix + mediaName.innerText + "_" + mediaIndex.innerText + "_" + mediaTime.innerText + "_source");
+                canvasToPng(videoCanvas, positiveNegativePrefix + "_img");
             } else
             {
                 // save the image as a png
-                imageToPng(image, positiveNegativePrefix + mediaName.innerText + "_" + mediaIndex.innerText + "_" + mediaTime.innerText + "_SDK");
+                imageToPng(image, positiveNegativePrefix + "_img");
             }
 
             // save the json data
-            predictionToJSON(positiveNegativePrefix + mediaName.innerText + "_" + mediaIndex.innerText + "_" + mediaTime.innerText, thirdEyePop.getPredictionData());
+            predictionToJSON(positiveNegativePrefix + "_result", thirdEyePop.getPredictionData());
 
         });
 
