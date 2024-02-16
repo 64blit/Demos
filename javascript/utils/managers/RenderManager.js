@@ -18,6 +18,7 @@ export default class RenderManager
             showBloom: false,
             showGammaCorrection: false,
             showCameraInCorner: false,
+            showVideo: true,
             bloomParams: {
                 strength: 0.5,
                 radius: 0.5,
@@ -39,10 +40,11 @@ export default class RenderManager
         this.showBloom = drawParams.showBloom;
         this.bloomParams = drawParams.bloomParams;
         this.showHeatmap = drawParams.showHeatmap;
+        this.showVideo = drawParams.showVideo;
         this.showCameraInCorner = drawParams.showCameraInCorner;
         this.showGammaCorrection = drawParams.showGammaCorrection;
 
-        this.heatmapIntensity = 0.1;
+        this.heatmapIntensity = 0.25;
 
         console.log("RenderManager constructor");
 
@@ -180,6 +182,8 @@ export default class RenderManager
             maxHeat = Math.max(maxHeat, heatGrid[ gridX + gridY * this.gridSpacesX ]);
         }
 
+        maxHeat = Math.max(maxHeat, 1);
+
         // normalize the heatGrid
         for (let i = 0; i < heatGrid.length; i++)
         {
@@ -221,6 +225,7 @@ export default class RenderManager
         this.video.volume = 1;
         this.video.src = videoUrl;
         this.video.load();
+        this.video.play();
 
         const scope = this;
 
@@ -521,7 +526,7 @@ export default class RenderManager
         const newSMAAPass = new SMAAPass(this.width / 2, this.height / 2);
         this.finalComposer.addPass(newSMAAPass);
 
-        if (this.videoTexture)
+        if (this.showVideo && this.videoTexture)
         {
             this.finalComposer.addPass(this.copyPass);
             this.copyPass.renderToScreen = true;
