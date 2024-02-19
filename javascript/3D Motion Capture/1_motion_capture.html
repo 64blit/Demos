@@ -75,6 +75,8 @@
         const canvas = document.getElementById("mobilecanvas");
         const renderCanvas = document.getElementById("rendercanvas");
         const loading = document.getElementById("loading");
+        const loadingText = document.getElementById("loadingText");
+        const spinner = document.getElementById("spinner");
 
         const run = () =>
         {
@@ -135,29 +137,20 @@
                         if (loading)
                         {
                             loading.remove();
+                            spinner.remove();
                         }
                     }
                 });
         }
 
-        const loadingText = document.getElementById("loadingText");
-        const spinner = document.getElementById("spinner");
 
-        if (!api_key || api_key == "")
-        {
 
-            loadingText.innerHTML = "Please add your API key to config.js";
-            spinner.remove();
+        EyePopSDK.EyePopAPI.FetchPopConfig(pop_endpoint, token)
+            .then(response => config = response)
+            .then((response) => { console.log(response); })
+            .then(() => { run() });
 
-        } else
-        {
 
-            EyePopSDK.EyePopAPI.FetchPopConfig(pop_endpoint, token)
-                .then(response => config = response)
-                .then((response) => { console.log(response); })
-                .then(() => { run() });
-
-        }
 
 
     </script>
