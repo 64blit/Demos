@@ -36,11 +36,11 @@
                 </div>
             </div>
             <div class="row">
-                <div class="col-md-6 d-flex">
-                    <img id="image-preview" src="css/images/empty.png" alt="Image Preview"
-                        style="width: 100%;border: #eee solid 1px;">
+                <div class="col-md-6">
+                    <img id="image-preview" class="object-fit-contain w-100" src="css/images/empty.png"
+                        alt="Image Preview" style="border: #eee solid 1px;">
                 </div>
-                <div class="col-md-6 d-flex">
+                <div class="col-md-6">
                     <pre id="txt_json" class="align-self-center" style="width: 100%; height: 40rem; overflow: auto;">
                     </pre>
                 </div>
@@ -70,8 +70,6 @@
 
             fileUpload.addEventListener('change', function (event)
             {
-                jsonViewer.innerHTML = "File selected!";
-
                 jsonViewer.innerHTML = JSON.stringify({ "status": "Loading..." }, null, 2);
 
                 DisplayPreviewImage(event);
@@ -99,7 +97,9 @@
                         timingDisplay.innerHTML = Math.floor(performance.now() - startTime) + "ms";
                         console.log(data);
                         if (!data || !data[ 0 ])
+                        {
                             return;
+                        }
                         if (data[ 0 ].objects)
                         {
                             const classyLabels = data[ 0 ].objects.map(obj => obj.classLabel);
