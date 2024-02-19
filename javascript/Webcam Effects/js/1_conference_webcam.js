@@ -82,7 +82,7 @@ export const updateScene = async (thirdEyePop) =>
 
         plane.scale.set(1, 1, 1);
 
-        if (Math.abs(width - plane.geometry.parameters.width) > 0.05 && Math.abs(height - plane.geometry.parameters.height) > 0.05)
+        if (Math.abs(width - plane.geometry.parameters.width) > 0.01 && Math.abs(height - plane.geometry.parameters.height) > 0.01)
         {
             // create a new plane geometry with the calculated width and height
             plane.geometry.dispose();
@@ -112,10 +112,10 @@ export const updateScene = async (thirdEyePop) =>
 
     const showActivePeople = () =>
     {
-        for (const object of objectPool)
-        {
-            object.mesh.visible = false;
-        }
+        // for (const object of objectPool)
+        // {
+        //     object.mesh.visible = false;
+        // }
 
         const activeIds = [];
 
@@ -126,17 +126,17 @@ export const updateScene = async (thirdEyePop) =>
             if (!person.frame)
             {
                 person.frame = getPlaneFromPool(scene);
-                person.frame.id = person.id;
+                person.frame.id = person.traceId;
             }
 
             // if ther person is less than 25% of the screen, ignore them
-            if (person.boundsWidth < 0.25 || person.boundsHeight < 0.25)
+            if (person.boundsWidth < 0.10 || person.boundsHeight < 0.10)
             {
                 continue;
             }
 
             person.inactiveFrames = 0;
-            activeIds.push(person.id);
+            activeIds.push(person.traceId);
             person.frame.mesh.visible = true;
 
             // update the plane mesh to scale of the person
@@ -149,7 +149,7 @@ export const updateScene = async (thirdEyePop) =>
             if (object.mesh.visible && !activeIds.includes(object.id))
             {
                 object.inactiveFrames++;
-                if (object.inactiveFrames > 25)
+                if (object.inactiveFrames > 10)
                 {
                     object.mesh.visible = false;
                     object.mesh.position.set(-100, -100, -100);
