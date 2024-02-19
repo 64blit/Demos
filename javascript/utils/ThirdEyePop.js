@@ -11,7 +11,7 @@ import { PeopleState } from './data/Constants.js';
 CameraControls.install({ THREE: THREE });
 
 
-// TODO: 
+// TODO:
 //   - Add workflow for dispose and reset of objects
 
 
@@ -442,6 +442,7 @@ export default class ThirdEyePop
         scope.pushPredictionData = pushPredictionData;
         scope.popPredictionData = popPredictionData;
         scope.getPredictionData = getPredictionData;
+
         scope.getControls = getControls;
         scope.getScene = getScene;
         scope.getCamera = getCamera;
@@ -450,6 +451,7 @@ export default class ThirdEyePop
         scope.getActivePeople = getActivePeople;
         scope.PeopleState = PeopleState;
         scope.getPeople = getPeople;
+
         scope.reset = resetScene;
 
         // //////////////////// end API /////////////////////////////

@@ -81,175 +81,179 @@
     </div>
 
     <script src="https://unpkg.com/@alenaksu/json-viewer/dist/json-viewer.bundle.js"></script>
-    <script src="../config.js"></script>
-    <script>
-        var cached_data = [];
-        const video = document.getElementById('myLocalVideo');
-        const urlInput = document.getElementById("txtUrl");
-        const analyzedPercentText = document.getElementById("timing");
-        const jsonPreviewBox = document.getElementById("txt_json");
-        const videoControls = document.getElementById("videoControls");
+    <<<<<<< HEAD <script src="../config.js">
+        </script>
+        =======
+        <script src="config.js"></script>
+        >>>>>>> dev
+        <script>
+            var cached_data = [];
+            const video = document.getElementById('myLocalVideo');
+            const urlInput = document.getElementById("txtUrl");
+            const analyzedPercentText = document.getElementById("timing");
+            const jsonPreviewBox = document.getElementById("txt_json");
+            const videoControls = document.getElementById("videoControls");
 
-        const playButton = document.getElementById("btnPlay");
+            const playButton = document.getElementById("btnPlay");
 
-        playButton.addEventListener("click", function ()
-        {
-            if (video.paused)
+            playButton.addEventListener("click", function ()
             {
-                playButton.innerText = "Pause";
-                video.play();
-            } else
-            {
-                playButton.innerText = "Play";
-                video.pause();
-            }
-        });
-
-
-        const run = () =>
-        {
-            var url = urlInput.value;
-
-            if (!url)
-                return;
-
-            config.input = {
-                "name": "url",
-                "url": url
-            };
-
-            config.draw = [
-
-                { "type": "pose", "targets": [ "person" ] },
-                { "type": "box", "targets": [ "*" ] },
-
-            ];
-
-            const ep = EyePopSDK.EyePopSDK.init(config);
-            console.log(EyePopSDK.EyePopSDK.init);
-            //EyePopSDK.VideoPlayer.IsTransparentMode=true;
-
-            percentBuffered = 0;
-
-            var currentFrame = null;
-
-            EyePopSDK.EyePopAPI.instance.OnDrawFrame = function (data)
-            {
-                videoControls.classList.remove("visually-hidden");
-
-                // We override the last message which will be drawn to the canvas to the current frame
-                EyePopSDK.EyePopAPI.instance.lastmsg = currentFrame;
-                jsonPreviewBox.data = EyePopSDK.EyePopAPI.instance.lastmsg;
-
-                var { closestIndex, closestDiff } = findClosestIndex(cached_data, video.currentTime);
-
-                if (!closestIndex || closestIndex == -1)
-                    return
-
-                currentFrame = cached_data[ closestIndex ];
-
-
-                // pause video to buffer if the closest prediction is too far behind our video
-                if (closestDiff > 0.5 && video.currentTime > cached_data[ closestIndex ].seconds)
+                if (video.paused)
                 {
-                    jsonPreviewBox.data = { status: "Buffering video - Press the left arrow and the Play button to preview loaded frames." };
+                    playButton.innerText = "Pause";
+                    video.play();
+                } else
+                {
                     playButton.innerText = "Play";
                     video.pause();
                 }
+            });
 
-            }
 
-            EyePopSDK.EyePopAPI.instance.OnPrediction = function (data)
+            const run = () =>
             {
+                var url = urlInput.value;
 
-                data.timestamp = data.timestamp / 1000000000;
+                if (!url)
+                    return;
 
-                percentBuffered = data.seconds / video.duration;
-                analyzedPercentText.innerHTML = Math.floor(percentBuffered * 100) + "% analyzed."
+                config.input = {
+                    "name": "url",
+                    "url": url
+                };
 
-                if (percentBuffered > 0.99)
+                config.draw = [
+
+                    { "type": "pose", "targets": [ "person" ] },
+                    { "type": "box", "targets": [ "*" ] },
+
+                ];
+
+                const ep = EyePopSDK.EyePopSDK.init(config);
+                console.log(EyePopSDK.EyePopSDK.init);
+                //EyePopSDK.VideoPlayer.IsTransparentMode=true;
+
+                percentBuffered = 0;
+
+                var currentFrame = null;
+
+                EyePopSDK.EyePopAPI.instance.OnDrawFrame = function (data)
                 {
-                    analyzedPercentText.innerHTML = "100% analyzed."
-                }
+                    videoControls.classList.remove("visually-hidden");
 
-                // We store all the data in an array
-                if (data)
-                {
-                    cached_data.push(data);
-                }
+                    // We override the last message which will be drawn to the canvas to the current frame
+                    EyePopSDK.EyePopAPI.instance.lastmsg = currentFrame;
+                    jsonPreviewBox.data = EyePopSDK.EyePopAPI.instance.lastmsg;
 
-            };
+                    var { closestIndex, closestDiff } = findClosestIndex(cached_data, video.currentTime);
 
-        }
+                    if (!closestIndex || closestIndex == -1)
+                        return
 
-        // A simple helper function to find the closest index in an array of buffered times
-        function findClosestIndex(bufferedTimes, currentTime)
-        {
-            let closestIndex = -1;
-            let closestDiff = Infinity;
+                    currentFrame = cached_data[ closestIndex ];
 
-            for (let i = 0; i < bufferedTimes.length; i++)
-            {
 
-                const diff = Math.abs(currentTime - bufferedTimes[ i ].seconds);
-
-                if (diff < closestDiff)
-                {
-                    closestDiff = diff;
-                    closestIndex = i;
-                }
-
-            }
-
-            return { closestIndex, closestDiff };
-
-        }
-
-        // Listen to the 'keydown' event like you're eavesdropping on a juicy conversation
-        document.addEventListener('keydown', function (event)
-        {
-            // Get that video element; I'm assuming there's just one on the page
-            var video = document.getElementById('myLocalVideo');
-
-            if (!video) return; // If there's no video, what's the point, right?
-
-            switch (event.code)
-            {
-                case 'Space':
-                    if (video.paused)
+                    // pause video to buffer if the closest prediction is too far behind our video
+                    if (closestDiff > 0.5 && video.currentTime > cached_data[ closestIndex ].seconds)
                     {
-                        playButton.innerText = "Pause";
-                        video.play();
-                    } else
-                    {
+                        jsonPreviewBox.data = { status: "Buffering video - Press the left arrow and the Play button to preview loaded frames." };
                         playButton.innerText = "Play";
                         video.pause();
                     }
-                    break;
 
-                case 'ArrowLeft':
-                    video.currentTime = Math.max(video.currentTime - 1, 0);
-                    break;
+                }
 
-                case 'ArrowRight':
-                    video.currentTime = Math.max(video.currentTime + 1, 0);
-                    break;
+                EyePopSDK.EyePopAPI.instance.OnPrediction = function (data)
+                {
 
-                default:
-                    // You hit something else? Really? What were you trying to do? Open a portal?
-                    break;
+                    data.timestamp = data.timestamp / 1000000000;
+
+                    percentBuffered = data.seconds / video.duration;
+                    analyzedPercentText.innerHTML = Math.floor(percentBuffered * 100) + "% analyzed."
+
+                    if (percentBuffered > 0.99)
+                    {
+                        analyzedPercentText.innerHTML = "100% analyzed."
+                    }
+
+                    // We store all the data in an array
+                    if (data)
+                    {
+                        cached_data.push(data);
+                    }
+
+                };
+
             }
-        });
+
+            // A simple helper function to find the closest index in an array of buffered times
+            function findClosestIndex(bufferedTimes, currentTime)
+            {
+                let closestIndex = -1;
+                let closestDiff = Infinity;
+
+                for (let i = 0; i < bufferedTimes.length; i++)
+                {
+
+                    const diff = Math.abs(currentTime - bufferedTimes[ i ].seconds);
+
+                    if (diff < closestDiff)
+                    {
+                        closestDiff = diff;
+                        closestIndex = i;
+                    }
+
+                }
+
+                return { closestIndex, closestDiff };
+
+            }
+
+            // Listen to the 'keydown' event like you're eavesdropping on a juicy conversation
+            document.addEventListener('keydown', function (event)
+            {
+                // Get that video element; I'm assuming there's just one on the page
+                var video = document.getElementById('myLocalVideo');
+
+                if (!video) return; // If there's no video, what's the point, right?
+
+                switch (event.code)
+                {
+                    case 'Space':
+                        if (video.paused)
+                        {
+                            playButton.innerText = "Pause";
+                            video.play();
+                        } else
+                        {
+                            playButton.innerText = "Play";
+                            video.pause();
+                        }
+                        break;
+
+                    case 'ArrowLeft':
+                        video.currentTime = Math.max(video.currentTime - 1, 0);
+                        break;
+
+                    case 'ArrowRight':
+                        video.currentTime = Math.max(video.currentTime + 1, 0);
+                        break;
+
+                    default:
+                        // You hit something else? Really? What were you trying to do? Open a portal?
+                        break;
+                }
+            });
 
 
-        EyePopSDK.EyePopAPI.FetchPopConfig(pop_endpoint, token)
-            .then(response => config = response)
-            .then(() => { document.getElementById("title").innerHTML = config.name; })
-            .then(() => { run(); });
+            EyePopSDK.EyePopAPI.FetchPopConfig(pop_endpoint, token)
+                .then(response => config = response)
+                .then(() => { document.getElementById("title").innerHTML = config.name; })
+                .then(() => { run(); });
 
-        document.getElementById("btnPost").addEventListener("click", run);
+            document.getElementById("btnPost").addEventListener("click", run);
 
-    </script>
+        </script>
 </body>
 
 <!--

@@ -59,6 +59,7 @@ async function FetchPopConfig(pop_endpoint, token)
     configData = await configData.json();
     configData.token = token;
     return configData;
+
 }
 
 function sortAndCount(arr)
