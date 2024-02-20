@@ -12,18 +12,10 @@ from tkinter import ttk
 
 POP_UUID, POP_API_SECRET = '', ''
 
-
-def get_config_data():
-    """
-    Reads and returns the configuration data from the config file which has the following format:
-    POP_UUID=
-    POP_API_SECRET=
-    """
-    with open("../config") as file:
-        data = file.readlines()
-        uuid = data[0].strip().split("=")[1]
-        secret = data[1].strip().split("=")[1]
-        return uuid, secret
+with open("../config") as file:
+    data = file.readlines()
+    POP_UUID = data[0].strip().split("=")[1]
+    POP_API_SECRET = data[1].strip().split("=")[1]
 
 
 def upload_and_plot():
@@ -66,8 +58,6 @@ def main():
     This function initializes the GUI window, sets the DPI scaling, and creates a button for selecting an image file.
     It also calculates the window size based on the screen resolution and displays the window.
     """
-    
-    POP_UUID, POP_API_SECRET = get_config_data()
 
     # Set DPI scaling
     ctypes.windll.shcore.SetProcessDpiAwareness(1)

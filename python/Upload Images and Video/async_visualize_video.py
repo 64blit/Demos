@@ -11,9 +11,13 @@ import cv2
 import threading
 from tkinter import filedialog
 
-POP_UUID = """YOUR POP UUID"""
-POP_API_KEY = """YOUR POP API KEY"""
 
+POP_UUID, POP_API_SECRET = '', ''
+
+with open("../config") as file:
+    data = file.readlines()
+    POP_UUID = data[0].strip().split("=")[1]
+    POP_API_SECRET = data[1].strip().split("=")[1]
 
 
 def upload_and_plot():
