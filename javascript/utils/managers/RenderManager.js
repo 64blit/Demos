@@ -78,6 +78,8 @@ export default class RenderManager
         this.domElement = null;
         this.fullScreen = false;
 
+        this.aspectRatio = null;
+
         if (drawParams.bgCanvas)
         {
             // setup the background canvas, and use it as the video texture
@@ -85,6 +87,7 @@ export default class RenderManager
             this.videoTexture = new THREE.CanvasTexture(this.bgCanvas);
             this.videoTexture.magFilter = THREE.NearestFilter;
             this.videoTexture.minFilter = THREE.NearestFilter;
+            this.aspectRatio = this.bgCanvas.width / this.bgCanvas.height;
 
             this.setupRenderer();
             this.setupEffectComposer();
@@ -118,11 +121,7 @@ export default class RenderManager
         // toggle fullscreen
         if (this.fullScreen)
         {
-            this.domElement.style.position = '';
-            this.domElement.style.top = '';
-            this.domElement.style.left = '';
-            this.domElement.style.width = '';
-            this.domElement.style.height = '';
+            this.reset();
 
             // if document is in fullscreen
             if (document.fullscreenElement)
@@ -132,12 +131,6 @@ export default class RenderManager
         } else
         {
             // make renderer canvas render fullscreen behind other dom elements
-            this.domElement.style.position = 'fixed';
-            this.domElement.style.top = 0;
-            this.domElement.style.left = 0;
-            this.domElement.style.width = '100%';
-            this.domElement.style.height = '100%';
-            this.domElement.style.zIndex = 9999;
             this.domElement.requestFullscreen({ navigationUI: "show" });
         }
         this.fullScreen = !this.fullScreen;
@@ -243,6 +236,7 @@ export default class RenderManager
 
             scope.width = scope.video.videoWidth;
             scope.height = scope.video.videoHeight;
+            scope.aspectRatio = scope.width / scope.height;
 
             scope.setupRenderer();
             scope.setupEffectComposer();
@@ -287,6 +281,7 @@ export default class RenderManager
 
                     scope.width = scope.video.videoWidth;
                     scope.height = scope.video.videoHeight;
+                    scope.aspectRatio = scope.width / scope.height;
 
                     scope.setupRenderer();
                     scope.setupEffectComposer();
@@ -336,13 +331,13 @@ export default class RenderManager
         this.camera.updateProjectionMatrix();
 
         this.width = this.canvas.clientWidth;
-        this.height = this.canvas.clientHeight;
 
         if (this.bgCanvas)
         {
             this.width = this.bgCanvas.clientWidth;
-            this.height = this.bgCanvas.clientHeight;
         }
+
+        this.height = this.width / this.aspectRatio;
 
         this.renderer.setSize(this.width, this.height);
         this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -353,19 +348,19 @@ export default class RenderManager
     onWindowResized()
     {
         this.width = this.canvas.clientWidth;
-        this.height = this.canvas.clientHeight;
 
         if (this.bgCanvas)
         {
             this.width = this.bgCanvas.clientWidth;
-            this.height = this.bgCanvas.clientHeight;
         }
+
+        this.height = this.width / this.aspectRatio;
 
         if (!this.renderer) return;
 
         this.renderer.setSize(this.width, this.height);
 
-        this.camera.aspect = this.width / this.height;
+        // this.camera.aspect = this.width / this.height;
         this.camera.updateProjectionMatrix();
 
         this.finalComposer.setSize(this.width, this.height);
