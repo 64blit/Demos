@@ -24,7 +24,7 @@
 
                 <form class="w-50">
                     <div class="input-group mt-3">
-                        <input type="text" class="form-control" placeholder="MP4 url" aria-label="MP4 URL"
+                        <input type="text" class="form-control" placeholder="Video url" aria-label="Video URL"
                             aria-describedby="basic-addon2" id="txtUrl">
                         <div class="input-group-append">
                             <button class="btn btn-outline-secondary" type="button" id="btnPost">Start</button>
@@ -79,11 +79,6 @@
             </div>
         </div>
 
-        <script src="https://cdn.jsdelivr.net/npm/@eyepop.ai/javascript-sdk"></script>
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
-        <script src="../config.js"></script>
-
         <script type="importmap">
             {
                 "imports": {
@@ -93,8 +88,14 @@
             }
         </script>
 
+        <script src="https://cdn.jsdelivr.net/npm/@eyepop.ai/javascript-sdk"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+        <script src="../config.js"></script>
+
         <script type="module">
+            import * as THREE from 'three';
             import ThirdEyePop from "../utils/ThirdEyePop.js";
+            // import { updateScene } from './js/'
 
             const video = document.getElementById("myLocalVideo");
             const urlInput = document.getElementById("txtUrl");
@@ -102,47 +103,18 @@
             const canvas = document.getElementById("mobilecanvas");
             const renderCanvas = document.getElementById("rendercanvas");
             const inputFile = document.getElementById("inputLoadFile");
+            const title = document.getElementById("title");
 
             var cached_data = [];
 
-            const load = () =>
-            {
-                var fileToLoad = inputFile.files[ 0 ];
-                var fileReader = new FileReader();
-
-                fileReader.onload = function (fileLoadedEvent)
-                {
-                    var textFromFileLoaded = fileLoadedEvent.target.result;
-                    var data = JSON.parse(textFromFileLoaded, null, 2);
-                    cached_data = data.body;
-                    urlInput.value = data.url;
-                    run();
-                };
-                fileReader.readAsText(fileToLoad);
-            }
-
-            function save()
-            {
-                var dataStr = JSON.stringify({ url: urlInput.value, body: cached_data });
-                var blob = new Blob([ dataStr ], { type: "text/json;charset=utf-8" });
-                var url = URL.createObjectURL(blob);
-
-                var btnSave = document.getElementById('btnSave');
-                btnSave.onclick = function ()
-                {
-                    var dlAnchorElem = document.createElement('a');
-                    dlAnchorElem.href = url;
-                    dlAnchorElem.download = urlInput.value + ".json";
-                    dlAnchorElem.click();
-                };
-            }
+            const DEBUG = true;
 
             const run = async () =>
             {
 
                 await EyePopSDK.EyePopAPI.FetchPopConfig(pop_endpoint, token)
                     .then(response => config = response)
-                    .then(() => { document.getElementById("title").innerHTML = config.name; });
+                    .then(() => { title.innerHTML = config.name; });
 
                 var url = urlInput.value;
 
@@ -161,10 +133,11 @@
                     thirdEyePop = new ThirdEyePop(
                         {
                             canvas: renderCanvas,
-                            videoUrl: urlInput.value,
+                            videoUrl: url,
                             predictionData: cached_data,
-                            frameBufferSize: 10000000000,
-                            DEBUG: true,
+                            frameBufferSize: 100000000,
+                            DEBUG: DEBUG,
+                            enableControls: false,
                             drawParams: {
                                 showHeatmap: true,
                                 showPoint: true,
@@ -175,7 +148,10 @@
                             }
                         });
 
-                    thirdEyePop.setup();
+                    thirdEyePop.setup().then(() =>
+                    {
+                        // updateScene(thirdEyePop);
+                    });
                 } catch (e)
                 {
                     alert("Error:" + e.message)
@@ -200,7 +176,6 @@
                 {
                     cached_data.push(data);
                     thirdEyePop.pushPredictionData(data);
-                    // console.log(data);
 
                     analyzedPercentText.innerHTML = thirdEyePop.getPercentAnalyzed() + "%";
                 };
@@ -208,9 +183,53 @@
                 EyePopSDK.EyePopAPI.instance.OnPredictionEnd = function (data)
                 {
                     analyzedPercentText.innerHTML = "100% analyzed."
-                    save();
                 }
 
+            }
+
+
+            const load = (path = undefined) =>
+            {
+                var fileToLoad = inputFile.files[ 0 ];
+                var fileReader = new FileReader();
+
+                fileReader.onload = function (fileLoadedEvent)
+                {
+                    var textFromFileLoaded = fileLoadedEvent.target.result;
+                    var data = JSON.parse(textFromFileLoaded, null, 2);
+                    cached_data = data.body;
+                    urlInput.value = data.url;
+                    run();
+                };
+
+                if (path)
+                {
+                    // path is a relative path to a json text file, e.g. './json/test_1.json'
+                    // here we fetch the file data
+                    fetch(path)
+                        .then(response => response.text())
+                        .then(text => fileReader.readAsText(new Blob([ text ])));
+                }
+                else
+                {
+                    fileReader.readAsText(fileToLoad);
+                }
+            }
+
+            function save()
+            {
+                var data = JSON.stringify({ url: urlInput.value, body: cached_data });
+                var blob = new Blob([ data ], { type: "text/json;charset=utf-8" });
+                var url = URL.createObjectURL(blob);
+
+                var btnSave = document.getElementById('btnSave');
+                btnSave.onclick = function ()
+                {
+                    var dlAnchorElem = document.createElement('a');
+                    dlAnchorElem.href = url;
+                    dlAnchorElem.download = urlInput.value + ".json";
+                    dlAnchorElem.click();
+                };
             }
 
             document.getElementById("btnPost").addEventListener("click", run);
@@ -219,9 +238,8 @@
 
             EyePopSDK.EyePopAPI.FetchPopConfig(pop_endpoint, token)
                 .then(response => config = response)
-                .then(() => { document.getElementById("title").innerHTML = config.name; });
-
-
+                .then(() => { title.innerHTML = config.name; })
+                .then(() => { DEBUG && load('./json/test_1.json'); });
 
         </script>
 </body>
