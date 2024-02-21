@@ -12,6 +12,7 @@ import { GLTFLoader } from 'https://unpkg.com/three/examples/jsm/loaders/GLTFLoa
 import { DRACOLoader } from 'https://unpkg.com/three/examples/jsm/loaders/DRACOLoader.js';
 import { RGBELoader } from 'https://unpkg.com/three/examples/jsm/loaders/RGBELoader.js';
 import { EXRLoader } from 'https://unpkg.com/three/examples/jsm/loaders/EXRLoader.js';
+import RenderManager from './RenderManager.js';
 
 
 
@@ -250,25 +251,27 @@ export default class SceneManager
 
         if (!text)
         {
-            let geometry = new TextGeometry("" + person.traceId, {
+            let geometry = new TextGeometry("person " + person.traceId, {
                 font: this.font,
-                size: .025,
-                height: 0,
-                curveSegments: 12,
+                size: .0175,
+                height: .025,
+                curveSegments: 20,
                 bevelEnabled: false,
             });
             text = new THREE.Mesh(geometry, this.textMaterial);
             text.name = "traceId";
+            text.scale.y = RenderManager.instance.aspectRatio;
             this.scene.add(text);
             person.traceIdText = text;
         }
 
         text.name = "traceId";
         let point = person.position;
-        text.scale.x = -1;
         text.position.x = point.x + person.boundsWidth / 2;
-        text.position.y = person.bounds.min.y;
+        text.position.y = person.bounds.min.y + .025;
         text.position.z = 0;
+
+        text.lookAt(this.camera.position);
     }
 
     drawPath(person)
