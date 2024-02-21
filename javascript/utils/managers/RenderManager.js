@@ -8,6 +8,9 @@ import { GammaCorrectionShader } from 'https://unpkg.com/three/examples/jsm/shad
 
 export default class RenderManager
 {
+
+    static instance = null;
+
     constructor(
         canvas,
         videoUrl,
@@ -26,6 +29,12 @@ export default class RenderManager
             },
         })
     {
+
+        if (!RenderManager.instance)
+        {
+            RenderManager.instance = this;
+        }
+
         THREE.Cache.enabled = true
         this.canvas = canvas;
         this.heatmapPass = null;
