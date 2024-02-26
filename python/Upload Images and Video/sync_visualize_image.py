@@ -7,8 +7,6 @@ import ctypes
 from tkinter import ttk
 
 
-
-
 POP_UUID, POP_API_SECRET = '', ''
 
 with open("../config") as file:
@@ -17,19 +15,18 @@ with open("../config") as file:
     POP_API_SECRET = data[1].strip().split("=")[1]
 
 
-
 def upload_and_plot():
     """
     Uploads a photo and plots it asynchronously.
     """
-    
+
     file_path = filedialog.askopenfilename()
 
     if file_path:
-        
+
         result = None
 
-        with EyePopSdk.endpoint(pop_id=POP_UUID, secret_key=POP_API_SECRET) as endpoint:
+        with EyePopSdk.endpoint(pop_id=POP_UUID, secret_key=POP_API_SECRET, auto_start=True) as endpoint:
             result = endpoint.upload(file_path).predict()
 
         with Image.open(file_path) as image:
@@ -38,7 +35,6 @@ def upload_and_plot():
         plot = EyePopSdk.plot(plt.gca())
         plot.prediction(result)
         plt.show()
-
 
 
 def main():
