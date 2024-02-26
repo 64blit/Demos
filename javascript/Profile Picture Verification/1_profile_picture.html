@@ -13,15 +13,14 @@
 </head>
 
 <body>
+
     <!-- A spinning loading animation -->
     <div id="loading"
         class="position-absolute top-0 w-100 h-100 d-flex align-items-center justify-content-center bg-white flex-column"
         style="z-index: 1000;">
         <div id="loadingText" class="text-white text-start p-5">Loading Pop...</div>
         <div class="spinner-border text-light align-self-center" role="status">
-
             <span class="visually-hidden">Loading...</span>
-
         </div>
     </div>
 
@@ -29,14 +28,13 @@
         <!-- HEADER: Full width, Logo Image -->
         <header class="mt-4">
             <div class="container-fluid d-flex align-items-center">
-
-                <a href="1_upload_image.html"><img src="css/images/eyepop-logo.svg" alt="EyePop.ai Logo" class="p-2"
-                        style="height: 70px;"></a>
+                <a href="1_upload_image.html">
+                    <img src="css/images/eyepop-logo.svg" alt="EyePop.ai Logo" class="p-2" style="height: 70px;">
+                </a>
             </div>
 
             <video id="myLocalVideo" playsinline controls muted class="position-absolute"
                 style="width:1px;height:1px;"></video>
-
         </header>
 
         <div class="w-100 h-100 d-flex justify-content-center">
@@ -86,6 +84,7 @@
                 </div>
             </div>
         </div>
+
         <!-- Modal for error info -->
         <div class="modal fade" id="errorModal" tabindex="-1" aria-labelledby="errorModalLabel" aria-hidden="true">
             <div class="modal-dialog">
@@ -133,7 +132,6 @@
             const modal = new bootstrap.Modal(document.getElementById('errorModal'), {
                 keyboard: true
             });
-
 
             function setFeedbackMessage(header, message, color)
             {
@@ -206,7 +204,6 @@
 
             async function run()
             {
-
 
                 async function processFile(file)
                 {
@@ -293,17 +290,6 @@
                         processFile(file);
                     }
                 });
-
-                // removeButton.addEventListener('click', function (event)
-                // {
-                //     profileIcon.classList.remove('visually-hidden');
-                //     mobilecanvas.width = 0;
-                //     mobilecanvas.height = 0;
-                //     file_upload.value = "";
-                //     profileIcon.style.display = "block";
-                //     peopleThumbnails.innerHTML = "";
-                //     feedbackMessage.innerHTML = "";
-                // });
 
             }
 
