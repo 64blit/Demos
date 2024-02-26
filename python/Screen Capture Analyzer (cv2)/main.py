@@ -9,6 +9,7 @@ import os
 SCREEN_NUMBER = 1
 POP_UUID, POP_API_SECRET = "", ""
 
+
 def get_config_data():
     """
     Reads and returns the configuration data from the config file which has the following format:
@@ -20,7 +21,6 @@ def get_config_data():
         uuid = data[0].strip().split("=")[1]
         secret = data[1].strip().split("=")[1]
         return uuid, secret
-
 
 
 class ScreenCaptureAnalyzer:
@@ -43,7 +43,6 @@ class ScreenCaptureAnalyzer:
     """
 
     def __init__(self, monitor_id):
-
         """
         Initializes a new instance of the ScreenCaptureAnalyzer class.
 
@@ -60,7 +59,6 @@ class ScreenCaptureAnalyzer:
         self.temp_file = 'temp.jpg'
 
     def draw_results(self):
-
         """
         Draws the detected objects on the frame and returns the blended frame.
 
@@ -69,9 +67,9 @@ class ScreenCaptureAnalyzer:
         """
 
         if self.result is None:
-            
+
             return self.frame
-        
+
         if "objects" not in self.result:
 
             return self.frame
@@ -81,14 +79,14 @@ class ScreenCaptureAnalyzer:
         for obj in self.result['objects']:
 
             self.ep_cv2_plotter.object(obj)
-        
+
         # Blend the original frame and the frame with objects
-        blended_frame = cv2.addWeighted(self.frame, 0.5, self.ep_cv2_plotter.frame, 0.5, 0)
+        blended_frame = cv2.addWeighted(
+            self.frame, 0.5, self.ep_cv2_plotter.frame, 0.5, 0)
 
         return blended_frame
 
     def capture_screen(self):
-
         """
         Captures the screen and converts it to a numpy array.
         """
@@ -98,7 +96,6 @@ class ScreenCaptureAnalyzer:
         self.frame = np.array(self.frame)
 
     def get_prediction_results(self, endpoint):
-
         """
         Uploads the captured frame to EyePop API and gets the prediction results.
 
@@ -113,28 +110,28 @@ class ScreenCaptureAnalyzer:
 
             cv2.imwrite(self.temp_file, self.frame)
             self.result = endpoint.upload(self.temp_file).predict()
+            print(endpoint, self.result)
 
         except Exception as e:
 
-            print ("Error uploading frame or getting prediction results: " + str(e))
+            print("Error uploading frame or getting prediction results: " + str(e))
 
     def run(self):
-
         """
         Runs the screen capture and analysis loop.
         """
 
-        with EyePopSdk.endpoint(pop_id=POP_UUID, secret_key=POP_API_SECRET) as endpoint:
+        with EyePopSdk.endpoint(pop_id=POP_UUID, secret_key=POP_API_SECRET, auto_start=True) as endpoint:
 
-            cv2.namedWindow("screencap", cv2.WINDOW_NORMAL) 
+            cv2.namedWindow("screencap", cv2.WINDOW_NORMAL)
 
             # infinite loop to capture the screen and send to EyePop API
             while True:
-            
+
                 self.capture_screen()
 
                 drawing = self.draw_results()
-                
+
                 cv2.imshow('screencap', drawing)
 
                 # if the space key is pressed, upload the image to EyePop API
@@ -148,7 +145,6 @@ class ScreenCaptureAnalyzer:
                     break
 
     def dispose(self):
-
         """
         Disposes the resources used by the ScreenCaptureAnalyzer.
         """
