@@ -20,11 +20,5 @@ Start your web server from within this directory and check out the examples: htt
 
 ## Overview
 
-### 1. Image Upload
-
-File: [1_upload_image.html](./1_upload_image.html)
-
-<img src="./images/1.png" width="50%" />
-
-**_Description:_**
-This is a basic example of how to use the EyePopSDK to upload an image to the EyePop API. It handles the process of selecting an image file, sending it to the API, and receiving the response.
+This demo works by performing simple image analysis to detect the number of people in a given image.
+It scans a profile picture and throws an error when more or less than 1 person is detected in the image.
