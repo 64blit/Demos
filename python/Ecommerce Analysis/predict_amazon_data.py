@@ -1,13 +1,17 @@
 from eyepop import EyePopSdk, Job
 import json
 import webbrowser
+import sys
 
-POP_UUID, POP_API_SECRET = '', ''
+POP_UUID, POP_API_SECRET = 'e4fd9369a9de42f6becfb90e11f4620c', 'AAFWTEvZaWw-h40Bga2N9swqZ0FBQUFBQmwyU3JzOXNSblFFaWZVR2R4aEpyY0hlSmVDRzJOUFJsUE9QQ0lUUkI2YURpYXFPYWF5emQxdkc1ekplc3JMcW45T3JHN1VzTnlBUHp3NDJJeVlvcHg0UHFxOVUzWS1tR25GZ3V3eXZZMy0zcmlHT009'
 
-with open("../config") as file:
-    data = file.readlines()
-    POP_UUID = data[0].strip().split("=")[1]
-    POP_API_SECRET = data[1].strip().split("=")[1]
+# try:
+#     with open("../config") as file:
+#         data = file.readlines()
+#         POP_UUID = data[0].strip().split("=")[1]
+#         POP_API_SECRET = data[1].strip().split("=")[1]
+# catch Exception as e:
+#     print("Error reading config file", e)
 
 endpoint = EyePopSdk.endpoint(
     pop_id=POP_UUID, secret_key=POP_API_SECRET, auto_start=True)
@@ -32,6 +36,9 @@ for product in file_content:
 
     if 'objects' not in prediction:
         continue
+
+    if product['product_photo'] == 'https://m.media-amazon.com/images/I/71r7eWuCsaL._AC_SR525,789_FMwebp_QL65_.jpg':
+        print("Prediction for product with photo: ", prediction)
 
     prediction_person_object_count = 0
     for obj in prediction['objects']:

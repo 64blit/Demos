@@ -115,8 +115,7 @@ def plot_best_seller_vs_person(data):
     people = np.array(people)
 
     # Apply a log transformation to the best_seller and people arrays
-    people = np.log1p(people)
-
+    # people = np.log1p(people)
     # round the transformed data to the nearest integer
     # best_seller = np.round(best_seller)
     # people = np.round(people)

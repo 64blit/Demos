@@ -5,7 +5,7 @@ import json
 url = "https://real-time-amazon-data.p.rapidapi.com/search"
 
 headers = {
-    "X-RapidAPI-Key": "dda1400629msh22a7e59a0af45eep140da3jsn4dafa3e75b38",
+    "X-RapidAPI-Key": "",
     "X-RapidAPI-Host": "real-time-amazon-data.p.rapidapi.com"
 }
 
