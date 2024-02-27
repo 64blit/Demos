@@ -6,7 +6,7 @@ This is a collection of demos for the [EyePop Python SDK](https://github.com/eye
 
 ## Getting started
 
-- Log into your EyePop account at https://dashboard.eyepop.ai/sign-in
+- Log into your EyePop account at https://dashboard.eyepop.ai/auth/sign-in
 - Create your own **API Pop** with any model.
 - After creating your pop, create or copy your API Key into the `config` file, as well as the Pop's UUID.
 
@@ -18,7 +18,7 @@ This is a collection of demos for the [EyePop Python SDK](https://github.com/eye
 
 Start your web server from within the **_parent_** directory and check out the examples: http://localhost:9001/1_upload_image.html
 
-[Sign up](https://app.eyepop.ai/sign-up)
+[Sign up](https://dashboard.eyepop.ai/auth/sign-up)
 
 ## Documentation
 
