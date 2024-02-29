@@ -10,6 +10,7 @@ let scene = null;
 let material = null;
 let bgModel = null;
 let bgModelPlanes = [];
+let activeObjects = [];
 
 const MAX_PEOPLE = 15;
 
@@ -28,14 +29,15 @@ const getFrame = () =>
     // get an inactive plane from the pool
     for (const object of objectPool)
     {
-        if (object.mesh.visible === false)
+        if (!object.active)
         {
+            object.active = true;
             return object;
         }
     }
 
     // if there are no inactive planes, create a new one
-    const newPlane = { id: null, mesh: createPlane(scene, material), inactiveFrames: 0, activeFrames: 0 };
+    const newPlane = { id: null, active: false, mesh: createPlane(scene, material), inactiveFrames: 0, activeFrames: 0 };
 
     objectPool.push(newPlane);
 
@@ -58,7 +60,7 @@ export const updateScene = async (thirdEyePop) =>
     {
 
         webcamTexture = renderManager.videoTexture;
-        webcamTexture.flipY = false;
+        webcamTexture.flipY = true;
         aspect = renderManager.videoTexture.image.videoWidth / renderManager.videoTexture.image.videoHeight;
 
         const ambientLight = new THREE.AmbientLight(0xffffff, 1);
@@ -74,7 +76,6 @@ export const updateScene = async (thirdEyePop) =>
         gltfLoader.load('./assets/conference_call.glb', (gltf) =>
         {
             bgModel = gltf.scene;
-            // bgModel.rotateY(Math.PI);
             bgModel.scale.set(1, 1, -1);
             bgModel.traverse((child) =>
             {
@@ -101,7 +102,8 @@ export const updateScene = async (thirdEyePop) =>
                 bounds.expandByObject(plane);
             }
 
-            controls.fitToBox(bounds, true);
+            controls.fitToBox(bounds, true, { paddingTop: 1, paddingLeft: 1, paddingBottom: 1, paddingRight: 1 });
+
 
             scene.add(bgModel);
         });
@@ -154,12 +156,11 @@ export const updateScene = async (thirdEyePop) =>
             uvMax.x += widthIncrease;
         }
 
-
         // update the uv coordinates
-        plane.geometry.attributes.uv.setXY(0, uvMin.x, uvMin.y);
-        plane.geometry.attributes.uv.setXY(1, uvMax.x, uvMin.y);
-        plane.geometry.attributes.uv.setXY(2, uvMin.x, uvMax.y);
-        plane.geometry.attributes.uv.setXY(3, uvMax.x, uvMax.y);
+        plane.geometry.attributes.uv.setXY(0, uvMin.x, uvMax.y);
+        plane.geometry.attributes.uv.setXY(1, uvMax.x, uvMax.y);
+        plane.geometry.attributes.uv.setXY(2, uvMin.x, uvMin.y);
+        plane.geometry.attributes.uv.setXY(3, uvMax.x, uvMin.y);
         plane.geometry.attributes.uv.needsUpdate = true;
 
         // set the boundingGeometry to the new bounds
@@ -169,10 +170,27 @@ export const updateScene = async (thirdEyePop) =>
 
     }
 
+    const getNextBeshMesh = () =>
+    {
+
+        for (let i = 0; i < objectPool.length; i++)
+        {
+            const child = objectPool[ i ];
+            console.log(child);
+            if (!child.mesh.visible && activeObjects.indexOf(child.id) === -1)
+            {
+                return child.mesh;
+            }
+        }
+
+        return null;
+
+    }
+
 
     const showActivePeople = () =>
     {
-        const activeIds = [];
+        activeObjects = [];
         const activePeople = thirdEyePop.getActivePeople();
         activePeople.sort((a, b) => a.traceId - b.traceId);
 
@@ -187,7 +205,6 @@ export const updateScene = async (thirdEyePop) =>
                 continue;
             }
 
-
             // get a plane from the pool if the person doesn't have one
             if (!person.frame)
             {
@@ -195,44 +212,45 @@ export const updateScene = async (thirdEyePop) =>
                 person.frame.id = person.traceId;
             }
 
-            person.frame.mesh = bgModelPlanes[ activeIds.length ];
-
             person.frame.activeFrames++;
             person.frame.inactiveFrames = 0;
+            person.frame.active = true;
 
-            activeIds.push(person.traceId);
-
-            if (person.frame.activeFrames > 50)
+            if (person.frame.activeFrames > 100)
             {
-                person.frame.mesh.visible = true;
-            }
+                person.frame.mesh = bgModelPlanes[ activeObjects.length ];
 
-            bounds.expandByObject(person.frame.mesh);
+                person.frame.mesh.visible = true;
+                activeObjects.push(person);
+                bounds.expandByObject(person.frame.mesh);
+            }
 
             // update the plane mesh to scale of the person
             updatePersonPlane(person);
         }
 
-        if (activeIds.length > 0)
-        {
-            controls.fitToBox(bounds, true);
-        }
+        console.log(activeObjects);
 
-        console.log(activeIds, objectPool);
+        if (activeObjects.length > 0)
+        {
+            controls.fitToBox(bounds, true, { paddingTop: 1, paddingLeft: 1, paddingBottom: 1, paddingRight: 1 });
+        }
 
         // hide any planes that are no longer active
         for (const object of objectPool)
         {
-            if (object.mesh.visible && !activeIds.includes(object.id))
+
+            if (object.active && !activeObjects.includes(object))
             {
                 object.activeFrames = 0;
                 object.inactiveFrames++;
 
-                if (object.inactiveFrames > 50)
+                if (object.inactiveFrames > 100)
                 {
-                    object.mesh.visible = false;
                     object.inactiveFrames = 0;
                     object.activeFrames = 0;
+                    object.mesh.visible = false;
+                    object.active = false;
                 }
 
             }
