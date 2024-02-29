@@ -112,10 +112,8 @@
         const recordingCtx = recordingCanvas.getContext("2d");
         recordingCtx.imageSmoothingEnabled = true;
         recordingCtx.imageSmoothingQuality = "high";
-        recordingCanvas.width = 1920; // Increase the width of the recording canvas
-        recordingCanvas.height = 1080; // Increase the height of the recording canvas
-
-        // recordingCanvas.classList.add("visually-hidden");
+        recordingCanvas.width = 1920;
+        recordingCanvas.height = 1080;
 
         video.addEventListener("timeupdate", function ()
         {
