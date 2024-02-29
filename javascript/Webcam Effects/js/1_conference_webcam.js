@@ -4,35 +4,38 @@ import { GLTFLoader } from 'https://unpkg.com/three/examples/jsm/loaders/GLTFLoa
 
 let objectPool = [];
 let webcamTexture = undefined;
+let aspect = 16 / 9;
 
 let scene = null;
 let material = null;
 let bgModel = null;
 let bgModelPlanes = [];
 
+const MAX_PEOPLE = 15;
+
 const createPlane = () =>
 {
     let plane = bgModelPlanes.pop();
 
-    if (!plane)
-    {
-        plane = new THREE.Mesh(
-            new THREE.PlaneGeometry(0.0, 0.0),
-            material
-        );
-    }
-
-    plane.geometry.computeBoundingBox();
-    plane.geometry.computeBoundingSphere();
     plane.visible = false;
     scene.add(plane);
+
     return plane;
 }
 
-const getPlaneFromPool = () =>
+const getFrame = () =>
 {
+    // get an inactive plane from the pool
+    for (const object of objectPool)
+    {
+        if (object.mesh.visible === false)
+        {
+            return object;
+        }
+    }
 
-    const newPlane = { id: null, mesh: createPlane(scene, material), target: new THREE.Vector3(), inactiveFrames: 0, activeFrames: 0 };
+    // if there are no inactive planes, create a new one
+    const newPlane = { id: null, mesh: createPlane(scene, material), inactiveFrames: 0, activeFrames: 0 };
 
     objectPool.push(newPlane);
 
@@ -46,7 +49,6 @@ const lerp = (a, b, t) =>
 
 export const updateScene = async (thirdEyePop) =>
 {
-    const raycaster = new THREE.Raycaster();
     scene = thirdEyePop.getScene();
     const renderer = thirdEyePop.getRenderer();
     const renderManager = thirdEyePop.getRenderManager();
@@ -56,6 +58,8 @@ export const updateScene = async (thirdEyePop) =>
     {
 
         webcamTexture = renderManager.videoTexture;
+        webcamTexture.flipY = false;
+        aspect = renderManager.videoTexture.image.videoWidth / renderManager.videoTexture.image.videoHeight;
 
         const ambientLight = new THREE.AmbientLight(0xffffff, 1);
         scene.add(ambientLight);
@@ -67,9 +71,11 @@ export const updateScene = async (thirdEyePop) =>
         material = new THREE.MeshBasicMaterial({ map: webcamTexture, side: THREE.DoubleSide });
 
         const gltfLoader = new GLTFLoader();
-        gltfLoader.load('../assets/conference_call.glb', (gltf) =>
+        gltfLoader.load('./assets/conference_call.glb', (gltf) =>
         {
             bgModel = gltf.scene;
+            // bgModel.rotateY(Math.PI);
+            bgModel.scale.set(1, 1, -1);
             bgModel.traverse((child) =>
             {
                 if (child.isMesh && child.name.includes('p'))
@@ -77,6 +83,7 @@ export const updateScene = async (thirdEyePop) =>
                     bgModelPlanes.push(child);
                     child.material = new THREE.MeshBasicMaterial({ map: webcamTexture, side: THREE.DoubleSide });
                     child.visible = false;
+                    child.scale.set(1, 1, -1);
                 }
             });
 
@@ -86,7 +93,16 @@ export const updateScene = async (thirdEyePop) =>
                 return a.name.localeCompare(b.name);
             });
 
-            controls.fitToBox(bgModel, true);
+
+            // create bounds around all the planes
+            const bounds = new THREE.Box3();
+            for (const plane of bgModelPlanes)
+            {
+                bounds.expandByObject(plane);
+            }
+
+            controls.fitToBox(bounds, true);
+
             scene.add(bgModel);
         });
 
@@ -105,26 +121,39 @@ export const updateScene = async (thirdEyePop) =>
             person.smoothedBounds = person.bounds.clone();
         }
 
-        person.smoothedBounds.min.x = lerp(person.smoothedBounds.min.x, person.bounds.min.x, 0.01);
-        person.smoothedBounds.min.y = lerp(person.smoothedBounds.min.y, person.bounds.min.y, 0.01);
-        person.smoothedBounds.max.x = lerp(person.smoothedBounds.max.x, person.bounds.max.x, 0.01);
-        person.smoothedBounds.max.y = lerp(person.smoothedBounds.max.y, person.bounds.max.y, 0.01);
+        person.smoothedBounds.min.x = lerp(person.smoothedBounds.min.x, person.bounds.min.x, 0.05);
+        person.smoothedBounds.min.y = lerp(person.smoothedBounds.min.y, person.bounds.min.y, 0.05);
+        person.smoothedBounds.max.x = lerp(person.smoothedBounds.max.x, person.bounds.max.x, 0.05);
+        person.smoothedBounds.max.y = lerp(person.smoothedBounds.max.y, person.bounds.max.y, 0.05);
 
 
         // update the uv coordinates of the plane to only show the part of the webcam feed that the person is in
         const bounds = person.smoothedBounds;
 
-        const width = Math.abs(bounds.max.x - bounds.min.x);
-        const height = Math.abs(bounds.max.y - bounds.min.y);
-
-        plane.scale.set(1, 1, 1);
-
-        plane.geometry.dispose();
-        plane.geometry = new THREE.PlaneGeometry(width, height);
-
         // convert bounds coordinates to uv coordinates
         const uvMin = new THREE.Vector2(1 - (bounds.min.x + 1) / 2, (bounds.min.y + 1) / 2);
         const uvMax = new THREE.Vector2(1 - (bounds.max.x + 1) / 2, (bounds.max.y + 1) / 2);
+
+        // Adjust the UV coordinates to match the aspect ratio of the image
+        let uvWidth = uvMax.x - uvMin.x;
+        let uvHeight = uvMax.y - uvMin.y;
+
+        if (uvWidth / uvHeight > aspect)
+        {
+            // The UV width is too large, adjust the height
+            let newHeight = uvWidth / aspect;
+            let heightIncrease = (newHeight - uvHeight) / 2;
+            uvMin.y -= heightIncrease;
+            uvMax.y += heightIncrease;
+        } else
+        {
+            // The UV height is too large, adjust the width
+            let newWidth = uvHeight * aspect;
+            let widthIncrease = (newWidth - uvWidth) / 2;
+            uvMin.x -= widthIncrease;
+            uvMax.x += widthIncrease;
+        }
+
 
         // update the uv coordinates
         plane.geometry.attributes.uv.setXY(0, uvMin.x, uvMin.y);
@@ -132,7 +161,6 @@ export const updateScene = async (thirdEyePop) =>
         plane.geometry.attributes.uv.setXY(2, uvMin.x, uvMax.y);
         plane.geometry.attributes.uv.setXY(3, uvMax.x, uvMax.y);
         plane.geometry.attributes.uv.needsUpdate = true;
-
 
         // set the boundingGeometry to the new bounds
         plane.geometry.needsUpdate = true;
@@ -145,25 +173,33 @@ export const updateScene = async (thirdEyePop) =>
     const showActivePeople = () =>
     {
         const activeIds = [];
+        const activePeople = thirdEyePop.getActivePeople();
+        activePeople.sort((a, b) => a.traceId - b.traceId);
 
-        for (const person of thirdEyePop.getActivePeople())
+        const bounds = new THREE.Box3();
+
+        for (let i = 0; i < activePeople.length && i < MAX_PEOPLE; i++)
         {
-
-            // get a plane from the pool if the person doesn't have one
-            if (!person.frame)
-            {
-                person.frame = getPlaneFromPool(scene);
-                person.frame.id = person.traceId;
-            }
-
+            const person = activePeople[ i ];
             // if ther person is less than 10% of the screen, ignore them
             if (person.boundsWidth < 0.10 || person.boundsHeight < 0.10)
             {
                 continue;
             }
 
+
+            // get a plane from the pool if the person doesn't have one
+            if (!person.frame)
+            {
+                person.frame = getFrame(scene);
+                person.frame.id = person.traceId;
+            }
+
+            person.frame.mesh = bgModelPlanes[ activeIds.length ];
+
             person.frame.activeFrames++;
             person.frame.inactiveFrames = 0;
+
             activeIds.push(person.traceId);
 
             if (person.frame.activeFrames > 50)
@@ -171,9 +207,18 @@ export const updateScene = async (thirdEyePop) =>
                 person.frame.mesh.visible = true;
             }
 
+            bounds.expandByObject(person.frame.mesh);
+
             // update the plane mesh to scale of the person
             updatePersonPlane(person);
         }
+
+        if (activeIds.length > 0)
+        {
+            controls.fitToBox(bounds, true);
+        }
+
+        console.log(activeIds, objectPool);
 
         // hide any planes that are no longer active
         for (const object of objectPool)
@@ -182,64 +227,23 @@ export const updateScene = async (thirdEyePop) =>
             {
                 object.activeFrames = 0;
                 object.inactiveFrames++;
-                if (object.inactiveFrames > 100)
+
+                if (object.inactiveFrames > 50)
                 {
                     object.mesh.visible = false;
+                    object.inactiveFrames = 0;
+                    object.activeFrames = 0;
                 }
+
             }
         }
 
-    }
-
-    // Position the planes in a dynamic grid layout
-    function positionPlanes(planesObjects, padding)
-    {
-        // get object meshes which are visible
-        let planes = [];
-
-        for (const object of planesObjects)
-        {
-            if (object.mesh.visible)
-            {
-                planes.push(object);
-            }
-        }
-
-        // Calculate the number of rows and columns for the grid
-        var gridRows = Math.floor(Math.sqrt(planes.length));
-        var gridColumns = Math.ceil(planes.length / gridRows);
-
-        // Calculate the width and height of each cell
-        var cellWidth = (2 - padding * (gridColumns - 1)) / gridColumns;
-        var cellHeight = (2 - padding * (gridRows - 1)) / gridRows;
-
-        // Position each plane in its cell
-        for (var i = planes.length - 1; i >= 0; i--)
-        {
-            var plane = planes[ i ].mesh;
-
-            // Calculate the cell's x and y position
-            const cellX = (i % gridColumns) * (cellWidth + padding) - 1 + cellWidth / 2;
-            const cellY = Math.floor(i / gridColumns) * (cellHeight + padding) - 1 + cellHeight / 2;
-
-            // Calculate the scale factor to fit the plane in the cell
-            const scaleFactor = Math.min(cellWidth / plane.geometry.parameters.width, cellHeight / plane.geometry.parameters.height);
-
-            // Position and scale the plane in the cell
-            plane.scale.setScalar(scaleFactor);
-
-            planes[ i ].target.set(cellX, -cellY, 0);
-
-            plane.position.lerp(planes[ i ].target, .1);
-        }
     }
 
     // runs every frame
     thirdEyePop.onUpdate = function ()
     {
         showActivePeople();
-
-        positionPlanes(objectPool, 0.01);
 
     };
 
