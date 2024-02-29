@@ -1,4 +1,5 @@
 import * as THREE from 'https://unpkg.com/three/build/three.module.js';
+import { GLTFLoader } from 'https://unpkg.com/three/examples/jsm/loaders/GLTFLoader.js';
 
 
 let objectPool = [];
@@ -6,13 +7,20 @@ let webcamTexture = undefined;
 
 let scene = null;
 let material = null;
+let bgModel = null;
+let bgModelPlanes = [];
 
 const createPlane = () =>
 {
-    const plane = new THREE.Mesh(
-        new THREE.PlaneGeometry(0.0, 0.0),
-        material
-    );
+    let plane = bgModelPlanes.pop();
+
+    if (!plane)
+    {
+        plane = new THREE.Mesh(
+            new THREE.PlaneGeometry(0.0, 0.0),
+            material
+        );
+    }
 
     plane.geometry.computeBoundingBox();
     plane.geometry.computeBoundingSphere();
@@ -24,19 +32,16 @@ const createPlane = () =>
 const getPlaneFromPool = () =>
 {
 
-    for (const object of objectPool)
-    {
-        if (!object.mesh.visible && object.mesh.geometry.parameters.width === 0.0 && object.mesh.geometry.parameters.height === 0.0)
-        {
-            return object;
-        }
-    }
-
-    const newPlane = { id: null, mesh: createPlane(scene, material), target: new THREE.Vector3(), inactiveFrames: 0 };
+    const newPlane = { id: null, mesh: createPlane(scene, material), target: new THREE.Vector3(), inactiveFrames: 0, activeFrames: 0 };
 
     objectPool.push(newPlane);
 
     return newPlane;
+}
+
+const lerp = (a, b, t) =>
+{
+    return a + (b - a) * t;
 }
 
 export const updateScene = async (thirdEyePop) =>
@@ -58,13 +63,32 @@ export const updateScene = async (thirdEyePop) =>
 
         // build a pool of plane meshes to be used to display all the people in the webcam feed
         objectPool = [];
-        const planeCount = 25;
+
         material = new THREE.MeshBasicMaterial({ map: webcamTexture, side: THREE.DoubleSide });
 
-        for (let i = 0; i < planeCount; i++)
+        const gltfLoader = new GLTFLoader();
+        gltfLoader.load('../assets/conference_call.glb', (gltf) =>
         {
-            getPlaneFromPool();
-        }
+            bgModel = gltf.scene;
+            bgModel.traverse((child) =>
+            {
+                if (child.isMesh && child.name.includes('p'))
+                {
+                    bgModelPlanes.push(child);
+                    child.material = new THREE.MeshBasicMaterial({ map: webcamTexture, side: THREE.DoubleSide });
+                    child.visible = false;
+                }
+            });
+
+            // sort the bgModelPlanes by name
+            bgModelPlanes.sort((a, b) =>
+            {
+                return a.name.localeCompare(b.name);
+            });
+
+            controls.fitToBox(bgModel, true);
+            scene.add(bgModel);
+        });
 
     }
 
@@ -74,49 +98,52 @@ export const updateScene = async (thirdEyePop) =>
     {
         const plane = person.frame.mesh;
 
+        // smoothly interpolate the smoothedBounds to the actual bounds of the person, these are both THREE.Box3 objects
+
+        if (!person.smoothedBounds)
+        {
+            person.smoothedBounds = person.bounds.clone();
+        }
+
+        person.smoothedBounds.min.x = lerp(person.smoothedBounds.min.x, person.bounds.min.x, 0.01);
+        person.smoothedBounds.min.y = lerp(person.smoothedBounds.min.y, person.bounds.min.y, 0.01);
+        person.smoothedBounds.max.x = lerp(person.smoothedBounds.max.x, person.bounds.max.x, 0.01);
+        person.smoothedBounds.max.y = lerp(person.smoothedBounds.max.y, person.bounds.max.y, 0.01);
+
+
         // update the uv coordinates of the plane to only show the part of the webcam feed that the person is in
-        const bounds = person.bounds;
+        const bounds = person.smoothedBounds;
 
         const width = Math.abs(bounds.max.x - bounds.min.x);
         const height = Math.abs(bounds.max.y - bounds.min.y);
 
         plane.scale.set(1, 1, 1);
 
-        if (Math.abs(width - plane.geometry.parameters.width) > 0.01 && Math.abs(height - plane.geometry.parameters.height) > 0.01)
-        {
-            // create a new plane geometry with the calculated width and height
-            plane.geometry.dispose();
-            plane.geometry = new THREE.PlaneGeometry(width, height);
+        plane.geometry.dispose();
+        plane.geometry = new THREE.PlaneGeometry(width, height);
+
+        // convert bounds coordinates to uv coordinates
+        const uvMin = new THREE.Vector2(1 - (bounds.min.x + 1) / 2, (bounds.min.y + 1) / 2);
+        const uvMax = new THREE.Vector2(1 - (bounds.max.x + 1) / 2, (bounds.max.y + 1) / 2);
+
+        // update the uv coordinates
+        plane.geometry.attributes.uv.setXY(0, uvMin.x, uvMin.y);
+        plane.geometry.attributes.uv.setXY(1, uvMax.x, uvMin.y);
+        plane.geometry.attributes.uv.setXY(2, uvMin.x, uvMax.y);
+        plane.geometry.attributes.uv.setXY(3, uvMax.x, uvMax.y);
+        plane.geometry.attributes.uv.needsUpdate = true;
 
 
-            // convert bounds coordinates to uv coordinates
-            const uvMin = new THREE.Vector2(1 - (bounds.min.x + 1) / 2, (bounds.min.y + 1) / 2);
-            const uvMax = new THREE.Vector2(1 - (bounds.max.x + 1) / 2, (bounds.max.y + 1) / 2);
+        // set the boundingGeometry to the new bounds
+        plane.geometry.needsUpdate = true;
+        plane.geometry.computeBoundingBox();
+        plane.geometry.computeBoundingSphere();
 
-            // update the uv coordinates
-            plane.geometry.attributes.uv.setXY(0, uvMin.x, uvMin.y);
-            plane.geometry.attributes.uv.setXY(1, uvMax.x, uvMin.y);
-            plane.geometry.attributes.uv.setXY(2, uvMin.x, uvMax.y);
-            plane.geometry.attributes.uv.setXY(3, uvMax.x, uvMax.y);
-            plane.geometry.attributes.uv.needsUpdate = true;
-
-
-            // set the boundingGeometry to the new bounds
-            plane.geometry.needsUpdate = true;
-            plane.geometry.computeBoundingBox();
-            plane.geometry.computeBoundingSphere();
-
-        }
     }
 
 
     const showActivePeople = () =>
     {
-        // for (const object of objectPool)
-        // {
-        //     object.mesh.visible = false;
-        // }
-
         const activeIds = [];
 
         for (const person of thirdEyePop.getActivePeople())
@@ -129,15 +156,20 @@ export const updateScene = async (thirdEyePop) =>
                 person.frame.id = person.traceId;
             }
 
-            // if ther person is less than 25% of the screen, ignore them
+            // if ther person is less than 10% of the screen, ignore them
             if (person.boundsWidth < 0.10 || person.boundsHeight < 0.10)
             {
                 continue;
             }
 
-            person.inactiveFrames = 0;
+            person.frame.activeFrames++;
+            person.frame.inactiveFrames = 0;
             activeIds.push(person.traceId);
-            person.frame.mesh.visible = true;
+
+            if (person.frame.activeFrames > 50)
+            {
+                person.frame.mesh.visible = true;
+            }
 
             // update the plane mesh to scale of the person
             updatePersonPlane(person);
@@ -148,11 +180,11 @@ export const updateScene = async (thirdEyePop) =>
         {
             if (object.mesh.visible && !activeIds.includes(object.id))
             {
+                object.activeFrames = 0;
                 object.inactiveFrames++;
-                if (object.inactiveFrames > 10)
+                if (object.inactiveFrames > 100)
                 {
                     object.mesh.visible = false;
-                    object.mesh.position.set(-100, -100, -100);
                 }
             }
         }
@@ -205,7 +237,6 @@ export const updateScene = async (thirdEyePop) =>
     // runs every frame
     thirdEyePop.onUpdate = function ()
     {
-
         showActivePeople();
 
         positionPlanes(objectPool, 0.01);
