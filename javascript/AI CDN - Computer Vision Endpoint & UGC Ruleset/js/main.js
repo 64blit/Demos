@@ -30,6 +30,27 @@ async function FetchTemporaryToken(apiKey)
     return data.access_token;
 }
 
+async function UploadFile(file, base_url, pipeline_id, temp_token)
+{
+    const url = base_url + '/pipelines/' + pipeline_id + '/source?mode=preempt&processing=sync';
+
+    const formData = new FormData()
+    formData.append('file', file)
+
+    const body = formData;
+
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+            'Accept': 'application/json',
+            'Authorization': 'Bearer ' + temp_token
+        },
+        body: body
+    });
+
+    return await response.json();
+}
+
 async function FetchPopConfig(pop_endpoint, token)
 {
     //const server = "https://api.eyepop.ai";
