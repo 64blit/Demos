@@ -114,12 +114,11 @@
 
     </div>
 
-    <script src="../config.js"></script>
-    <script src="./js/main.js"></script>
+    <script src="./config.js"></script>
 
     <script type="module">
 
-        import tsWhammy from 'https://www.unpkg.com/ts-whammy@1.1.5/libs/index.js';
+        import FFmpeg from '@ffmpeg/ffmpeg';
 
         var fileInput = document.getElementById('file_upload');
         const postButton = document.getElementById('btnPost');
@@ -150,23 +149,49 @@
         recordingCanvas.width = 1920;
         recordingCanvas.height = 1080;
 
-        var frames = [];
+        var cached_data = [];
 
-        var whammyVideo = new tsWhammy.Video(30);
+        var chunks = [];
+
+        let ffmpegTool = null;
 
         async function createVideoFromImages(imageBlobs)
         {
-            // Compile the video
-            var output = whammyVideo.compile(false, function (blob)
+            if (ffmpegTool === null)
             {
-                var url = URL.createObjectURL(blob);
-                var a = document.createElement('a');
-                a.href = url;
-                a.download = 'output.webm';
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-            });
+                ffmpegTool = await FFmpeg({
+                    logger: ({ message }) =>
+                    {
+                        console.log(message);
+                    },
+                });
+            }
+
+            // Convert blobs to array buffers and write them to the ffmpeg filesystem
+            for (let i = 0; i < imageBlobs.length; i++)
+            {
+                let buffer = await imageBlobs[ i ].arrayBuffer();
+                await ffmpegTool.writeFile('frame' + ('000' + i).slice(-3) + '.png', new Uint8Array(buffer));
+            }
+
+            await ffmpegTool.exec([ '-framerate', '30', '-i', 'frame%03d.png', '-c:v', 'libx264', '-r', '30', '-pix_fmt', 'yuv420p', 'out.mp4' ]);
+
+            let outputData = await ffmpegTool.readFile('out.mp4');
+
+            console.log('ffmpegTool result', result);
+
+            let outputBlob = new Blob([ outputData.data.buffer ], { type: 'video/mp4' });
+
+            // Create a URL for the Blob
+            let url = URL.createObjectURL(outputBlob);
+
+            // Create a download link and click it
+            let a = document.createElement('a');
+            a.href = url;
+            a.download = 'output.mp4';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
         }
 
 
@@ -348,7 +373,7 @@
                 let frameCount = Math.floor(video.duration);
 
                 // Calculate the number of frames to extract at 30fps
-                let skip = 1 / 30;
+                let skip = 1 / 3;
 
                 console.log("Frame count: ", video);
                 console.log("Frame count: ", frameCount);
@@ -415,6 +440,27 @@
             });
         };
 
+        function captureFrame()
+        {
+            let dataUrl = mobilecanvas.toDataURL();
+            let blob = dataURItoBlob(dataUrl);
+            return blob;
+        }
+
+        // Step 2: Convert dataURI to Blob
+        function dataURItoBlob(dataURI)
+        {
+            var byteString = atob(dataURI.split(',')[ 1 ]);
+            var mimeString = dataURI.split(',')[ 0 ].split(':')[ 1 ].split(';')[ 0 ]
+            var ab = new ArrayBuffer(byteString.length);
+            var ia = new Uint8Array(ab);
+            for (var i = 0; i < byteString.length; i++)
+            {
+                ia[ i ] = byteString.charCodeAt(i);
+            }
+            return new Blob([ ab ], { type: mimeString });
+        }
+
 
         async function processFile(file)
         {
@@ -428,7 +474,8 @@
             // draw the file on the canvas
             await drawImage(file);
 
-            whammyVideo.add(mobilecanvas);
+            frames.push(captureFrame())
+
         }
 
     </script>
