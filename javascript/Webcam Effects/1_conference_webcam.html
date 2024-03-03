@@ -85,7 +85,6 @@
                     frameBufferSize: 1,
                     DEBUG: false,
                     drawParams: {
-                        // bgCanvas: canvas,
                         showHeatmap: false,
                         showPoint: false,
                         showPath: false,
@@ -95,8 +94,8 @@
                         showHands: false,
                         showFace: false,
                         showBloom: false,
-                        showCameraInCorner: true,
-                        showVideo: false,
+                        showCameraInCorner: false,
+                        showVideo: true,
                         bloomParams: {
                             strength: 0.12,
                             radius: 0.1,
@@ -112,7 +111,7 @@
                     updateScene(thirdEyePop);
                 });
 
-            config.draw = [];
+            // config.draw = [];
 
             config.input = { "name": "webcam_on_page" };
 
