@@ -642,8 +642,8 @@ export default class SceneManager
                 }
             `,
             transparent: true,
-            depthTest: false,
-            depthWrite: false,
+            depthTest: true,
+            depthWrite: true,
             side: THREE.DoubleSide,
         });
     }

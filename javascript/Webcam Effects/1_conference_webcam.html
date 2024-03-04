@@ -88,13 +88,13 @@
                         showHeatmap: false,
                         showPoint: false,
                         showPath: false,
-                        showBounds: false,
+                        showBounds: true,
                         showTraceId: false,
                         showPose: false,
                         showHands: false,
                         showFace: false,
                         showBloom: false,
-                        showCameraInCorner: false,
+                        showCameraInCorner: true,
                         showVideo: true,
                         bloomParams: {
                             strength: 0.12,
@@ -110,8 +110,6 @@
                 {
                     updateScene(thirdEyePop);
                 });
-
-            // config.draw = [];
 
             config.input = { "name": "webcam_on_page" };
 

@@ -8,14 +8,54 @@ let aspect = 16 / 9;
 
 let scene = null;
 let material = null;
-let activeObjects = [];
 
-const MAX_PEOPLE = 25;
+const mediaMaterial = new THREE.ShaderMaterial({
+    uniforms: {
+        tex: {
+            value: null
+        },
+        aspect: {
+            value: 1.0
+        }
+    },
+    side: THREE.DoubleSide,
+    vertexShader: `
+      varying vec2 vUv;
+      
+      void main() {
+        vUv = uv;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `,
+    fragmentShader: `
+      varying vec2 vUv;
+      uniform sampler2D tex;
+      uniform float aspect;
+      
+      void main() {
+      	vec2 uv = vUv;
+        // uv.y *= ratio;
+        // uv.y -= (0.5 - (1. / ratio) * 0.5) * ratio;
+   		
+        if (aspect > 1.0) {
+            uv.x = uv.x / aspect + (1.0 - 1.0 / aspect) / 2.0;
+        } else {
+            uv.y = uv.y * aspect + (1.0 - aspect) / 2.0;
+        }
 
-const createPlane = (scene, material) =>
+        vec3 col = texture2D(tex, uv).rgb;
+        
+        col = mix(col, vec3(0), step(0.5, abs(uv.y - 0.5)));
+        
+        gl_FragColor = vec4(col, 1.);
+      }
+    `
+})
+
+const createPlane = (scene, material, width = 0.0, height = 0.0) =>
 {
     const plane = new THREE.Mesh(
-        new THREE.PlaneGeometry(0.0, 0.0),
+        new THREE.PlaneGeometry(width, height),
         material
     );
 
@@ -29,23 +69,15 @@ const createPlane = (scene, material) =>
 const getFrame = (scene) =>
 {
 
-    for (const object of objectPool)
-    {
-        if (!object.active)
-        {
-            return object;
-        }
-    }
-
-    const newPlane = { id: null, active: false, mesh: createPlane(scene, material), target: new THREE.Vector3(), activeFrames: 0, inactiveFrames: 0 };
+    const newPlane = { id: null, active: false, mesh: createPlane(scene, material.clone()), target: new THREE.Vector3(), activeFrames: 0, inactiveFrames: 0 };
 
     objectPool.push(newPlane);
 
     return newPlane;
 }
 
-const minTime = 0.05;
-const maxTime = 0.25;
+const minTime = 0.01;
+const maxTime = 0.15;
 
 const calculateTime = (smoothedValue, targetValue) =>
 {
@@ -73,13 +105,22 @@ export const updateScene = async (thirdEyePop) =>
 
         scene.add(new THREE.AmbientLight(0xffffff, 1));
 
-        material = new THREE.MeshBasicMaterial({ map: webcamTexture, side: THREE.DoubleSide });
+        // material = new THREE.MeshBasicMaterial({ map: webcamTexture, side: THREE.DoubleSide });
 
+        material = mediaMaterial;
+        material.uniforms.tex.value = webcamTexture;
+        material.uniforms.aspect.value = aspect;
+
+
+        const darkMaterial = new THREE.MeshBasicMaterial({ color: 0x000000, side: THREE.DoubleSide, transparent: true, opacity: 0.75 });
+        const bgPlane = createPlane(scene, darkMaterial, 10, 10);
+        bgPlane.position.z = -1;
+        bgPlane.visible = true;
     }
 
     await buildScene(scene, renderer);
 
-    const updatePersonPlane = (person) =>
+    const updatePersonPlane = (person, cellWidth, cellHeight) =>
     {
         const plane = person.frame.mesh;
 
@@ -90,31 +131,41 @@ export const updateScene = async (thirdEyePop) =>
             person.smoothedBounds = person.bounds.clone();
         }
 
-        person.smoothedBounds.min.x = lerp(person.smoothedBounds.min.x, person.bounds.min.x, calculateTime(person.smoothedBounds.min.x, person.bounds.min.x));
-        person.smoothedBounds.min.y = lerp(person.smoothedBounds.min.y, person.bounds.min.y, calculateTime(person.smoothedBounds.min.y, person.bounds.min.y));
-        person.smoothedBounds.max.x = lerp(person.smoothedBounds.max.x, person.bounds.max.x, calculateTime(person.smoothedBounds.max.x, person.bounds.max.x));
-        person.smoothedBounds.max.y = lerp(person.smoothedBounds.max.y, person.bounds.max.y, calculateTime(person.smoothedBounds.max.y, person.bounds.max.y));
+        person.smoothedBounds.min.x = lerp(person.smoothedBounds.min.x, person.bounds.min.x + .05, calculateTime(person.smoothedBounds.min.x, person.bounds.min.x));
+        person.smoothedBounds.min.y = lerp(person.smoothedBounds.min.y, person.bounds.min.y + .05, calculateTime(person.smoothedBounds.min.y, person.bounds.min.y));
+        person.smoothedBounds.max.x = lerp(person.smoothedBounds.max.x, person.bounds.max.x - .05, calculateTime(person.smoothedBounds.max.x, person.bounds.max.x));
+        person.smoothedBounds.max.y = lerp(person.smoothedBounds.max.y, person.bounds.max.y - .05, calculateTime(person.smoothedBounds.max.y, person.bounds.max.y));
 
         // update the uv coordinates of the plane to only show the part of the webcam feed that the person is in
         const bounds = person.smoothedBounds;
 
-        const width = Math.abs(bounds.max.x - bounds.min.x);
-        const height = Math.abs(bounds.max.y - bounds.min.y);
+        let width = Math.abs(bounds.max.x - bounds.min.x);
+        let height = Math.abs(bounds.max.y - bounds.min.y);
+        person.frame.mesh.material.uniforms.aspect.value = (width / height) * cellHeight / cellWidth;
+        person.frame.mesh.material.uniforms.aspect.needsUpdate = true;
+
+        let scaleFactor = Math.max(cellWidth / width, cellHeight / height);
+        width *= scaleFactor;
+        height *= scaleFactor;
+
+        width = Math.min(width, cellWidth);
+        height = Math.min(height, cellHeight);
+
         // create a new plane geometry with the calculated width and height
         plane.geometry.dispose();
         plane.geometry = new THREE.PlaneGeometry(width, height);
 
-
         // convert bounds coordinates to uv coordinates
-        const uvMin = new THREE.Vector2(1 - (bounds.min.x + 1) / 2, (bounds.min.y + 1) / 2);
-        const uvMax = new THREE.Vector2(1 - (bounds.max.x + 1) / 2, (bounds.max.y + 1) / 2);
+        const uvMin = new THREE.Vector2((1 - (bounds.min.x + 1) / 2), ((bounds.min.y + 1) / 2));
+        const uvMax = new THREE.Vector2((1 - (bounds.max.x + 1) / 2), ((bounds.max.y + 1) / 2));
 
-        // update the uv coordinates
+        // update the uv coordinates with the new centered coordinates
         plane.geometry.attributes.uv.setXY(0, uvMax.x, uvMin.y);
         plane.geometry.attributes.uv.setXY(1, uvMin.x, uvMin.y);
         plane.geometry.attributes.uv.setXY(2, uvMax.x, uvMax.y);
         plane.geometry.attributes.uv.setXY(3, uvMin.x, uvMax.y);
         plane.geometry.attributes.uv.needsUpdate = true;
+
 
         // set the boundingGeometry to the new bounds
         plane.geometry.needsUpdate = true;
@@ -125,27 +176,23 @@ export const updateScene = async (thirdEyePop) =>
 
     const showActivePeople = () =>
     {
-        activeObjects = [];
+
+        let activeFrameObjects = [];
         const activePeople = thirdEyePop.getActivePeople();
         activePeople.sort((a, b) => a.traceId - b.traceId);
 
 
-        for (let i = 0; i < activePeople.length && i < MAX_PEOPLE; i++)
+        for (let i = 0; i < activePeople.length; i++)
         {
             const person = activePeople[ i ];
-            // if ther person is less than 10% of the screen, ignore them
-            if (person.boundsWidth < 0.10 || person.boundsHeight < 0.10)
-            {
-                continue;
-            }
 
             // get a plane from the pool if the person doesn't have one
             if (!person.frame)
             {
                 person.frame = getFrame(scene);
-                person.frame.id = person.traceId;
             }
 
+            person.frame.id = person.traceId;
             person.frame.activeFrames++;
             person.frame.inactiveFrames = 0;
 
@@ -157,9 +204,8 @@ export const updateScene = async (thirdEyePop) =>
 
             person.frame.activeFrames = Math.min(person.frame.activeFrames, 1000);
 
-            activeObjects.push(person.frame);
-            // update the plane mesh to scale of the person
-            updatePersonPlane(person);
+            activeFrameObjects.push(person.frame);
+            // // update the plane mesh to scale of the person
         }
 
 
@@ -167,7 +213,7 @@ export const updateScene = async (thirdEyePop) =>
         for (const object of objectPool)
         {
 
-            if (object.active && !activeObjects.includes(object))
+            if (object.active && !activeFrameObjects.includes(object))
             {
                 object.activeFrames = 0;
                 object.inactiveFrames++;
@@ -178,64 +224,51 @@ export const updateScene = async (thirdEyePop) =>
                     object.activeFrames = 0;
                     object.mesh.visible = false;
                     object.active = false;
+
                 }
 
             }
         }
 
-
+        return { activeFrameObjects, activePeople };
     }
 
 
     // Position the planes in a dynamic grid layout
-    function positionPlanes(planesObjects, padding)
+    function positionFrames(activePeople, padding)
     {
-        // get object meshes which are visible
-        let planes = [];
-
-        for (const object of planesObjects)
-        {
-            if (object.active)
-            {
-                planes.push(object);
-            }
-        }
 
         // Calculate the number of rows and columns for the grid
-        var gridRows = Math.floor(Math.sqrt(planes.length));
-        var gridColumns = Math.ceil(planes.length / gridRows);
+        var gridRows = Math.floor(Math.sqrt(activePeople.length));
+        var gridColumns = Math.ceil(activePeople.length / gridRows);
 
         // Calculate the width and height of each cell
         var cellWidth = (2 - padding * (gridColumns - 1)) / gridColumns;
         var cellHeight = (2 - padding * (gridRows - 1)) / gridRows;
 
         // Position each plane in its cell
-        for (var i = planes.length - 1; i >= 0; i--)
+        for (var i = activePeople.length - 1; i >= 0; i--)
         {
-            var plane = planes[ i ].mesh;
+            var plane = activePeople[ i ].frame.mesh;
 
             // Calculate the cell's x and y position
             const cellX = (i % gridColumns) * (cellWidth + padding) - 1 + cellWidth / 2;
             const cellY = Math.floor(i / gridColumns) * (cellHeight + padding) - 1 + cellHeight / 2;
 
-            // Calculate the scale factor to fit the plane in the cell
-            const scaleFactor = Math.min(cellWidth / plane.geometry.parameters.width, cellHeight / plane.geometry.parameters.height);
+            activePeople[ i ].frame.target.set(cellX, -cellY, -2);
 
-            // Position and scale the plane in the cell
-            plane.scale.setScalar(scaleFactor);
+            plane.position.lerp(activePeople[ i ].frame.target, .1);
 
-            planes[ i ].target.set(cellX, -cellY, 0);
-
-            plane.position.lerp(planes[ i ].target, .1);
+            updatePersonPlane(activePeople[ i ], cellWidth, cellHeight)
         }
     }
 
     // runs every frame
     thirdEyePop.onUpdate = function ()
     {
-        showActivePeople();
+        const { activeFrameObjects, activePeople } = showActivePeople();
 
-        positionPlanes(objectPool, 0.15);
+        positionFrames(activePeople, 0.05);
 
     };
 
