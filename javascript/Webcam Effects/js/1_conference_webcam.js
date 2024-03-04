@@ -34,29 +34,26 @@ const mediaMaterial = new THREE.ShaderMaterial({
       
       void main() {
       	vec2 uv = vUv;
-        // uv.y *= ratio;
-        // uv.y -= (0.5 - (1. / ratio) * 0.5) * ratio;
-   		
+
+
         if (aspect > 1.0) {
-            uv.x = uv.x / aspect + (1.0 - 1.0 / aspect) / 2.0;
+            uv.x = (uv.x - 0.5) / aspect + 0.5;
         } else {
-            uv.y = uv.y * aspect + (1.0 - aspect) / 2.0;
+            uv.y = (uv.y - 0.5) * aspect + 0.5;
         }
 
         vec3 col = texture2D(tex, uv).rgb;
-        
-        col = mix(col, vec3(0), step(0.5, abs(uv.y - 0.5)));
         
         gl_FragColor = vec4(col, 1.);
       }
     `
 })
 
-const createPlane = (scene, material, width = 0.0, height = 0.0) =>
+const createPlane = (scene, planeMaterial, width = 0.0, height = 0.0) =>
 {
     const plane = new THREE.Mesh(
         new THREE.PlaneGeometry(width, height),
-        material
+        planeMaterial
     );
 
     plane.geometry.computeBoundingBox();
@@ -114,7 +111,7 @@ export const updateScene = async (thirdEyePop) =>
 
         const darkMaterial = new THREE.MeshBasicMaterial({ color: 0x000000, side: THREE.DoubleSide, transparent: true, opacity: 0.75 });
         const bgPlane = createPlane(scene, darkMaterial, 10, 10);
-        bgPlane.position.z = -1;
+        bgPlane.position.z = -.1;
         bgPlane.visible = true;
     }
 
@@ -131,10 +128,10 @@ export const updateScene = async (thirdEyePop) =>
             person.smoothedBounds = person.bounds.clone();
         }
 
-        person.smoothedBounds.min.x = lerp(person.smoothedBounds.min.x, person.bounds.min.x + .05, calculateTime(person.smoothedBounds.min.x, person.bounds.min.x));
-        person.smoothedBounds.min.y = lerp(person.smoothedBounds.min.y, person.bounds.min.y + .05, calculateTime(person.smoothedBounds.min.y, person.bounds.min.y));
-        person.smoothedBounds.max.x = lerp(person.smoothedBounds.max.x, person.bounds.max.x - .05, calculateTime(person.smoothedBounds.max.x, person.bounds.max.x));
-        person.smoothedBounds.max.y = lerp(person.smoothedBounds.max.y, person.bounds.max.y - .05, calculateTime(person.smoothedBounds.max.y, person.bounds.max.y));
+        person.smoothedBounds.min.x = lerp(person.smoothedBounds.min.x, person.bounds.min.x + .1, calculateTime(person.smoothedBounds.min.x, person.bounds.min.x));
+        person.smoothedBounds.min.y = lerp(person.smoothedBounds.min.y, person.bounds.min.y + .1, calculateTime(person.smoothedBounds.min.y, person.bounds.min.y));
+        person.smoothedBounds.max.x = lerp(person.smoothedBounds.max.x, person.bounds.max.x - .1, calculateTime(person.smoothedBounds.max.x, person.bounds.max.x));
+        person.smoothedBounds.max.y = lerp(person.smoothedBounds.max.y, person.bounds.max.y - .1, calculateTime(person.smoothedBounds.max.y, person.bounds.max.y));
 
         // update the uv coordinates of the plane to only show the part of the webcam feed that the person is in
         const bounds = person.smoothedBounds;
@@ -156,14 +153,22 @@ export const updateScene = async (thirdEyePop) =>
         plane.geometry = new THREE.PlaneGeometry(width, height);
 
         // convert bounds coordinates to uv coordinates
-        const uvMin = new THREE.Vector2((1 - (bounds.min.x + 1) / 2), ((bounds.min.y + 1) / 2));
-        const uvMax = new THREE.Vector2((1 - (bounds.max.x + 1) / 2), ((bounds.max.y + 1) / 2));
+        const uvMin = new THREE.Vector2(((bounds.min.x + 1) / 2), ((bounds.min.y + 1) / 2));
+        const uvMax = new THREE.Vector2(((bounds.max.x + 1) / 2), ((bounds.max.y + 1) / 2));
+
+        // flip the uvX
+        uvMin.x = 1 - uvMin.x;
+        uvMax.x = 1 - uvMax.x;
 
         // update the uv coordinates with the new centered coordinates
-        plane.geometry.attributes.uv.setXY(0, uvMax.x, uvMin.y);
-        plane.geometry.attributes.uv.setXY(1, uvMin.x, uvMin.y);
-        plane.geometry.attributes.uv.setXY(2, uvMax.x, uvMax.y);
-        plane.geometry.attributes.uv.setXY(3, uvMin.x, uvMax.y);
+        plane.geometry.attributes.uv.setX(0, uvMax.x);
+        plane.geometry.attributes.uv.setY(0, uvMin.y);
+        plane.geometry.attributes.uv.setX(1, uvMin.x);
+        plane.geometry.attributes.uv.setY(1, uvMin.y);
+        plane.geometry.attributes.uv.setX(2, uvMax.x);
+        plane.geometry.attributes.uv.setY(2, uvMax.y);
+        plane.geometry.attributes.uv.setX(3, uvMin.x);
+        plane.geometry.attributes.uv.setY(3, uvMax.y);
         plane.geometry.attributes.uv.needsUpdate = true;
 
 
@@ -255,7 +260,7 @@ export const updateScene = async (thirdEyePop) =>
             const cellX = (i % gridColumns) * (cellWidth + padding) - 1 + cellWidth / 2;
             const cellY = Math.floor(i / gridColumns) * (cellHeight + padding) - 1 + cellHeight / 2;
 
-            activePeople[ i ].frame.target.set(cellX, -cellY, -2);
+            activePeople[ i ].frame.target.set(cellX, -cellY, -.2);
 
             plane.position.lerp(activePeople[ i ].frame.target, .1);
 
@@ -268,7 +273,7 @@ export const updateScene = async (thirdEyePop) =>
     {
         const { activeFrameObjects, activePeople } = showActivePeople();
 
-        positionFrames(activePeople, 0.05);
+        positionFrames(activePeople, 0.01);
 
     };
 
