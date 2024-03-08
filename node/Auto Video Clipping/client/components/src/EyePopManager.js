@@ -1,4 +1,5 @@
-import { EyePopSdk } from "@eyepop.ai/eyepop";
+import { EyePop } from "@eyepop.ai/eyepop";
+import { Render2d } from "@eyepop.ai/eyepop-render-2d";
 // import EyePopVisualizer from "./EyePopVisualizer.js"
 
 export default class EyePopManager
@@ -108,7 +109,13 @@ export default class EyePopManager
         }
 
         this.context = this.resultCanvasRef.getContext("2d");
-        this.popPlotter = EyePopSdk.plot(this.context);
+        this.popPlotter = Render2d.renderer(this.context, [
+            Render2d.renderBox(true),
+            Render2d.renderFace(),
+            Render2d.renderHand(),
+            Render2d.renderTrail(1.0,
+                '$..keyPoints[?(@.category=="3d-body-points")].points[?(@.classLabel.includes("nose"))]')
+        ]);
 
         this.setLoading(false);
 
@@ -151,7 +158,7 @@ export default class EyePopManager
         try
         {
 
-            this.endpoint = await EyePopSdk.endpoint({
+            this.endpoint = await EyePop.endpoint({
                 auth: { session: this.popSession },
                 popId: this.popUUID
             }).onStateChanged((from, to) =>
@@ -187,6 +194,14 @@ export default class EyePopManager
         try
         {
             scope.popLiveIngress = await scope.endpoint.liveIngress(scope.webcam.stream);
+            scope.endpoint.process({ ingressId: scope.popLiveIngress.ingressId() }).then(async (results) =>
+            {
+                for await (let result of results)
+                {
+                    console.log(result);
+                    this.drawPrediction(result);
+                }
+            });
         } catch (error)
         {
             console.error("Failed to call liveIngress:", error);
@@ -202,7 +217,7 @@ export default class EyePopManager
         this.resultCanvasRef.width = result.source_width;
         this.resultCanvasRef.height = result.source_height;
         this.context.clearRect(0, 0, this.resultCanvasRef.width, this.resultCanvasRef.height);
-        this.popPlotter.prediction(result);
+        this.popPlotter.draw(result);
     }
 
     startLiveInference(ingressId)

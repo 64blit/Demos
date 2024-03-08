@@ -35,11 +35,16 @@ const mediaMaterial = new THREE.ShaderMaterial({
       void main() {
       	vec2 uv = vUv;
 
-
         if (aspect > 1.0) {
             uv.x = (uv.x - 0.5) / aspect + 0.5;
         } else {
             uv.y = (uv.y - 0.5) * aspect + 0.5;
+        }
+
+        // if the uv coordinates are outside of the camera feed, make them black
+        if (uv.x < 0. || uv.x > 1. || uv.y < 0. || uv.y > 1.) {
+            gl_FragColor = vec4(0., 0., 0., 1.);
+            return;
         }
 
         vec3 col = texture2D(tex, uv).rgb;
@@ -186,7 +191,6 @@ export const updateScene = async (thirdEyePop) =>
         const activePeople = thirdEyePop.getActivePeople();
         activePeople.sort((a, b) => a.traceId - b.traceId);
 
-
         for (let i = 0; i < activePeople.length; i++)
         {
             const person = activePeople[ i ];
@@ -210,7 +214,6 @@ export const updateScene = async (thirdEyePop) =>
             person.frame.activeFrames = Math.min(person.frame.activeFrames, 1000);
 
             activeFrameObjects.push(person.frame);
-            // // update the plane mesh to scale of the person
         }
 
 
@@ -242,29 +245,46 @@ export const updateScene = async (thirdEyePop) =>
     // Position the planes in a dynamic grid layout
     function positionFrames(activePeople, padding)
     {
+        const activePlanes = [];
+
+        for (let i = 0; i < objectPool.length; i++)
+        {
+            if (objectPool[ i ].active)
+            {
+                activePlanes.push(objectPool[ i ]);
+            }
+        }
 
         // Calculate the number of rows and columns for the grid
-        var gridRows = Math.floor(Math.sqrt(activePeople.length));
-        var gridColumns = Math.ceil(activePeople.length / gridRows);
+        var gridRows = Math.floor(Math.sqrt(activePlanes.length));
+        var gridColumns = Math.ceil(activePlanes.length / gridRows);
 
         // Calculate the width and height of each cell
         var cellWidth = (2 - padding * (gridColumns - 1)) / gridColumns;
         var cellHeight = (2 - padding * (gridRows - 1)) / gridRows;
 
         // Position each plane in its cell
-        for (var i = activePeople.length - 1; i >= 0; i--)
+        for (var i = activePlanes.length - 1; i >= 0; i--)
         {
-            var plane = activePeople[ i ].frame.mesh;
+            var plane = activePlanes[ i ].mesh;
 
             // Calculate the cell's x and y position
             const cellX = (i % gridColumns) * (cellWidth + padding) - 1 + cellWidth / 2;
             const cellY = Math.floor(i / gridColumns) * (cellHeight + padding) - 1 + cellHeight / 2;
 
-            activePeople[ i ].frame.target.set(cellX, -cellY, -.2);
+            activePlanes[ i ].target.set(cellX, -cellY, -.2);
 
-            plane.position.lerp(activePeople[ i ].frame.target, .1);
+            plane.position.lerp(activePlanes[ i ].target, .1);
 
-            updatePersonPlane(activePeople[ i ], cellWidth, cellHeight)
+            for (let i = 0; i < activePeople.length; i++)
+            {
+                const person = activePeople[ i ];
+                if (person.frame === activePlanes[ i ])
+                {
+                    updatePersonPlane(person, cellWidth, cellHeight)
+                }
+            }
+
         }
     }
 

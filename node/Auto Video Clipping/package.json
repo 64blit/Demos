@@ -5,18 +5,19 @@
   "type": "module",
   "scripts": {
     "dev": "node server.js --dev",
+    "build": "vite build",
     "start": "node server.js",
-    "build": "vite build"
+    "restart": "vite build && node server.js"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "@eyepop.ai/eyepop": "latest",
+    "@eyepop.ai/eyepop-render-2d": "latest",
     "@react-three/drei": "latest",
     "@react-three/fiber": "latest",
     "@react-three/flex": "latest",
     "@types/three": "latest",
-    "path": "latest",
     "pino": "latest",
     "react": "latest",
     "react-dom": "latest",
@@ -33,6 +34,7 @@
     "fastify": "latest",
     "postcss": "latest",
     "tailwindcss": "latest",
-    "vite": "^5.1.2"
+    "vite": "^5.1.2",
+    "vite-plugin-node-polyfills": "^0.21.0"
   }
 }

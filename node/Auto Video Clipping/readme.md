@@ -1,7 +1,22 @@
-# Auto Video Clipping Demo
+1. 
+```
+npm install; npm run build; npm run start;
+```
+2. 
+```
+http://localhost:3000
+```
+3. 
+Select a webcam and click start.
 
-The purpose of this project is to show how simple it is to extract the images of people from a live webcam feed and rearrange them in an organized way. This could be useful for conference calls, presentations, and more.
+Error in console inspector:
 
-### Installing and Running
-
-To install, run a `yarn/node install` as well as a `yarn/node dev`
+```
+index-Bg14Ct0b.js:106 Failed to call liveIngress: TypeError: path.randomFillSync is not a function
+    at rng (index-Bg14Ct0b.js:77:5886)
+    at v4 (index-Bg14Ct0b.js:77:6619)
+    at new WebrtcWhip (index-Bg14Ct0b.js:89:157)
+    at Endpoint.liveIngress (index-Bg14Ct0b.js:89:7958)
+    at lu.startWebcamIngress (index-Bg14Ct0b.js:106:2786)
+    at async lu.toggleStart (index-Bg14Ct0b.js:106:1099)
+```

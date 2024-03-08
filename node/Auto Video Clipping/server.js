@@ -1,9 +1,10 @@
 import Fastify from 'fastify';
 import FastifyVite from '@fastify/vite';
-import { EyePopSdk } from "@eyepop.ai/eyepop";
+import { EyePop } from "@eyepop.ai/eyepop";
+import process from 'process';
 
-const POP_UUID = process.env.EYEPOP_POP_ID || 'aee2bc9258df4addad007c25d00f75a1';
-const POP_API_SECRET = process.env.EYEPOP_API_SECRET || 'AAFal4-kPIi6jNSJ8QvwNKEyZ0FBQUFBQmx6UTZuRGYtQkhob3Q2Yk1oc0FVSXFXbHlOc0RXTXJSX3VrWVRQX3hzTXBHeENqX1BWcW5nUWFxTU5Cb25sTWN2SGxyWFIyM0FDS1NpXzBrUWpES20yU21jM1VlWVUzeFBlWXc3YXh0REV5TElobms9';
+const POP_UUID = process.env.EYEPOP_POP_ID || 'f10ac5dcb812495b9028332dc96922a7';
+const POP_API_SECRET = process.env.EYEPOP_SECRET_KEY || 'AAGPQzemZMi5gTNUa0-sWDgDZ0FBQUFBQmwwODFSWE51Y1gyZkx4M3RwSk5MdEF0bFZUclBFeXM2SUx4blU3aEJGUzVENDZOdEtEVkhZQnF4RFAxUXAtNlRUVC1ZcXZEaFVlQVIzZXBmUG9aeWhMNUNRQ0FDQmdNS0JqNnZiRDAwYl9JczVKSnc9';
 
 const server = Fastify()
 
@@ -31,7 +32,7 @@ server.get('/eyepop/session', async (req, reply) =>
     try
     {
 
-        const endpoint = await EyePopSdk.endpoint(
+        const endpoint = await EyePop.endpoint(
             {
                 popId: POP_UUID,
                 auth: { secretKey: POP_API_SECRET }
@@ -48,7 +49,7 @@ server.get('/eyepop/session', async (req, reply) =>
     } catch (error)
     {
         console.error('Error:', error);
-        reply.send(JSON.stringify({ error }));
+        reply.send({ error });
     }
 });
 
