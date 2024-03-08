@@ -1,0 +1,49 @@
+{
+  "name": "eyepop-ai-auto-video-clipping",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "scripts": {
+    "dev": "node server.js --dev",
+    "build": "vite build",
+    "start": "node server.js",
+    "restart": "vite build && node server.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@alenaksu/json-viewer": "^2.0.1",
+    "@eyepop.ai/eyepop": "latest",
+    "@eyepop.ai/eyepop-render-2d": "latest",
+    "@fortawesome/fontawesome-svg-core": "^6.5.1",
+    "@fortawesome/free-brands-svg-icons": "^6.5.1",
+    "@fortawesome/free-regular-svg-icons": "^6.5.1",
+    "@fortawesome/free-solid-svg-icons": "^6.5.1",
+    "@fortawesome/react-fontawesome": "^0.2.0",
+    "@react-three/drei": "latest",
+    "@react-three/fiber": "latest",
+    "@react-three/flex": "latest",
+    "@types/three": "latest",
+    "font-awesome": "^4.7.0",
+    "gsap": "^3.12.5",
+    "pino": "latest",
+    "react": "latest",
+    "react-dom": "latest",
+    "swiper": "^11.0.7",
+    "three": "^0.161.0"
+  },
+  "devDependencies": {
+    "@fastify/vite": "latest",
+    "@types/node": "latest",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "@vitejs/plugin-react": "latest",
+    "autoprefixer": "latest",
+    "daisyui": "latest",
+    "fastify": "latest",
+    "postcss": "latest",
+    "tailwindcss": "latest",
+    "vite": "^5.1.2",
+    "vite-plugin-node-polyfills": "^0.21.0"
+  }
+}
