@@ -27,9 +27,9 @@ const EyePopVisuals = ({ className, resultCanvasRef, videoRef, setModel }) =>
                     ref={modelSelectionRef}
                     onChange={() => { setModel(modelSelectionRef.current.value); }}
                     className="btn select select-bordered  outline border-black max-w-xs w-1/2 m-5 text-yellow-50 rounded-xl transition-all">
-                    <option value="model1">Model 1</option>
-                    <option value="model2">Model 2</option>
-                    <option value="model3">Model 3</option>
+                    <option value="model1">People + Common Objects</option>
+                    <option value="model2">People + 2D Body Pose</option>
+                    <option value="model3">People + 3D Pose + Hands + Face</option>
                 </select>
 
             </div>
