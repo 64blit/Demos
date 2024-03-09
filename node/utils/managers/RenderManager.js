@@ -8,6 +8,9 @@ import { GammaCorrectionShader } from 'https://unpkg.com/three/examples/jsm/shad
 
 export default class RenderManager
 {
+
+    static instance = null;
+
     constructor(
         canvas,
         videoUrl,
@@ -18,6 +21,7 @@ export default class RenderManager
             showBloom: false,
             showGammaCorrection: false,
             showCameraInCorner: false,
+            showVideo: true,
             bloomParams: {
                 strength: 0.5,
                 radius: 0.5,
@@ -25,6 +29,12 @@ export default class RenderManager
             },
         })
     {
+
+        if (!RenderManager.instance)
+        {
+            RenderManager.instance = this;
+        }
+
         THREE.Cache.enabled = true
         this.canvas = canvas;
         this.heatmapPass = null;
@@ -39,10 +49,11 @@ export default class RenderManager
         this.showBloom = drawParams.showBloom;
         this.bloomParams = drawParams.bloomParams;
         this.showHeatmap = drawParams.showHeatmap;
+        this.showVideo = drawParams.showVideo;
         this.showCameraInCorner = drawParams.showCameraInCorner;
         this.showGammaCorrection = drawParams.showGammaCorrection;
 
-        this.heatmapIntensity = 0.5;
+        this.heatmapIntensity = 0.25;
 
         console.log("RenderManager constructor");
 
@@ -76,6 +87,8 @@ export default class RenderManager
         this.domElement = null;
         this.fullScreen = false;
 
+        this.aspectRatio = null;
+
         if (drawParams.bgCanvas)
         {
             // setup the background canvas, and use it as the video texture
@@ -83,6 +96,7 @@ export default class RenderManager
             this.videoTexture = new THREE.CanvasTexture(this.bgCanvas);
             this.videoTexture.magFilter = THREE.NearestFilter;
             this.videoTexture.minFilter = THREE.NearestFilter;
+            this.aspectRatio = this.bgCanvas.width / this.bgCanvas.height;
 
             this.setupRenderer();
             this.setupEffectComposer();
@@ -116,11 +130,7 @@ export default class RenderManager
         // toggle fullscreen
         if (this.fullScreen)
         {
-            this.domElement.style.position = '';
-            this.domElement.style.top = '';
-            this.domElement.style.left = '';
-            this.domElement.style.width = '';
-            this.domElement.style.height = '';
+            this.reset();
 
             // if document is in fullscreen
             if (document.fullscreenElement)
@@ -130,12 +140,6 @@ export default class RenderManager
         } else
         {
             // make renderer canvas render fullscreen behind other dom elements
-            this.domElement.style.position = 'fixed';
-            this.domElement.style.top = 0;
-            this.domElement.style.left = 0;
-            this.domElement.style.width = '100%';
-            this.domElement.style.height = '100%';
-            this.domElement.style.zIndex = 9999;
             this.domElement.requestFullscreen({ navigationUI: "show" });
         }
         this.fullScreen = !this.fullScreen;
@@ -241,6 +245,7 @@ export default class RenderManager
 
             scope.width = scope.video.videoWidth;
             scope.height = scope.video.videoHeight;
+            scope.aspectRatio = scope.width / scope.height;
 
             scope.setupRenderer();
             scope.setupEffectComposer();
@@ -252,8 +257,7 @@ export default class RenderManager
     setupWebCam()
     {
         const scope = this;
-        // TODO: Remove this hardcoded id and create a hidden video element
-        this.video = document.createElement('video');
+        this.video = document.getElementById('myLocalVideo');
         this.video.playsInline = true;
         this.video.crossOrigin = "Anonymous";
         this.video.loop = true;
@@ -286,6 +290,7 @@ export default class RenderManager
 
                     scope.width = scope.video.videoWidth;
                     scope.height = scope.video.videoHeight;
+                    scope.aspectRatio = scope.width / scope.height;
 
                     scope.setupRenderer();
                     scope.setupEffectComposer();
@@ -335,13 +340,13 @@ export default class RenderManager
         this.camera.updateProjectionMatrix();
 
         this.width = this.canvas.clientWidth;
-        this.height = this.canvas.clientHeight;
 
         if (this.bgCanvas)
         {
             this.width = this.bgCanvas.clientWidth;
-            this.height = this.bgCanvas.clientHeight;
         }
+
+        this.height = this.width / this.aspectRatio;
 
         this.renderer.setSize(this.width, this.height);
         this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -352,19 +357,19 @@ export default class RenderManager
     onWindowResized()
     {
         this.width = this.canvas.clientWidth;
-        this.height = this.canvas.clientHeight;
 
         if (this.bgCanvas)
         {
             this.width = this.bgCanvas.clientWidth;
-            this.height = this.bgCanvas.clientHeight;
         }
+
+        this.height = this.width / this.aspectRatio;
 
         if (!this.renderer) return;
 
         this.renderer.setSize(this.width, this.height);
 
-        this.camera.aspect = this.width / this.height;
+        // this.camera.aspect = this.width / this.height;
         this.camera.updateProjectionMatrix();
 
         this.finalComposer.setSize(this.width, this.height);
@@ -508,7 +513,7 @@ export default class RenderManager
 
     }
 
-    // TODO: modularize post effects
+    // TODO: modularize post effects and split this into multiple functions
     setupEffectComposer()
     {
         const renderScene = new RenderPass(this.scene, this.camera);
@@ -525,7 +530,7 @@ export default class RenderManager
         const newSMAAPass = new SMAAPass(this.width / 2, this.height / 2);
         this.finalComposer.addPass(newSMAAPass);
 
-        if (this.videoTexture)
+        if (this.showVideo && this.videoTexture)
         {
             this.finalComposer.addPass(this.copyPass);
             this.copyPass.renderToScreen = true;

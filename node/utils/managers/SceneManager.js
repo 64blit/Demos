@@ -12,8 +12,8 @@ import { GLTFLoader } from 'https://unpkg.com/three/examples/jsm/loaders/GLTFLoa
 import { DRACOLoader } from 'https://unpkg.com/three/examples/jsm/loaders/DRACOLoader.js';
 import { RGBELoader } from 'https://unpkg.com/three/examples/jsm/loaders/RGBELoader.js';
 import { EXRLoader } from 'https://unpkg.com/three/examples/jsm/loaders/EXRLoader.js';
-
-
+import RenderManager from './RenderManager.js';
+import { MeshLineGeometry, MeshLineMaterial, } from 'https://cdn.jsdelivr.net/npm/@lume/three-meshline@4.0.5/dist/index.js';
 
 export default class SceneManager
 {
@@ -56,20 +56,16 @@ export default class SceneManager
             scope.font = font;
         });
 
-        this.textMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
-        this.boxLineMaterial = new THREE.LineBasicMaterial({ color: 0x1d47b3 });
+        this.textMaterial = new THREE.MeshBasicMaterial({ color: 0xfff700 });
 
-        this.pointMaterial = new THREE.MeshBasicMaterial({ color: 0x1d47b3 });
-        this.pathMaterial = new THREE.LineBasicMaterial({ vertexColors: true, linewidth: 100, });
-        this.poseMaterial = new THREE.LineBasicMaterial({ vertexColors: true, linewidth: 100, });
+        this.pointMaterial = new THREE.MeshBasicMaterial({ color: 0x009dff });
+        this.pathMaterial = new MeshLineMaterial({ color: 0xfff700, lineWidth: .01, depthTest: false, });
+        this.poseMaterial = new THREE.LineBasicMaterial({ vertexColors: true, linewidth: 4, depthTest: false, depthWrite: false, transparent: false });
         this.faceMaterial = new THREE.PointsMaterial({ vertexColors: true, size: 5 });
         this.handMaterial = new THREE.PointsMaterial({ vertexColors: true, size: 5 });
 
-        this.boxQueue = [];
-
         this.maxPersons = 100;
         this.personBoxGroup = new Array(this.maxPersons).fill(null);
-        this.personPathGeometry = new Array(this.maxPersons).fill(null);
 
 
         const dracoLoader = new DRACOLoader()
@@ -250,25 +246,27 @@ export default class SceneManager
 
         if (!text)
         {
-            let geometry = new TextGeometry("" + person.traceId, {
+            let geometry = new TextGeometry("person " + person.traceId, {
                 font: this.font,
-                size: .025,
-                height: 0,
-                curveSegments: 12,
+                size: .0175,
+                height: .025,
+                curveSegments: 20,
                 bevelEnabled: false,
             });
             text = new THREE.Mesh(geometry, this.textMaterial);
             text.name = "traceId";
+            text.scale.y = RenderManager.instance.aspectRatio;
             this.scene.add(text);
             person.traceIdText = text;
         }
 
         text.name = "traceId";
         let point = person.position;
-        text.scale.x = -1;
         text.position.x = point.x + person.boundsWidth / 2;
-        text.position.y = person.bounds.min.y;
+        text.position.y = person.bounds.min.y + .025;
         text.position.z = 0;
+
+        text.lookAt(this.camera.position);
     }
 
     drawPath(person)
@@ -280,8 +278,9 @@ export default class SceneManager
 
         if (!pathLine)
         {
-            pathLineGeometry = new THREE.BufferGeometry().setFromPoints(person.path);
-            pathLine = new THREE.Line(pathLineGeometry, this.pathMaterial);
+
+            pathLineGeometry = new MeshLineGeometry();
+            pathLine = new THREE.Mesh(pathLineGeometry, this.pathMaterial);
             pathLine.name = "path";
             this.scene.add(pathLine)
 
@@ -290,17 +289,31 @@ export default class SceneManager
         }
         else
         {
-            pathLineGeometry.setFromPoints(person.path);
-            // set the vertex color of the line from hot red to cool blue based on the length of the path
-            let colors = [];
-            let color = new THREE.Color();
-            let pathLength = person.path.length;
-            for (let i = 0; i < pathLength; i++)
+
+            if (person.path.length > 10)
             {
-                color.setHSL(0.7 * (pathLength - i) / pathLength, 1, 0.5);
-                colors.push(color.r, color.g, color.b);
+                let validPoints = [];
+                let index = 0;
+                for (let i = 0; i < person.path.length; i++)
+                {
+
+                    validPoints.push(
+                        person.path[ i ].x
+                    );
+
+                    validPoints.push(
+                        person.path[ i ].y
+                    );
+
+                    validPoints.push(
+                        person.path[ i ].z
+                    );
+
+                }
+
+
+                pathLineGeometry.setPoints(validPoints);
             }
-            pathLineGeometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
 
         }
 

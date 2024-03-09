@@ -1,4 +1,4 @@
-import * as THREE from 'https://unpkg.com/three/build/three.module.js';
+import * as THREE from 'three';
 import Stats from 'https://unpkg.com/three/examples/jsm/libs/stats.module.js';
 import { GUI } from 'https://unpkg.com/dat.gui/build/dat.gui.module.js';
 import RenderManager from './managers/RenderManager.js';
@@ -8,11 +8,10 @@ import AnimationManager from './managers/AnimationManager.js';
 import CameraControls from 'https://unpkg.com/camera-controls/dist/camera-controls.module.js';
 import { PeopleState } from './data/Constants.js';
 
-
 CameraControls.install({ THREE: THREE });
 
 
-// TODO: 
+// TODO:
 //   - Add workflow for dispose and reset of objects
 
 
@@ -25,6 +24,7 @@ export default class ThirdEyePop
         predictionData = [],
         frameBufferSize = 1,
         smoothingAmount = 5,
+        enableControls = true,
         drawParams: {
             bgCanvas = null,
             showHeatmap = false,
@@ -129,19 +129,22 @@ export default class ThirdEyePop
 
             animationManager = new AnimationManager(renderManager.getScene());
 
-            cameraControls = new CameraControls(
-                renderManager.getCamera(),
-                renderManager.renderer.domElement
-            );
-            cameraControls.dollyToCursor = true;
+            if (enableControls)
+            {
+                cameraControls = new CameraControls(
+                    renderManager.getCamera(),
+                    renderManager.renderer.domElement
+                );
+                cameraControls.dollyToCursor = true;
 
-            cameraControls.saveState();
+                cameraControls.saveState();
+            }
 
             window.addEventListener('keydown', event =>
             {
                 if (event.key == "Escape")
                 {
-                    cameraControls.reset(true);
+                    cameraControls && cameraControls.reset(true);
                 } else if (event.key == "f")
                 {
                     renderManager.toggleFullscreen();
@@ -443,6 +446,7 @@ export default class ThirdEyePop
         scope.pushPredictionData = pushPredictionData;
         scope.popPredictionData = popPredictionData;
         scope.getPredictionData = getPredictionData;
+
         scope.getControls = getControls;
         scope.getScene = getScene;
         scope.getCamera = getCamera;
@@ -451,6 +455,7 @@ export default class ThirdEyePop
         scope.getActivePeople = getActivePeople;
         scope.PeopleState = PeopleState;
         scope.getPeople = getPeople;
+
         scope.reset = resetScene;
 
         // //////////////////// end API /////////////////////////////

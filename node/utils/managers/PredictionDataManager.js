@@ -2,10 +2,10 @@
 
 export default class PredictionDataManager
 {
-    constructor(predictionData = [], maxFrames = 1000)
+    constructor(predictionData = [], frameBufferSize = 1000)
     {
         this.predictionData = predictionData;
-        this.maxFrames = maxFrames;
+        this.maxFrames = frameBufferSize;
         this.currentFrame = null;
     }
 

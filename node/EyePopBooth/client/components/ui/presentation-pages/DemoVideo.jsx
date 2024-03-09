@@ -17,7 +17,7 @@ const DemoVideo = () =>
             <div className="pt-20 pl-5 pr-5 pb-40 flex flex-col  justify-center">
 
 
-                <video ref={videoRef} src="../../../assets/3.6.24 compilation_1.mp4" controls playsInline loop></video>
+                <video ref={videoRef} muted src="../../../assets/3.6.24 compilation_1.mp4" controls playsInline loop></video>
 
 
             </div>
