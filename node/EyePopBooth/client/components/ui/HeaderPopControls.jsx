@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import AdvancedControls from './AdvancedControls.jsx';
 
-const HeaderPopControls = ({ className, loading, popNameRef, handleWebcamChange, startButtonRef, onStart, showControls, setSlideDelay }) =>
+const HeaderPopControls = ({ className, loading, popNameRef, handleWebcamChange, startButtonRef, onStart, showControls }) =>
 {
     const [ webcamDevices, setWebcamDevices ] = useState([]);
 
@@ -32,7 +32,7 @@ const HeaderPopControls = ({ className, loading, popNameRef, handleWebcamChange,
     return (
 
         <>
-            <AdvancedControls className={`${className} ${!showControls && 'hidden'}`} loading={loading} popNameRef={popNameRef} handleWebcamChange={handleWebcamChange} startButtonRef={startButtonRef} onStart={onStart} setSlideDelay={setSlideDelay}
+            <AdvancedControls className={`${className} ${!showControls && 'hidden'}`} loading={loading} popNameRef={popNameRef} handleWebcamChange={handleWebcamChange} startButtonRef={startButtonRef} onStart={onStart}
             />
         </>
     );

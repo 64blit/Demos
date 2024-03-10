@@ -4,7 +4,6 @@ import PipelineVisualization from './presentation-pages/PipelineVisualization';
 import JsonExplorer from './presentation-pages/JsonExplorer';
 import Header from './Header';
 import HeaderPopControls from './HeaderPopControls';
-import gsap from 'gsap';
 
 import "swiper/css";
 import { Swiper, SwiperSlide } from 'swiper/react';
@@ -13,82 +12,99 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowRight, faGear, faComputer, faVideo, faChain, faPlay, faPause } from '@fortawesome/free-solid-svg-icons';
 
+let activeTimeout = null;
 
 const EyePopPresentation = ({ className, json = { status: { 'message': 'Loading...' } }, popNameRef, handleWebcamChange, startButtonRef, onStart, loading }) =>
 {
-    const [ swipe, setSwipe ] = useState();
-    const [ slideIndex, setSlideIndex ] = useState(0);
-    const [ showControls, setShowControls ] = useState(false);
     const navButton1Ref = useRef();
     const navButton2Ref = useRef();
     const navButton3Ref = useRef();
-    const [ tl, setTl ] = useState(gsap.timeline({ repeat: -1, repeatDelay: 0 }));
+
+    const [ swipe, setSwipe ] = useState();
+    const [ slideIndex, setSlideIndex ] = useState(0);
+    const [ showControls, setShowControls ] = useState(false);
     const [ paused, setPaused ] = useState(false);
-    const [ slideDelay, setSlideDelay ] = useState(10);
+    const [ reset, setReset ] = useState("");
+
+
+    const startTimeout = (index) =>
+    {
+        clearTimeout(activeTimeout);
+
+        let newTiemeout = null;
+
+        if (index === 0)
+        {
+            highlightButton(navButton1Ref);
+            changeSlide(0);
+            newTiemeout = setTimeout(() =>
+            {
+                setSlideIndex(1);
+            }, 10000);
+        }
+        if (index === 1)
+        {
+            highlightButton(navButton2Ref);
+            changeSlide(1);
+            newTiemeout = setTimeout(() =>
+            {
+                setSlideIndex(2);
+            }, 78000);
+        }
+        if (index === 2)
+        {
+            highlightButton(navButton3Ref);
+            changeSlide(2);
+            newTiemeout = setTimeout(() =>
+            {
+                setSlideIndex(0);
+            }, 25000);
+        }
+        activeTimeout = (newTiemeout);
+    }
 
     useEffect(() =>
     {
-        if (!tl) return;
-        tl.paused(paused);
+        //pause the active timeout
+        if (paused)
+        {
+            clearTimeout(activeTimeout);
+        }
+        else
+        {
+            startTimeout(slideIndex);
+        }
     }, [ paused ]);
 
 
+    const highlightButton = (buttonRef) =>
+    {
+        navButton1Ref.current.classList.remove('bg-primary-gradient', 'scale-110');
+        navButton2Ref.current.classList.remove('bg-primary-gradient', 'scale-110');
+        navButton3Ref.current.classList.remove('bg-primary-gradient', 'scale-110');
+        buttonRef.current.classList.add('bg-primary-gradient', 'scale-110');
+    }
+
+    const changeSlide = (index) =>
+    {
+        setReset(Math.random());
+        setSlideIndex(index);
+    }
+
     useEffect(() =>
     {
-        // update all the delays in the timeline
         navButton1Ref.current.classList.remove('bg-primary-gradient', 'scale-110');
         navButton2Ref.current.classList.remove('bg-primary-gradient', 'scale-110');
         navButton3Ref.current.classList.remove('bg-primary-gradient', 'scale-110');
 
+        clearTimeout(activeTimeout);
+
+        startTimeout(slideIndex);
+
         swipe?.slideTo(slideIndex);
-        tl.seek(slideIndex * slideDelay);
-    }, [ slideIndex, slideDelay ]);
 
-    useEffect(() =>
-    {
-        if (!navButton1Ref.current) return;
-        if (!navButton2Ref.current) return;
-        if (!navButton3Ref.current) return;
+    }, [ slideIndex ]);
 
-        const highlightButton = (buttonRef, oldButtonRef) =>
-        {
-            buttonRef.current.classList.add('bg-primary-gradient', 'scale-110');
-            oldButtonRef.current.classList.remove('bg-primary-gradient', 'scale-110');
-        }
-
-        const changeSlide = (index) =>
-        {
-            setSlideIndex(index);
-        }
-
-        tl.kill();
-        tl.clear();
-
-        tl.to(navButton1Ref.current, {
-            duration: slideDelay, delay: 0, onStart: () =>
-            {
-                changeSlide(0);
-                highlightButton(navButton1Ref, navButton3Ref);
-            }
-        });
-        tl.to(navButton2Ref.current, {
-            duration: slideDelay, delay: 0, onStart: () =>
-            {
-
-                changeSlide(1);
-                highlightButton(navButton2Ref, navButton1Ref);
-            }
-        });
-        tl.to(navButton3Ref.current, {
-            duration: slideDelay, delay: 0, onStart: () =>
-            {
-                changeSlide(2);
-                highlightButton(navButton3Ref, navButton2Ref);
-            }
-        });
-        tl.play();
-
-    }, [ navButton1Ref.current, navButton2Ref.current, navButton3Ref.current, slideDelay ]);
 
     return (
         <div
@@ -103,8 +119,9 @@ const EyePopPresentation = ({ className, json = { status: { 'message': 'Loading.
             />
 
 
-            <Swiper ref={swipe}
-                onBeforeInit={(swipper) => setSwipe(swipper)}
+            <Swiper
+                ref={swipe}
+                onBeforeInit={(swipper) => { setSwipe(swipper); }}
                 className="w-full">
 
                 <SwiperSlide>
@@ -112,12 +129,12 @@ const EyePopPresentation = ({ className, json = { status: { 'message': 'Loading.
                 </SwiperSlide>
 
                 <SwiperSlide>
-                    <DemoVideo />
+                    <DemoVideo updateTrigger={reset} />
                 </SwiperSlide>
 
 
                 <SwiperSlide>
-                    <PipelineVisualization />
+                    <PipelineVisualization updateTrigger={reset} />
                 </SwiperSlide>
 
             </Swiper>
@@ -131,7 +148,6 @@ const EyePopPresentation = ({ className, json = { status: { 'message': 'Loading.
                 popNameRef={popNameRef}
                 loading={loading}
                 showControls={showControls}
-                setSlideDelay={setSlideDelay}
             />
 
             <div className=' flex-1 w-full flex flex-col-reverse'>

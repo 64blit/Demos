@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 
-const AdvancedControls = ({ className, loading, popNameRef, handleWebcamChange, startButtonRef, onStart, setSlideDelay }) =>
+const AdvancedControls = ({ className, loading, popNameRef, handleWebcamChange, startButtonRef, onStart }) =>
 {
     const [ webcamDevices, setWebcamDevices ] = useState([]);
 
@@ -64,15 +64,6 @@ const AdvancedControls = ({ className, loading, popNameRef, handleWebcamChange, 
                     className={`${loading && 'hidden'}  bg-white hover:bg-blue-500 text-blue-700 font-semibold hover:text-white border border-blue-500 hover:border-transparent rounded-3xl h-10 m-5 min-w-32 w-44 self-center hover:scale-125 transition-all`} >
                     Start Camera
                 </button>
-
-                <input
-                    type="number"
-                    min="1"
-                    max="50"
-                    onChange={(e) => { setSlideDelay(e.target.value); }}
-                    className={`${loading && 'hidden'} bg-white text-gray-700 border border-gray-300 rounded-3xl h-10 m-5 w-50 self-center min-w-[9rem]`}
-                    placeholder="Slide Delay"
-                />
 
             </div>
 

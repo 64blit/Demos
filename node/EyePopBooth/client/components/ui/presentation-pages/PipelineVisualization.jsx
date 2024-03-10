@@ -1,17 +1,28 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowRight, faArrowLeft, faComputer, faVideo, faChain } from '@fortawesome/free-solid-svg-icons';
 
 
-const PipelineVisualization = () =>
+const PipelineVisualization = ({ updateTrigger }) =>
 {
+
+    const videoRef = useRef();
+
+    useEffect(() =>
+    {
+        if (!videoRef.current) return;
+
+        videoRef.current.currentTime = 0;
+        videoRef.current.play();
+    }, [ updateTrigger ]);
+
+
     return (
         <>
-            <h1 className="text-2xl text-center text-white">Pipeline Visualization:</h1>
 
-            <video className="max-h-[100%]" width={'100%'} src="../../../assets/graphic.webm" autoPlay playsInline loop></video>
+            <video ref={videoRef} className="max-h-[100%]" width={'100%'} id={`video${updateTrigger}`} src="../../../assets/graphic.webm" playsInline controls loop></video>
 
         </>
     );

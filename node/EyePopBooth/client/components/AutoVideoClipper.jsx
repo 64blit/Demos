@@ -56,7 +56,6 @@ export function AutoVideoClipper()
 
     useEffect(() =>
     {
-        console.log('resultCanvasRef', resultCanvasRef.current, popNameRef.current, videoRef.current, startButtonRef.current, eyePopManager);
 
         setupEyePopManager();
 

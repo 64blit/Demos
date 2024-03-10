@@ -1,10 +1,13 @@
 import { EyePop } from "@eyepop.ai/eyepop";
 import { Render2d } from "@eyepop.ai/eyepop-render-2d";
-// import EyePopVisualizer from "./EyePopVisualizer.js"
-
 export default class EyePopManager
 {
     static instance = null;
+    static popComps = {
+        "model1": "people+common-objects",
+        "model2": "people+2d-body-pose",
+        "model3": "people+3d-pose+hands+face"
+    };
 
     constructor(resultCanvasRef, videoRef, popNameRef, startButtonRef, setters = { setProgress, setLoading, setJSON })
     {
@@ -17,8 +20,6 @@ export default class EyePopManager
         this.resultCanvasRef = resultCanvasRef.current;
         this.videoRef = videoRef.current;
         this.popNameElement = popNameRef.current;
-
-        // this.eyePopVisualizer = new EyePopVisualizer();
 
         this.endpoint = undefined;
         this.popSession = undefined;
@@ -122,6 +123,10 @@ export default class EyePopManager
     async setModel(model)
     {
 
+        const scope = EyePopManager.instance;
+        if (!scope.endpoint) return;
+
+        await scope.endpoint.changePopComp(popComp[ model ]);
     }
 
     async setup()

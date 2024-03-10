@@ -13,7 +13,6 @@ const JsonExplorer = (props) =>
 
     return (
         <>
-            <h1 className="text-2xl text-center text-white">Live JSON:</h1>
             <div className={props.className} style={{ overflow: 'auto' }}>
                 <json-viewer ref={jsonViewerRef} className="rounded-lg h-full" data={JSON.stringify(props.data)}>
                 </json-viewer>
