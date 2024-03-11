@@ -6,6 +6,44 @@ import React, { useEffect, useRef } from 'react';
 const EyePopVisuals = ({ className, resultCanvasRef, videoRef, setModel }) =>
 {
     const sharedClass = 'object-contain h-full bg-transparent d-block';
+    const canvasRef = useRef();
+
+    // when the f key is pressed make the canvas go full screen
+    const toggleFullScreen = () =>
+    {
+        if (!document.fullscreenElement)
+        {
+            resultCanvasRef.current.requestFullscreen();
+        } else
+        {
+            if (document.exitFullscreen)
+            {
+                document.exitFullscreen();
+            }
+        }
+    }
+
+    //handle the key press event
+    const handleKeyPress = (e) =>
+    {
+        if (e.key === 'f')
+        {
+            toggleFullScreen();
+        }
+    }
+
+    useEffect(() =>
+    {
+        // Add key press event listener when component mounts
+        window.addEventListener('keypress', handleKeyPress);
+
+        // Remove event listener when component unmounts
+        return () =>
+        {
+            window.removeEventListener('keypress', handleKeyPress);
+        };
+    }, []); // Empty dependency array ensures this runs once on mount and unmount
+
 
     const modelSelectionRef = useRef();
 

@@ -20,7 +20,16 @@ const config = {
     root: root,
     base: './',
     assetsInclude: [ '**/*.mp4', '**/*.webm' ],
-    plugins: plugins
+    plugins: plugins,
+    build: {
+        rollupOptions: {
+            output: {
+                entryFileNames: 'index.js',
+                chunkFileNames: 'index.js',
+                assetFileNames: 'index.[ext]'
+            }
+        }
+    }
 };
 
-export default config
+export default config;
