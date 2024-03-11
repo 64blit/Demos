@@ -26,32 +26,26 @@ const EyePopVisuals = ({ className, resultCanvasRef, videoRef, setModel }) =>
                 <select
                     ref={modelSelectionRef}
                     onChange={() => { setModel(modelSelectionRef.current.value); }}
-                    className="btn select select-bordered  outline border-black max-w-xs w-1/2 m-5 text-yellow-50 rounded-xl transition-all">
-                    <option value="peopleCommon">People + Common Objects</option>
-                    <option value="peopleBody">People + 2D Body Pose</option>
-                    <option value="people3d">People + 3D Pose + Hands + Face</option>
+                    className="btn select select-bordered outline border-black max-w-xs w-1/2 m-5 text-white rounded-xl transition-all bg-black hover:bg-purple-500 hover:text-white"
+                >
+                    <option className='text-white bg-black' value="peopleCommon">People + Common Objects</option>
+                    <option className='text-white bg-black' value="peopleBody">People + 2D Body Pose</option>
+                    <option className='text-white bg-black' value="people3d">People + 3D Pose + Hands + Face</option>
                 </select>
-
             </div>
-
             <canvas
                 id="result-overlay"
                 ref={resultCanvasRef}
                 className={`${sharedClass} aboslute shadow-2xl shadow-black w-full max-h-[90%] flex-none`}
-            >
-            </canvas>
-
+            ></canvas>
             <video
                 ref={videoRef}
                 className={`${sharedClass} hidden absolute flex-none`}
                 autoPlay
                 playsInline
                 muted
-            >
-            </video>
-
-
-        </div >
+            ></video>
+        </div>
     );
 };
 

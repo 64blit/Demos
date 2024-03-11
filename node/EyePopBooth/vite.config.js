@@ -15,4 +15,12 @@ const plugins = [
 ]
 
 
+// copy the client/assets folder to the build folder
+const config = {
+    root: root,
+    base: './',
+    assetsInclude: [ '**/*.mp4', '**/*.webm' ],
+    plugins: plugins
+};
+
 export default config
