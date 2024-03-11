@@ -8,12 +8,12 @@ const JsonExplorer = (props) =>
     useEffect(() =>
     {
         if (!jsonViewerRef.current) return;
-        jsonViewerRef.current.expandAll();
-    }, [ jsonViewerRef.current ]);
+        // jsonViewerRef.current.expandAll();
+    }, [ props.updateTrigger ]);
 
     return (
         <>
-            <div className={props.className} style={{ overflow: 'auto' }}>
+            <div id={`json-${props.updateTrigger}`} className={props.className} style={{ overflow: 'auto' }}>
                 <json-viewer ref={jsonViewerRef} className="rounded-lg h-full" data={JSON.stringify(props.data)}>
                 </json-viewer>
             </div>

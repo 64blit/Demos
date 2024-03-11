@@ -125,7 +125,7 @@ const EyePopPresentation = ({ className, json = { status: { 'message': 'Loading.
                 className="w-full">
 
                 <SwiperSlide>
-                    <JsonExplorer className=" ml-5 mr-5 mt-0 mb-0 p-0 h-full " data={json} />
+                    <JsonExplorer updateTrigger={reset} className=" ml-5 mr-5 mt-0 mb-0 p-0 h-full " data={json} />
                 </SwiperSlide>
 
                 <SwiperSlide>

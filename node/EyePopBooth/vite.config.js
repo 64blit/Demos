@@ -13,4 +13,19 @@ const plugins = [
     CustomHmr() // uncomment this this to enable a full refresh on any changes to any files
 ]
 
+/*
+const config = {
+    build: {
+        outDir: resolve(root, 'build'),
+        rollupOptions: {
+            input: {
+                main: resolve(root, 'index.html'),
+                nested: resolve(root, 'nested/index.html')
+            }
+        }
+    },
+    plugins: plugins
+}
+*/
+
 export default { root, plugins }
