@@ -287,7 +287,6 @@ export default class EyePopManager
                 closest = this.predictionData[ i ];
             }
 
-
         }
 
         console.log('Closest prediction: ', closestDifference, closest.seconds, time);
