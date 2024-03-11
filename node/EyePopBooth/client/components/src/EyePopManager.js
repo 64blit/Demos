@@ -138,14 +138,14 @@ export default class EyePopManager
 
         this.popNameElement.innerHTML = "Loading...";
 
-        const isAuthenticated = await this.authenticate();
         const isConnected = await this.connect();
+        // const isAuthenticated = await this.authenticate();
 
-        if (!isAuthenticated || !isConnected)
-        {
-            this.setErrorMessage("Error authenticating you pop...");
-            return;
-        }
+        // if (!isAuthenticated || !isConnected)
+        // {
+        //     this.setErrorMessage("Error authenticating you pop...");
+        //     return;
+        // }
 
         this.context = this.resultCanvasRef.getContext("2d");
         this.popPlotter = Render2d.renderer(this.context, [
@@ -194,16 +194,15 @@ export default class EyePopManager
     async connect()
     {
         if (this.endpoint) return false;
-        if (!this.popSession) return false;
 
         try
         {
 
+            const url = 'https://worker-1.edge.eyepop.xyz/echo';
             this.endpoint = await EyePop.endpoint({
-                auth: { session: this.popSession },
-                popId: this.popUUID,
-                // auth: { oAuth2: true },
-                // popId: `transient`
+                eyepopUrl: url,
+                auth: { oAuth2: true },
+                popId: `transient`
             }).onStateChanged((from, to) =>
             {
                 console.log("Endpoint state transition from " + from + " to " + to);
