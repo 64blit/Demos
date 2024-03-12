@@ -42,8 +42,8 @@ const EyePopVisuals = ({ className, resultCanvasRef, videoRef, setModel }) =>
         {
             window.removeEventListener('keypress', handleKeyPress);
         };
-    }, []); // Empty dependency array ensures this runs once on mount and unmount
 
+    }, []);
 
     const modelSelectionRef = useRef();
 

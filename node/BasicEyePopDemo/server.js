@@ -3,8 +3,8 @@ import FastifyVite from '@fastify/vite';
 import { EyePop } from "@eyepop.ai/eyepop";
 import process from 'process';
 
-const POP_UUID = process.env.EYEPOP_POP_ID || 'f10ac5dcb812495b9028332dc96922a7';
-const POP_API_SECRET = process.env.EYEPOP_SECRET_KEY || 'AAGPQzemZMi5gTNUa0-sWDgDZ0FBQUFBQmwwODFSWE51Y1gyZkx4M3RwSk5MdEF0bFZUclBFeXM2SUx4blU3aEJGUzVENDZOdEtEVkhZQnF4RFAxUXAtNlRUVC1ZcXZEaFVlQVIzZXBmUG9aeWhMNUNRQ0FDQmdNS0JqNnZiRDAwYl9JczVKSnc9';
+const POP_UUID = process.env.EYEPOP_POP_ID || 'e4fd9369a9de42f6becfb90e11f4620c';
+const POP_API_SECRET = process.env.EYEPOP_SECRET_KEY || 'AAF8CqARHHgQBcLhHqLPUjJxZ0FBQUFBQmw0QXNqX2pqMzlaZ292b05LdHhrRmowUGlrNUREUDVYQTE2TW1zQWYyU2U0eVRmQS0xSVdnWkZvRldQOGd2Y2hKWG9kYnI0MzJnRGwyWGJoTExYNkVwQzVLdHZvRzBIMTlLdTFaZ2JEWFJPTERzbTQ9';
 
 const server = Fastify()
 

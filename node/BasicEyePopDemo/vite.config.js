@@ -7,10 +7,29 @@ import { nodePolyfills } from 'vite-plugin-node-polyfills'
 const path = fileURLToPath(import.meta.url)
 const root = resolve(dirname(path), 'client')
 
+
 const plugins = [
     viteReact({ jsxRuntime: 'classic' }),
     nodePolyfills(),
     CustomHmr() // uncomment this this to enable a full refresh on any changes to any files
 ]
 
-export default { root, plugins }
+
+// copy the client/assets folder to the build folder
+const config = {
+    root: root,
+    base: './',
+    assetsInclude: [ '**/*.mp4', '**/*.webm' ],
+    plugins: plugins,
+    build: {
+        rollupOptions: {
+            output: {
+                entryFileNames: 'index.js',
+                chunkFileNames: 'index.js',
+                assetFileNames: 'index.[ext]'
+            }
+        }
+    }
+};
+
+export default config;
