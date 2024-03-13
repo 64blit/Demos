@@ -7,47 +7,47 @@ const EyePopProvider = ({ children }) =>
 {
     const [ results, setResults ] = useState(null);
     const [ endpoint, setEndpoint ] = useState(undefined);
+    const [ isLoadingEyePop, setLoading ] = useState(true);
 
     // Initialize the EyePop.ai endpoint
     useEffect(() =>
     {
-        async function setup()
-        {
-
-            // API key and popID are easily obtained from the EyePop.ai dashboard
-            const newEndpoint = await EyePop.endpoint({
-                auth: { secretKey: 'AAF8CqARHHgQBcLhHqLPUjJxZ0FBQUFBQmw0QXNqX2pqMzlaZ292b05LdHhrRmowUGlrNUREUDVYQTE2TW1zQWYyU2U0eVRmQS0xSVdnWkZvRldQOGd2Y2hKWG9kYnI0MzJnRGwyWGJoTExYNkVwQzVLdHZvRzBIMTlLdTFaZ2JEWFJPTERzbTQ9' },
-                popId: 'e4fd9369a9de42f6becfb90e11f4620c',
+        // API key and popID are easily obtained from the EyePop.ai dashboard
+        EyePop.endpoint({
+            auth: { secretKey: 'AAF8CqARHHgQBcLhHqLPUjJxZ0FBQUFBQmw0QXNqX2pqMzlaZ292b05LdHhrRmowUGlrNUREUDVYQTE2TW1zQWYyU2U0eVRmQS0xSVdnWkZvRldQOGd2Y2hKWG9kYnI0MzJnRGwyWGJoTExYNkVwQzVLdHZvRzBIMTlLdTFaZ2JEWFJPTERzbTQ9' },
+            popId: 'e4fd9369a9de42f6becfb90e11f4620c',
+        })
+            .onStateChanged((from, to) =>
+            {
+                console.log("EyePop.ai endpoint state transition from " + from + " to " + to);
             })
-                .onStateChanged((from, to) =>
-                {
-                    console.log("EyePop.ai endpoint state transition from " + from + " to " + to);
-                });
+            .connect()
+            .then((endpoint) =>
+            {
+                setEndpoint(endpoint);
+                console.log('EyePop.ai endpoint connected:', endpoint);
+                setLoading(false);
+            });
 
-            // Boots up the worker server
-            await newEndpoint.connect();
-
-            setEndpoint(newEndpoint);
-
-            console.log('EyePop.ai endpoint connected:', newEndpoint);
-        }
-
-        setup();
     }, []);
 
 
+
+    // Analyze an image and parse results
     async function checkURL(url = '', category = 'medical')
     {
         const result = await endpoint.process({ url: url });
         return testResults(result);
     }
 
+    // Analyze an image and parse results
     async function checkFile(fileContent = null, category = 'medical')
     {
         const result = await endpoint.process({ file: fileContent });
         return testResults(result);
     }
 
+    // Analyze an image and parse results
     async function checkPath(path = '', category = 'medical')
     {
         const result = await endpoint.process({ path: path });
@@ -85,6 +85,8 @@ const EyePopProvider = ({ children }) =>
     }
 
 
+    // Test for medical category, which requires at least one person in the frame
+    //  and the person should take up 20 - 50 % of the area of the photo
     function testMedical(results)
     {
         let isValid = false;
@@ -106,22 +108,19 @@ const EyePopProvider = ({ children }) =>
                 personCount++;
             }
 
-            totalObjectWidth += sourceWidth / (element.x + element.width);
-            totalObjectHeight += sourceHeight / (element.y + element.height);
+            totalObjectWidth += (element.width) / sourceWidth;
+            totalObjectHeight += (element.height) / sourceHeight;
 
         }
 
+        const totalObjectArea = totalObjectWidth * totalObjectHeight;
         console.log('personCount:', personCount);
-        console.log('totalObjectWidth:', totalObjectWidth);
-        console.log('totalObjectHeight:', totalObjectHeight);
+        console.log('totalObjectArea:', totalObjectArea);
 
-        if (
-            personCount > 0 &&
-            totalObjectWidth > 0.2 &&
-            totalObjectWidth < 0.5 &&
-            totalObjectHeight > 0.2 &&
-            totalObjectHeight < 0.5
-        )
+
+        if (personCount > 0 &&
+            totalObjectArea > 0.2 &&
+            totalObjectArea < 0.5)
         {
             isValid = true;
         }
@@ -129,16 +128,16 @@ const EyePopProvider = ({ children }) =>
         return isValid;
     }
 
+    // Test for animal category, which requires at least one animal in the frame
+    // and the animal should take up 20 - 50 % of the area of the photo
     function testAnimal(results)
     {
-        // Category[ Animals ]
-        // ------- Have at least one animal
-        // ------- any animal should only take up 20 - 50 % of the area of the photo
         let isValid = false;
 
         const animalLabels = [ 'bird', 'cat', 'dog', 'horse', 'sheep', 'cow', 'elephant', 'bear', 'zebra', 'giraffe' ];
         let animalCount = 0;
         let totalObjectWidth = 0;
+        let totalObjectHeight = 0;
         let sourceWidth = results.source_width;
         let sourceHeight = results.source_height;
 
@@ -151,15 +150,15 @@ const EyePopProvider = ({ children }) =>
                 animalCount++;
             }
 
-            totalObjectWidth += sourceWidth / (element.x + element.width);
-            totalObjectHeight += sourceHeight / (element.y + element.height);
+            totalObjectWidth += (element.width) / sourceWidth;
+            totalObjectHeight += (element.height) / sourceHeight;
         }
+
+        const totalObjectArea = totalObjectWidth * totalObjectHeight;
+
         if (animalCount > 0 &&
-            totalObjectWidth > 0.2 &&
-            totalObjectWidth < 0.5
-            && totalObjectHeight > 0.2
-            && totalObjectHeight < 0.5
-        )
+            totalObjectArea > 0.2 &&
+            totalObjectArea < 0.5)
         {
             isValid = true;
         }
@@ -175,7 +174,7 @@ const EyePopProvider = ({ children }) =>
             checkFile,
             checkPath,
         }}>
-            {children}
+            {!isLoadingEyePop && children}
         </EyePopContext.Provider>
     );
 };

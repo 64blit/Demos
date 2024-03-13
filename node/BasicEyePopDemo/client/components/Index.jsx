@@ -5,10 +5,10 @@ import { useEyePop } from '../hook/EyePopContext.jsx';
 export function Index()
 {
 
-    const [ valid, setValid ] = useState(false);
-    const [ isMedicalFocused, setIsMedicalFocused ] = useState(true);
-
     const { checkFile } = useEyePop();
+
+    const [ isApproved, setIsApproved ] = useState(null);
+    const [ isMedicalFocused, setIsMedicalFocused ] = useState(true);
 
 
     const fileChange = async (e) =>
@@ -16,17 +16,13 @@ export function Index()
 
         const category = isMedicalFocused ? 'medical' : 'animal';
 
-        const isValid = await checkFile(e.target.files[ 0 ], category);
+        const approved = await checkFile(e.target.files[ 0 ], category);
 
-        console.log('isValid:', isValid);
+        console.log('EyePop Result - Is image approved:', approved);
 
-        setValid(isValid);
+        setIsApproved(approved);
     }
 
-    useEffect(() =>
-    {
-        console.log('valid state has changed:', valid);
-    }, [ valid ]);
 
     return (
         <div className='flex flex-col justify-center items-center gap-5 m-5 text-white'>
@@ -45,13 +41,15 @@ export function Index()
                 </button>
             </div>
 
+
+
             <input type="file" onChange={fileChange} />
 
 
-            {valid &&
-                <h2 className={`text-2xl text-white ${valid ? 'bg-green-500' : 'bg-red-500'}`}>
+            {isApproved != null &&
+                <h2 className={`text-2xl text-white ${isApproved ? 'bg-green-500' : 'bg-red-500'}`}>
 
-                    {valid ? 'Good!' : 'Not so good!'}
+                    {isApproved ? 'Good!' : 'Not so good!'}
 
                 </h2>
             }
