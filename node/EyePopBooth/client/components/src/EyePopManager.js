@@ -35,11 +35,12 @@ export default class EyePopManager
         this.isJobRunning = false;
 
         this.popComps = {
-            "peopleCommon": "ep_infer id=1  category-name=common-objects model=eyepop-coco:EPCocoB1_EPCOCO_TorchScriptCuda_float32  threshold=0.8  ! ep_infer id=2   tracing=deepsort   model=legacy:reid-mobilenetv2_x1_4_ImageNet_TensorFlowLite_int8    secondary-to-id=1   secondary-for-class-ids=<1>",
+            "peopleCommon": "ep_infer id=1  category-name=common-objects model=eyepop-coco:EPCocoB1_EPCOCO_TorchScriptCuda_float32  threshold=0.75  ! ep_infer id=2   tracing=deepsort   model=legacy:reid-mobilenetv2_x1_4_ImageNet_TensorFlowLite_int8    secondary-to-id=1   secondary-for-class-ids=<1>",
 
-            "peopleBody": "ep_infer id=1    category-name=person    model=eyepop-person:EPPersonB1_Person_TorchScriptCuda_float32 threshold=0.8  ! ep_infer id=2   tracing=deepsort   model=legacy:reid-mobilenetv2_x1_4_ImageNet_TensorFlowLite_int8    secondary-to-id=1   secondary-for-class-ids=<0>  ! ep_infer id=3    threshold=0.5   category-name=2d-body-points   model=Mediapipe:MoveNet_SinglePose_Thunder_MoveNet_TensorFlowLite_float32   secondary-to-id=1   secondary-for-class-ids=\"<0>\"   secondary-box-padding=0.1  ! ep_mixer name=\"meta_mixer\"",
+            "peopleBody": "ep_infer id=1   model=eyepop-person:EPPersonB1_Person_TorchScriptCuda_float32  ! ep_infer id=2  tracing=deepsort  model=legacy:reid-mobilenetv2_x1_4_ImageNet_TensorFlowLite_int8   secondary-to-id=1  secondary-for-class-ids=<0>  thread=true! ep_infer id=3  thread=true  threshold=0.5  model=Mediapipe:BlazeFace_ShortRange_BlazeFace_TensorFlowLite_float32  secondary-to-id=1  secondary-for-class-ids=" < 0 > "  primary-for-absent-class-ids=true  secondary-box-padding=0.1 ! ep_infer id=4  thread=true  model=eyepop-gender:EPGenderB1_Ensemble_Dataset_TorchScriptCuda_float32  secondary-to-id=1  secondary-for-class-ids=" < 0 > "  primary-for-absent-class-ids=true  secondary-box-padding=0.1 ! ep_infer id=5  thread=true  model=eyepop-age:EPAgeB1_Ensemble_Dataset_TorchScriptCuda_float32  secondary-to-id=1  secondary-for-class-ids=" < 0 > "  primary-for-absent-class-ids=true  secondary-box-padding=0.1 ",
+            // "peopleBody": "ep_infer id=1    category-name=person    model=eyepop-person:EPPersonB1_Person_TorchScriptCuda_float32  threshold=0.8 ! ep_infer id=2   tracing=deepsort   model=legacy:reid-mobilenetv2_x1_4_ImageNet_TensorFlowLite_int8    secondary-to-id=1   secondary-for-class-ids=<0>  ! ep_infer id=3    threshold=0.5   category-name=2d-body-points   model=Mediapipe:MoveNet_SinglePose_Thunder_MoveNet_TensorFlowLite_float32   secondary-to-id=1   secondary-for-class-ids=\"<0>\"   secondary-box-padding=0.1  ! ep_mixer name=\"meta_mixer\"",
 
-            "people3d": "ep_infer id=1 category-name=person   model=eyepop-person:EPPersonB1_Person_TorchScriptCuda_float32 threshold=0.8  ! ep_infer id=2   tracing=deepsort   model=legacy:reid-mobilenetv2_x1_4_ImageNet_TensorFlowLite_int8    secondary-to-id=1   secondary-for-class-ids=<0>  ! tee name=t   t. ! ep_infer id=3    threshold=0.75   model=Mediapipe:BlazePose_BlazePose_TensorFlowLite_float32   secondary-to-id=1   secondary-for-class-ids=<0>   secondary-box-padding=0.5     thread=true ! ep_infer id=4 category-name=3d-body-points   threshold=0.75   model=Mediapipe:BlazePose_Landmarks_Heavy_BlazePose_Landmarks_TensorFlowLite_float32   secondary-to-id=3   secondary-for-class-ids=<0>   secondary-box-padding=0.56     orientation-target-angle=-90.0 ! meta_mixer.   t. ! ep_infer id=5   threshold=0.75   model=Mediapipe:Palm_Palm_TensorFlowLite_float32 threshold=0.6   secondary-to-id=1   secondary-for-class-ids=<0>   secondary-box-padding=0.25     thread=true ! ep_infer id=6  category-name=3d-hand-points   model=Mediapipe:Hand_Landmarks_Hand_TensorFlowLite_float32   threshold=0.75   secondary-to-id=5   secondary-for-class-ids=<1>   orientation-target-angle=-90.0 ! meta_mixer.  t. ! ep_infer id=7   threshold=0.75   category-name=2d-face-points   model=Mediapipe:BlazeFace_ShortRange_BlazeFace_TensorFlowLite_float32   secondary-to-id=1   secondary-for-class-ids=\"<0>\"   primary-for-absent-class-ids=true   secondary-box-padding=0.1   ! ep_infer id=8  category-name=3d-face-mesh   model=Mediapipe:Face_Mesh_FaceMesh_TensorFlowLite_float32   secondary-box-padding=1.25   secondary-to-id=7   secondary-for-class-ids=<0>   orientation-target-angle=-90.0 ! ep_infer id=9 category-name=expression   model=eyepop-expression:EPExpressionDS_Ensemble_Dataset_TorchScriptCuda_float32   secondary-to-id=7   secondary-for-class-ids=<0>  ! ep_mixer name=\"meta_mixer\" hide-object-ids=\"3,*;5,*;7,*\""
+            "people3d": "ep_infer id=1 category-name=person   model=eyepop-person:EPPersonB1_Person_TorchScriptCuda_float32  ! ep_infer id=2   tracing=deepsort   model=legacy:reid-mobilenetv2_x1_4_ImageNet_TensorFlowLite_int8    secondary-to-id=1   secondary-for-class-ids=<0>  ! tee name=t   t. ! ep_infer id=3    threshold=0.75   model=Mediapipe:BlazePose_BlazePose_TensorFlowLite_float32   secondary-to-id=1   secondary-for-class-ids=<0>   secondary-box-padding=0.5     thread=true ! ep_infer id=4 category-name=3d-body-points   threshold=0.75   model=Mediapipe:BlazePose_Landmarks_Heavy_BlazePose_Landmarks_TensorFlowLite_float32   secondary-to-id=3   secondary-for-class-ids=<0>   secondary-box-padding=0.56     orientation-target-angle=-90.0 ! meta_mixer.   t. ! ep_infer id=5   threshold=0.75   model=Mediapipe:Palm_Palm_TensorFlowLite_float32 threshold=0.6   secondary-to-id=1   secondary-for-class-ids=<0>   secondary-box-padding=0.25     thread=true ! ep_infer id=6  category-name=3d-hand-points   model=Mediapipe:Hand_Landmarks_Hand_TensorFlowLite_float32   threshold=0.75   secondary-to-id=5   secondary-for-class-ids=<1>   orientation-target-angle=-90.0 ! meta_mixer.  t. ! ep_infer id=7   threshold=0.75   category-name=2d-face-points   model=Mediapipe:BlazeFace_ShortRange_BlazeFace_TensorFlowLite_float32   secondary-to-id=1   secondary-for-class-ids=\"<0>\"   primary-for-absent-class-ids=true   secondary-box-padding=0.1   ! ep_infer id=8  category-name=3d-face-mesh   model=Mediapipe:Face_Mesh_FaceMesh_TensorFlowLite_float32   secondary-box-padding=1.25   secondary-to-id=7   secondary-for-class-ids=<0>   orientation-target-angle=-90.0 ! ep_infer id=9 category-name=expression   model=eyepop-expression:EPExpressionDS_Ensemble_Dataset_TorchScriptCuda_float32   secondary-to-id=7   secondary-for-class-ids=<0>  ! ep_mixer name=\"meta_mixer\" hide-object-ids=\"3,*;5,*;7,*\""
         };
 
         this.getWebcam();
@@ -137,15 +138,17 @@ export default class EyePopManager
     {
 
         this.popNameElement.innerHTML = "Loading...";
-
+        console.log("Setting up Pop Manager...");
+        const isAuthenticated = await this.authenticate();
         const isConnected = await this.connect();
-        // const isAuthenticated = await this.authenticate();
+        console.log("Is Authenticated: ", isAuthenticated);
+        console.log("Is Connected: ", isConnected);
 
-        // if (!isAuthenticated || !isConnected)
-        // {
-        //     this.setErrorMessage("Error authenticating you pop...");
-        //     return;
-        // }
+        if (!isAuthenticated || !isConnected)
+        {
+            this.setErrorMessage("Error authenticating you pop...");
+            return;
+        }
 
         this.context = this.resultCanvasRef.getContext("2d");
         this.popPlotter = Render2d.renderer(this.context, [
@@ -194,15 +197,16 @@ export default class EyePopManager
     async connect()
     {
         if (this.endpoint) return false;
+        if (!this.popSession) return false;
 
         try
         {
 
-            const url = 'https://worker-1.edge.eyepop.xyz/echo';
             this.endpoint = await EyePop.endpoint({
-                eyepopUrl: url,
-                auth: { oAuth2: true },
-                popId: `transient`
+                auth: { session: this.popSession },
+                popId: this.popUUID,
+                // auth: { oAuth2: true },
+                // popId: `transient`
             }).onStateChanged((from, to) =>
             {
                 console.log("Endpoint state transition from " + from + " to " + to);
@@ -286,6 +290,7 @@ export default class EyePopManager
             {
                 closest = this.predictionData[ i ];
             }
+
 
         }
 

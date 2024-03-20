@@ -14,16 +14,19 @@
     "@react-three/fiber": "^8.15.19",
     "@react-three/postprocessing": "latest",
     "@react-three/rapier": "latest",
+    "@react-three/uikit": "^0.1.19",
     "camera-controls": "latest",
     "daisyui": "^4.7.3",
     "font-awesome": "^4.7.0",
-    "gsap": "^3.12.2",
+    "gsap": "^3.12.5",
+    "immer": "^10.0.4",
     "leva": "^0.9.35",
     "maath": "^0.10.7",
     "r3f-perf": "^7.1.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "three": "^0.162.0"
+    "three": "^0.162.0",
+    "zustand": "^4.5.2"
   },
   "devDependencies": {
     "@types/node": "latest",
@@ -40,6 +43,7 @@
     "postcss": "latest",
     "tailwindcss": "^3.4.1",
     "typescript": "^5.2.2",
-    "vite": "^5.1.6"
+    "vite": "^5.1.6",
+    "vite-plugin-node-polyfills": "^0.21.0"
   }
 }

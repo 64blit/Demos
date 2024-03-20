@@ -16,17 +16,17 @@ const TextInput: React.FC<TextInputProps> = ({ label, className }) =>
     };
 
     return (
-        <div className={`${className} z-50`}>
-            <label className='p-5 bg-orange-500 text-black '>{label}</label>
+        <div className={`${className} z-50 flex rounded-sm`}>
             <input
                 className='p-5 '
                 type="text"
                 multiple
                 value={value}
+                placeholder={label}
                 onChange={handleChange}
             />
 
-            <div className='btn p-5 m-0  min-h-full bg-blue-500 text-white'>Go</div>
+            <div className='p-5 m-0 w-20 bg-blue-500 text-white cursor-pointer'>ok</div>
         </div>
     );
 };
