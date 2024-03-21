@@ -1,15 +1,15 @@
 import TextInput from './components/TextInput'
-import Visuals from './components/Visuals'
+import Index from './components/Index'
 import './style/App.css'
 
 function App()
 {
-
+  console.log('App')
   return (
 
     <>
       {/* <TextInput className="absolute bottom-0 p-5 -mt-[5rem]" label="Enter Message..." /> */}
-      <Visuals />
+      <Index />
     </>
   )
 }

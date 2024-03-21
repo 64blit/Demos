@@ -4,93 +4,25 @@ import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
 import { produce } from 'immer';
 
-type EyePopConfig = {
-    secretKey?: string | null | undefined;
-    popId: string;
-};
+import { atom, useAtom } from 'jotai'
+import { atomWithDefault } from "jotai/utils";
+import { get } from "http";
 
-type EyePopState = {
-    eyePop: EyePopManager | undefined;
-    prediction: JSON | null | undefined;
-    videoElement: HTMLVideoElement | null | undefined;
-    initialize: (config: EyePopConfig) => Promise<void | EyePopManager>;
-    startWebcamStream: () => Promise<void | HTMLVideoElement> | void;
-    update: () => Promise<void> | void;
-    getEyePop: () => EyePopManager | undefined;
-};
 
-const store = (set, get): EyePopState => ({
-    eyePop: undefined,
-    getEyePop: () => get().eyePop,
-    videoElement: null,
-    prediction: null,
-    initialize: async (config) =>
-    {
-        const eyePopManager = new EyePopManager(config);
-        await eyePopManager.setup();
-        set({ eyePop: eyePopManager }, 'eyePop');
-    },
-    startWebcamStream: () =>
-    {
-        set(
-            produce((draft: EyePopState) =>  //useful for modifying the state in a more complex way, so you dont have to unroll the state and then roll it back up again
-            {
-                if (!draft.eyePop)
-                {
-                    console.error('EyePop not yet initialized. Please wait a moment and try again.');
-                }
-
-                draft.eyePop?.startWebcamStream().then((videoElement) =>
-                {
-                    if (!videoElement) return;
-
-                    videoElement.onloadedmetadata = () =>
-                    {
-                        // update the video width and height
-                        videoElement.width = videoElement?.videoWidth || 0;
-                        videoElement.height = videoElement?.videoHeight || 0;
-
-                        set({
-                            videoElement: videoElement
-                        }, 'videoElement');
-
-                    }
-
-                })
-
-                return draft
-            },
-                'startWebcamStream'
-            )
-        )
-    },
-    update: async () =>
-    {
-        const eyePop = get().eyePop;
-
-        console.log('Updating prediction:', eyePop, eyePop?.prediction);
-
-        if (!eyePop)
-        {
-            return;
-        }
-
-        set({ prediction: eyePop.prediction });
-    }
-})
-
-// const useEyePop = create(devtools(persist(store, { name: 'store' })));
-const useEyePop = create(devtools(store));
 
 class EyePopManager 
 {
     public config: EyePopConfig;
     public videoElement: HTMLVideoElement | null | undefined = null;
-    public prediction: JSON | null | undefined;
-    public endpoint: EyePop.Endpoint | null | undefined = null;
+    public ready: boolean = false;
+
+    private prediction: JSON | null | undefined;
+    private endpoint: EyePop.Endpoint | null | undefined = null;
+    private ingressId: number | null | undefined;
 
     private stream: EyePop.Ingress | null | undefined = null;
     private egressId: number | null | undefined;
+
 
 
     constructor(config: EyePopConfig)
@@ -101,8 +33,11 @@ class EyePopManager
         this.stream = undefined;
         this.endpoint = undefined;
         this.prediction = undefined;
+        this.ingressId = undefined;
+        this.ready = false;
 
         this.createVideoElement();
+        this.setup();
     }
 
     setup = async () =>
@@ -138,6 +73,9 @@ class EyePopManager
 
             await this.endpoint.connect();
 
+            this.startWebcamStream();
+
+
             console.log('EyePop.ai endpoint connected')
 
         } catch (error)
@@ -150,7 +88,15 @@ class EyePopManager
 
     createVideoElement = () =>
     {
+        const existingVideoElement = document.getElementById('webcam-video-eyepop');
+        if (existingVideoElement)
+        {
+            this.videoElement = existingVideoElement as HTMLVideoElement;
+            return;
+        }
+
         this.videoElement = document.createElement('video');
+        this.videoElement.setAttribute('id', 'webcam-video-eyepop');
         this.videoElement.style.display = 'none';
         document.body.appendChild(this.videoElement);
         this.videoElement.setAttribute('autoplay', 'true');
@@ -158,7 +104,7 @@ class EyePopManager
         this.videoElement.setAttribute('playsinline', 'true');
     };
 
-    startWebcamPrediction = (ingressId, onNewPrediction) =>
+    startWebcamPrediction = (ingressId?: number) =>
     {
         const scope = this;
         this.endpoint.process({ ingressId })
@@ -167,11 +113,15 @@ class EyePopManager
                 // starts a new prediction process in the background
                 setTimeout(async () =>
                 {
+                    console.log('Starting prediction process');
                     for await (let result of results)
                     {
-                        (result.seconds.toFixed(1) % 2 < .0001) && console.log('Prediction result:', result.seconds);
+                        if (result.seconds % 2 < 0.1)
+                        {
+                            console.log('New prediction:', result);
+                        }
+
                         scope.prediction = result;
-                        onNewPrediction(result);
                     }
                 });
             });
@@ -193,6 +143,7 @@ class EyePopManager
         const tempStream = await navigator.mediaDevices.getUserMedia({
             audio: false,
             video: {
+                facingMode: 'user',
                 width: { ideal: 1920 },
                 height: { ideal: 1080 }
             }
@@ -200,12 +151,31 @@ class EyePopManager
 
         const ingressStream = await this.endpoint?.liveIngress(tempStream);
 
-        this.startWebcamPrediction(ingressStream.ingressId());
+        this.ingressId = ingressStream.ingressId();
+        this.startWebcamPrediction(this.ingressId);
 
         this.videoElement.srcObject = tempStream;
         this.videoElement?.play();
 
-        console.log('Completed startWebcamStream')
+        await new Promise((resolve) =>
+        {
+            if (!this.videoElement)
+            {
+                resolve(null);
+                return;
+            }
+
+            this.videoElement.onloadedmetadata = () =>
+            {
+                this.videoElement.width = this.videoElement?.videoWidth || 0;
+                this.videoElement.height = this.videoElement?.videoHeight || 0;
+
+                resolve(this.videoElement);
+
+                this.ready = true;
+            }
+        });
+
 
         return this.videoElement;
 
@@ -222,7 +192,38 @@ class EyePopManager
         return egress?.stream() || new MediaStream();
     };
 
+
+    getPrediction = (): JSON | null | undefined =>
+    {
+        return this.prediction;
+    }
 }
 
 
-export default useEyePop;
+
+type EyePopConfig = {
+    popId: string;
+    secretKey?: string;
+}
+
+
+// Create an atom to hold the instance of EyePopManager
+let eyePopManagerAtom = null;
+
+const webcamVideoAtom = atom(
+    (get) => get(eyePopManagerAtom)?.videoElement
+)
+
+const useEyePop = (config?: EyePopConfig | null | undefined = null) =>
+{
+    if (!eyePopManagerAtom)
+    {
+        eyePopManagerAtom = atom(new EyePopManager(config))
+    }
+
+    const [ eyePopManager, setEyePopManager ] = useAtom(eyePopManagerAtom)
+
+    return { eyePopManager, webcamVideo: eyePopManager.videoElement }
+}
+
+export default useEyePop
