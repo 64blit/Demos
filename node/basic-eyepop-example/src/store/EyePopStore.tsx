@@ -106,6 +106,7 @@ class EyePopManager
 
     startWebcamPrediction = (ingressId?: number) =>
     {
+        // return;
         const scope = this;
         this.endpoint.process({ ingressId })
             .then((results) =>

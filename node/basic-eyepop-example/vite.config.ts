@@ -28,14 +28,14 @@ export default defineConfig({
   },
   plugins: [ react(), 
     nodePolyfills(),
-    CustomHmr() 
+    // CustomHmr() 
   ],
   css: {
     postcss: {
       plugins: [ tailwindcss ],
     },
   },
-
+  assetsInclude: ['**/*.glb', '**/*.json']
 });
 
 

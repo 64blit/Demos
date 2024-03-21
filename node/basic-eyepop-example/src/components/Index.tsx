@@ -11,7 +11,6 @@ import { Perf } from 'r3f-perf';
 
 const Index: React.FC = () =>
 {
-    const [ camera, setCamera ] = useState<CameraControls | null>(null);
     const [ webcamMesh, setWebcamMesh ] = useState<THREE.Mesh | null>(null);
 
     const cameraRef = useRef(null);
@@ -22,9 +21,25 @@ const Index: React.FC = () =>
         if (!webcamMesh) return;
 
         console.log('Fitting camera to webcamMesh', cameraRef.current, webcamMesh);
+        cameraRef.current.near
         cameraRef.current.fitToBox(webcamMesh, true);
+        cameraRef.current.saveState();
 
     }, [ cameraRef, webcamMesh ])
+
+
+    useEffect(() =>
+    {
+        const handleEscape = (e: KeyboardEvent) =>
+        {
+            if (e.key === 'Escape')
+            {
+                cameraRef?.current.reset(true);
+            }
+        }
+        window.addEventListener('keydown', handleEscape);
+        return () => window.removeEventListener('keydown', handleEscape);
+    })
 
     useEyePop(
         {
@@ -41,7 +56,6 @@ const Index: React.FC = () =>
         >
 
             <Perf position="top-left" />
-            <axesHelper args={[ 1 ]} />
 
             <CameraControls ref={cameraRef} />
             <Environment preset="sunset" />
