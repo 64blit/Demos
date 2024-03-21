@@ -24,6 +24,15 @@ const Index: React.FC = () =>
         cameraRef.current.near
         cameraRef.current.fitToBox(webcamMesh, true);
         cameraRef.current.saveState();
+        cameraRef.current.mouseButtons.left = null;
+        cameraRef.current.mouseButtons.right = null;
+        cameraRef.current.mouseButtons.middle = null;
+        cameraRef.current.mouseButtons.wheel = null;
+        cameraRef.current.touches.two = null;
+        cameraRef.current.touches.three = null;
+        cameraRef.current.touches.one = null;
+
+
 
     }, [ cameraRef, webcamMesh ])
 
@@ -55,17 +64,17 @@ const Index: React.FC = () =>
             gl={{ localClippingEnabled: true }}
         >
 
-            <Perf position="top-left" />
+            {/* <Perf position="top-left" /> */}
 
             <CameraControls ref={cameraRef} />
             <Environment preset="sunset" />
 
-            <spotLight position={[ 10, 10, 10 ]} angle={0.15} penumbra={1} decay={0} intensity={Math.PI} />
-            <pointLight position={[ -10, -10, -10 ]} decay={0} intensity={Math.PI / 4} />
-            <ambientLight intensity={5} />
+            <spotLight position={[ 0, 0, 10 ]} penumbra={1} decay={.5} intensity={20} />
+            <pointLight position={[ 0, 0, 10 ]} decay={0} intensity={Math.PI / 4} />
 
-
-            <EyePopDrawing />
+            <DragControls >
+                <EyePopDrawing />
+            </DragControls>
 
             <group ref={(node) =>
             {
@@ -73,7 +82,6 @@ const Index: React.FC = () =>
             }}>
                 <WebcamMesh />
             </group>
-
 
         </Canvas >
     );

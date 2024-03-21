@@ -404,6 +404,11 @@
   resolved "https://registry.npmjs.org/@eslint/js/-/js-8.57.0.tgz"
   integrity sha512-Ys+3g2TaW7gADOJzPt83SJtCDhMjndcDMFVQ/Tj9iA1BfJzFKD9mAUXT3OenpuPHbI6P/myECxRJrofUsDx/5g==
 
+"@eyepop.ai/javascript-sdk@^0.1.9":
+  version "0.1.9"
+  resolved "https://registry.yarnpkg.com/@eyepop.ai/javascript-sdk/-/javascript-sdk-0.1.9.tgz#f88c1f7df2435ff5e55db0e2a71778c392c1ff54"
+  integrity sha512-lsPFzCQD4kDxUenQvhFsYh2maXs8QWGxka3HZSdhjBmnvrdAKeVl+NPzilFD6cI9jiRLR37YNHcb2zSd5Ed5/Q==
+
 "@floating-ui/core@^1.0.0":
   version "1.6.0"
   resolved "https://registry.npmjs.org/@floating-ui/core/-/core-1.6.0.tgz"

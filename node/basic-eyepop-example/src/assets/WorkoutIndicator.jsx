@@ -7,11 +7,13 @@ import gltfUrl from './eyepop_squats_ui_1-transformed.glb'
 import React, { useEffect, useRef } from 'react'
 import { Text, useGLTF } from '@react-three/drei'
 import gsap from 'gsap'
+import { useFrame } from '@react-three/fiber'
 
-export function WorkoutIndicator({ count })
+export function WorkoutIndicator({ repCount, repsPerSet, setCount })
 {
   const { nodes, materials } = useGLTF(gltfUrl)
 
+  const workoutIndicator = useRef()
   // refs for each tick
   const tick_1 = useRef(null)
   const tick_2 = useRef(null)
@@ -35,10 +37,26 @@ export function WorkoutIndicator({ count })
   const tick_20 = useRef(null)
   const tick_21 = useRef(null)
 
+  // useFrame((mouse, delta) =>
+  // {
+  // make the workoutIndicator tilk with the mouse movement slightly
+  //  based on the width of the screen
+
+  // const x = mouse.x
+  // const y = mouse.y
+  // const width = window.innerWidth
+  // const height = window.innerHeight
+  // const xPercent = (x / width) * 2 - 1
+  // const yPercent = (y / height) * 2 - 1
+  // workoutIndicator.current.rotation.x += yPercent * 0.2
+  // workoutIndicator.current.rotation.y += xPercent * 0.2
+
+  // })
+
   const tickRefs = [ tick_1, tick_2, tick_3, tick_4, tick_5, tick_6, tick_7, tick_8, tick_9, tick_10, tick_11, tick_12, tick_13, tick_14, tick_15, tick_16, tick_17, tick_18, tick_19, tick_20, tick_21 ]
 
   // given a percentage, set the ticks as visible or not
-  function setTicks(percentage)
+  function animateRepTicks(percentage)
   {
     for (let i = 0; i < tickRefs.length; i++)
     {
@@ -66,22 +84,26 @@ export function WorkoutIndicator({ count })
   useEffect(() =>
   {
 
-    if (!count) return;
+    if (!repCount) return;
 
-    setTicks(count / 21)
+    animateRepTicks(repCount / 21)
 
-  }, [ count ])
+  }, [ repCount ])
 
   const scale = .03
 
+  setTimeout(() =>
+  {
+    animateRepTicks(20 / 21)
+  }, 1000);
 
   return (
-    <group dispose={null} scale={[ scale, scale, scale ]} position={[ 0, .29, .01 ]} rotation={[ 0, Math.PI, 0 ]}>
+    <group ref={workoutIndicator} dispose={null} scale={[ scale, scale, scale ]} position={[ 0, .29, .01 ]} rotation={[ 0, Math.PI, 0 ]}>
       <group name="Scene">
 
 
-        <Text position={[ 0, 0, 0 ]} rotation={[ 0, Math.PI, 0 ]} fontSize={5} color="white" maxWidth={4} lineHeight={1} letterSpacing={0} textAlign="center" font="https://fonts.gstatic.com/s/roboto/v27/KFOmCnqEu92Fr1Mu4mxP.ttf">
-          {count}
+        <Text position={[ 0, 0, 0 ]} rotation={[ 0, Math.PI, 0 ]} fontSize={5} color="white" maxWidth={4} lineHeight={1} letterSpacing={0} textAlign="center" font="https://fonts.gstatic.com/s/roboto/v27/KFOmCnqEu92Fr1Mu4mxP.ttf" >
+          {repCount}
         </Text>
 
         <mesh name="bg" castShadow receiveShadow geometry={nodes.bg.geometry} material={materials.bake} position={[ 0, 0, 0.037076 ]} rotation={[ Math.PI / 2, 0, 0 ]} />
