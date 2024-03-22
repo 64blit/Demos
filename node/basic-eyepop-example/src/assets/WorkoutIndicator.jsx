@@ -66,8 +66,8 @@ export function WorkoutIndicator()
 
     const startRotation = workoutIndicator.current.rotation.y
 
-    const targetRotationNegative = startRotation - THREE.MathUtils.degToRad(5)
-    const targetRotationPositive = startRotation + THREE.MathUtils.degToRad(10)
+    const targetRotationNegative = startRotation - THREE.MathUtils.degToRad(2)
+    const targetRotationPositive = startRotation + THREE.MathUtils.degToRad(4)
 
     workoutIndicator.current.rotation.y = targetRotationNegative
 
@@ -112,15 +112,26 @@ export function WorkoutIndicator()
   useEffect(() =>
   {
     if (!repCount) return;
+    if (!workoutIndicator.current) return;
 
     animateRepTicks(repCount / repsPerSet)
 
-  }, [ repCount ])
+
+    // bounce the scale of the indicator by 20% of the scale then return it to the stored original scale
+    const originalScale = { ...workoutIndicator.current.scale };
+    gsap.fromTo(
+      workoutIndicator.current.scale,
+      { x: originalScale.x * 1.5, y: originalScale.y * 1.5, z: originalScale.z * 1.5 },
+      { ...originalScale, duration: 0.15, ease: "bounce.out" }
+    );
+
+  }, [ repCount, workoutIndicator ])
 
   const scale = .03
 
 
   return (
+
     <group ref={workoutIndicator} dispose={null} scale={[ scale, scale, scale * 2 ]} position={[ 0, .2, .1 ]} rotation={[ 0, Math.PI, 0 ]}>
       <group name="Scene">
 

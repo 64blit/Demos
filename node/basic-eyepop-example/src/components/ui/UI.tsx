@@ -10,7 +10,7 @@ const UI: React.FC = () =>
     return (
         <>
             <Html fullscreen>
-                <div className='flex flex-row w-100 h-100 min-h-100 justify-end' style={{ height: '100%' }}>
+                <div className='flex flex-row w-100 h-100 min-h-100 justify-end p-5' style={{ height: '100%' }}>
                     <div className="btn w-14 bg-gray-600 text-white m-4 " onClick={() =>
                     {
                         setOpen(!open)

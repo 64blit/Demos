@@ -64,7 +64,7 @@ const Index: React.FC = () =>
             {/* <Perf position="top-left" /> */}
 
             <CameraControls ref={cameraRef} />
-            <Environment preset="sunset" />
+            <Environment preset="city" />
 
             <spotLight position={[ 0, 0, 10 ]} penumbra={1} decay={.5} intensity={20} />
             <pointLight position={[ 0, 0, 10 ]} decay={0} intensity={Math.PI / 4} />

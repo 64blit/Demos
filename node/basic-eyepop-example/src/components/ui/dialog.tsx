@@ -14,7 +14,7 @@ const Dialog: React.FC<DialogProps> = ({ onClose }) =>
 
     return (
         <div className="bg-white rounded p-4 flex flex-col gap-3 justify-center">
-            <h2 className="text-center">Workout Routine</h2>
+            <h2 className="text-center">Workout Settings</h2>
             <label className='flex flex-row justify-evenly items-center gap-3'>
                 <div className='w-24'>
                     Workout Routine:
