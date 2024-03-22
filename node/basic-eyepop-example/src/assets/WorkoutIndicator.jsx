@@ -86,19 +86,24 @@ export function WorkoutIndicator()
   // given a percentage, set the ticks as visible or not
   function animateRepTicks(percentage)
   {
+
+    if (percentage === 0) percentage = 1.0
+
     for (let i = 0; i < tickRefs.length; i++)
     {
       const tick = tickRefs[ i ].current;
       if (!tick) continue;
 
       const tickPercentage = i / tickRefs.length;
+
       if (tickPercentage <= percentage)
       {
         tick.visible = true;
+        const originalScale = { ...tick.scale };
         gsap.fromTo(
           tick.scale,
           { x: 0, y: 0, z: 0 },
-          { x: 1, y: 1, z: 1, duration: 0.15, ease: "bounce.out", delay: i * 0.1 }
+          { x: 1.2, y: 1.2, z: 1, duration: 0.15, ease: "bounce.out", delay: i * 0.1 }
         );
       } else
       {
@@ -112,6 +117,8 @@ export function WorkoutIndicator()
   useEffect(() =>
   {
     if (!repCount) return;
+    console.log('repCount', repCount, repsPerSet)
+
     animateRepTicks(repCount / repsPerSet)
 
     if (!workoutIndicator.current) return;
@@ -122,7 +129,7 @@ export function WorkoutIndicator()
     gsap.fromTo(
       workoutIndicator.current.scale,
       { x: originalScale.x * 1.5, y: originalScale.y * 1.5, z: originalScale.z * 1.5 },
-      { ...originalScale, duration: 0.15, ease: "bounce.out" }
+      { x: originalScale.x, y: originalScale.y, z: originalScale.z, duration: 0.15, ease: "bounce.out" }
     );
 
   }, [ repCount, workoutIndicator ])
@@ -138,7 +145,7 @@ export function WorkoutIndicator()
         <Text3D
           font={font3d}
           scale={[ 1.5, 1.5, .5 ]}
-          position={[ 4, 1, -.35 ]}
+          position={[ 4.2, 1, -.35 ]}
           bevelEnabled
           bevelSize={0.015}
           rotation={[ 0, Math.PI, 0 ]}
@@ -153,7 +160,7 @@ export function WorkoutIndicator()
         <Text3D
           font={font3d}
           scale={[ 1.25, 1.25, .5 ]}
-          position={[ 2.7, -1, 0 ]}
+          position={[ 2.9, -1, 0 ]}
           bevelEnabled
           bevelSize={0.015}
           rotation={[ 0, Math.PI, 0 ]}
@@ -164,27 +171,27 @@ export function WorkoutIndicator()
 
         <mesh name="bg" castShadow receiveShadow geometry={nodes.bg.geometry} material={materials[ 'bake.002' ]} position={[ 0, 0, 0.037076 ]} rotation={[ Math.PI / 2, 0, 0 ]} />
 
-        <mesh name="tick_1" ref={tick_1} visible={false} castShadow receiveShadow geometry={nodes.tick_1.geometry} material={materials.eyepop_blue} position={[ 0, 0, 2.54 ]} />
-        <mesh name="tick_2" ref={tick_2} visible={false} castShadow receiveShadow geometry={nodes.tick_2.geometry} material={materials.eyepop_blue} position={[ 0, 0, 2.54 ]} />
-        <mesh name="tick_3" ref={tick_3} visible={false} castShadow receiveShadow geometry={nodes.tick_3.geometry} material={materials.eyepop_blue} position={[ 0, 0, 2.54 ]} />
-        <mesh name="tick_4" ref={tick_4} visible={false} castShadow receiveShadow geometry={nodes.tick_4.geometry} material={materials.eyepop_blue} position={[ 0, 0, 2.54 ]} />
-        <mesh name="tick_5" ref={tick_5} visible={false} castShadow receiveShadow geometry={nodes.tick_5.geometry} material={materials.eyepop_blue} position={[ 0, 0, 2.54 ]} />
-        <mesh name="tick_6" ref={tick_6} visible={false} castShadow receiveShadow geometry={nodes.tick_6.geometry} material={materials.eyepop_blue} position={[ 0, 0, 2.54 ]} />
-        <mesh name="tick_7" ref={tick_7} visible={false} castShadow receiveShadow geometry={nodes.tick_7.geometry} material={materials.eyepop_blue} position={[ 0, 0, 2.54 ]} />
-        <mesh name="tick_8" ref={tick_8} visible={false} castShadow receiveShadow geometry={nodes.tick_8.geometry} material={materials.eyepop_blue} position={[ 0, 0, 2.54 ]} />
-        <mesh name="tick_9" ref={tick_9} visible={false} castShadow receiveShadow geometry={nodes.tick_9.geometry} material={materials.eyepop_blue} position={[ 0, 0, 2.54 ]} />
-        <mesh name="tick_10" ref={tick_10} visible={false} castShadow receiveShadow geometry={nodes.tick_10.geometry} material={materials.eyepop_blue} position={[ 0, 0, 2.54 ]} />
-        <mesh name="tick_11" ref={tick_11} visible={false} castShadow receiveShadow geometry={nodes.tick_11.geometry} material={materials.eyepop_blue} position={[ 0, 0, 2.54 ]} />
-        <mesh name="tick_12" ref={tick_12} visible={false} castShadow receiveShadow geometry={nodes.tick_12.geometry} material={materials.eyepop_blue} position={[ 0, 0, 2.54 ]} />
-        <mesh name="tick_13" ref={tick_13} visible={false} castShadow receiveShadow geometry={nodes.tick_13.geometry} material={materials.eyepop_blue} position={[ 0, 0, 2.54 ]} />
-        <mesh name="tick_14" ref={tick_14} visible={false} castShadow receiveShadow geometry={nodes.tick_14.geometry} material={materials.eyepop_blue} position={[ 0, 0, 2.54 ]} />
-        <mesh name="tick_15" ref={tick_15} visible={false} castShadow receiveShadow geometry={nodes.tick_15.geometry} material={materials.eyepop_blue} position={[ 0, 0, 2.54 ]} />
-        <mesh name="tick_16" ref={tick_16} visible={false} castShadow receiveShadow geometry={nodes.tick_16.geometry} material={materials.eyepop_blue} position={[ 0, 0, 2.54 ]} />
-        <mesh name="tick_17" ref={tick_17} visible={false} castShadow receiveShadow geometry={nodes.tick_17.geometry} material={materials.eyepop_blue} position={[ 0, 0, 2.54 ]} />
-        <mesh name="tick_18" ref={tick_18} visible={false} castShadow receiveShadow geometry={nodes.tick_18.geometry} material={materials.eyepop_blue} position={[ 0, 0, 2.54 ]} />
-        <mesh name="tick_19" ref={tick_19} visible={false} castShadow receiveShadow geometry={nodes.tick_19.geometry} material={materials.eyepop_blue} position={[ 0, 0, 2.54 ]} />
-        <mesh name="tick_20" ref={tick_20} visible={false} castShadow receiveShadow geometry={nodes.tick_20.geometry} material={materials.eyepop_blue} position={[ 0, 0, 2.54 ]} />
-        <mesh name="tick_21" ref={tick_21} visible={false} castShadow receiveShadow geometry={nodes.tick_21.geometry} material={materials.eyepop_blue} position={[ 0, 0, 2.54 ]} />
+        <mesh name="tick_1" ref={tick_1} visible={false} castShadow receiveShadow geometry={nodes.tick_1.geometry} material={materials.eyepop_blue} scale={1.1} position={[ 0, 0, 2.54 ]} />
+        <mesh name="tick_2" ref={tick_2} visible={false} castShadow receiveShadow geometry={nodes.tick_2.geometry} material={materials.eyepop_blue} scale={1.1} position={[ 0, 0, 2.54 ]} />
+        <mesh name="tick_3" ref={tick_3} visible={false} castShadow receiveShadow geometry={nodes.tick_3.geometry} material={materials.eyepop_blue} scale={1.1} position={[ 0, 0, 2.54 ]} />
+        <mesh name="tick_4" ref={tick_4} visible={false} castShadow receiveShadow geometry={nodes.tick_4.geometry} material={materials.eyepop_blue} scale={1.1} position={[ 0, 0, 2.54 ]} />
+        <mesh name="tick_5" ref={tick_5} visible={false} castShadow receiveShadow geometry={nodes.tick_5.geometry} material={materials.eyepop_blue} scale={1.1} position={[ 0, 0, 2.54 ]} />
+        <mesh name="tick_6" ref={tick_6} visible={false} castShadow receiveShadow geometry={nodes.tick_6.geometry} material={materials.eyepop_blue} scale={1.1} position={[ 0, 0, 2.54 ]} />
+        <mesh name="tick_7" ref={tick_7} visible={false} castShadow receiveShadow geometry={nodes.tick_7.geometry} material={materials.eyepop_blue} scale={1.1} position={[ 0, 0, 2.54 ]} />
+        <mesh name="tick_8" ref={tick_8} visible={false} castShadow receiveShadow geometry={nodes.tick_8.geometry} material={materials.eyepop_blue} scale={1.1} position={[ 0, 0, 2.54 ]} />
+        <mesh name="tick_9" ref={tick_9} visible={false} castShadow receiveShadow geometry={nodes.tick_9.geometry} material={materials.eyepop_blue} scale={1.1} position={[ 0, 0, 2.54 ]} />
+        <mesh name="tick_10" ref={tick_10} visible={false} castShadow receiveShadow geometry={nodes.tick_10.geometry} material={materials.eyepop_blue} scale={1.1} position={[ 0, 0, 2.54 ]} />
+        <mesh name="tick_11" ref={tick_11} visible={false} castShadow receiveShadow geometry={nodes.tick_11.geometry} material={materials.eyepop_blue} scale={1.1} position={[ 0, 0, 2.54 ]} />
+        <mesh name="tick_12" ref={tick_12} visible={false} castShadow receiveShadow geometry={nodes.tick_12.geometry} material={materials.eyepop_blue} scale={1.1} position={[ 0, 0, 2.54 ]} />
+        <mesh name="tick_13" ref={tick_13} visible={false} castShadow receiveShadow geometry={nodes.tick_13.geometry} material={materials.eyepop_blue} scale={1.1} position={[ 0, 0, 2.54 ]} />
+        <mesh name="tick_14" ref={tick_14} visible={false} castShadow receiveShadow geometry={nodes.tick_14.geometry} material={materials.eyepop_blue} scale={1.1} position={[ 0, 0, 2.54 ]} />
+        <mesh name="tick_15" ref={tick_15} visible={false} castShadow receiveShadow geometry={nodes.tick_15.geometry} material={materials.eyepop_blue} scale={1.1} position={[ 0, 0, 2.54 ]} />
+        <mesh name="tick_16" ref={tick_16} visible={false} castShadow receiveShadow geometry={nodes.tick_16.geometry} material={materials.eyepop_blue} scale={1.1} position={[ 0, 0, 2.54 ]} />
+        <mesh name="tick_17" ref={tick_17} visible={false} castShadow receiveShadow geometry={nodes.tick_17.geometry} material={materials.eyepop_blue} scale={1.1} position={[ 0, 0, 2.54 ]} />
+        <mesh name="tick_18" ref={tick_18} visible={false} castShadow receiveShadow geometry={nodes.tick_18.geometry} material={materials.eyepop_blue} scale={1.1} position={[ 0, 0, 2.54 ]} />
+        <mesh name="tick_19" ref={tick_19} visible={false} castShadow receiveShadow geometry={nodes.tick_19.geometry} material={materials.eyepop_blue} scale={1.1} position={[ 0, 0, 2.54 ]} />
+        <mesh name="tick_20" ref={tick_20} visible={false} castShadow receiveShadow geometry={nodes.tick_20.geometry} material={materials.eyepop_blue} scale={1.1} position={[ 0, 0, 2.54 ]} />
+        <mesh name="tick_21" ref={tick_21} visible={false} castShadow receiveShadow geometry={nodes.tick_21.geometry} material={materials.eyepop_blue} scale={1.1} position={[ 0, 0, 2.54 ]} />
       </group>
     </group>
   )

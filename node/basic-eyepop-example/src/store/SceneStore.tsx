@@ -14,7 +14,7 @@ const workoutList = [
     {
         id: 2,
         name: 'Pushups',
-        rules: " Biggest Person left hip below Biggest Person left knee " + "\r\n" +
+        rules: " Biggest Person left wrist below Biggest Person left knee " + "\r\n" +
             " Biggest Person right hip below Biggest Person right knee " + "\r\n" +
             " Biggest Person left hip above Biggest Person left knee " + "\r\n" +
             " Biggest Person right hip above Biggest Person right knee "
@@ -73,15 +73,16 @@ const store = (set): SceneStore => ({
         set((state) =>
         {
             let newRepCount = state.repCount + 1;
+            console.log('Incrementing rep count', newRepCount, state.repsPerSet);
 
-            if (newRepCount === state.repsPerSet)
+            if (newRepCount > state.repsPerSet)
             {
                 // You can add additional logic here if needed
                 set({ currentSet: state.currentSet + 1 })
-                newRepCount = 0;
+                newRepCount = 1;
             }
 
-            return { repCount: newRepCount };
+            return ({ repCount: newRepCount });
         });
     },
     setRepCount: (value) => set({ repCount: value }),
@@ -89,9 +90,12 @@ const store = (set): SceneStore => ({
     setCurrentSet: (value) => set({ currentSet: value }),
     setTotalSets: (value) => set({ totalSets: value }),
     setWorkoutRoutine: (value) => set({ workoutRules: value }),
-    reset: () => set({
-        repCount: 0, currentSet: 0, totalSets: 3, repsPerSet: 10, workoutRules: workoutList[ defaultWorkout ].rules,
-    }),
+    reset: () =>
+    {
+        set({
+            repCount: 0, currentSet: 0, totalSets: 3, repsPerSet: 10, workoutRules: workoutList[ defaultWorkout ].rules,
+        })
+    },
     setWorkout: (index) => set({ activeWorkoutIndex: index, workoutRules: workoutList[ index ].rules }),
     setPersonBoundsScalar: (value) => set({ personBoundsScalar: value })
 });

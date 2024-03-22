@@ -71,8 +71,6 @@ const EyePopDrawing: React.FC = () =>
                     yMax - parentPosition.y,
                     z - parentPosition.z
                 );
-
-                // personBoundsRef.current?.scale.set(1, personBoundsScalar, 1);
             }
         }
 
@@ -159,7 +157,13 @@ const EyePopDrawing: React.FC = () =>
         if (!kneePosition || !waistPosition) return;
 
 
-        const distance = Math.abs(waistPosition.y - kneePosition.y)
+        const distance = (kneePosition.y - waistPosition.y)
+
+        if (distance < 0)
+        {
+            setPersonBoundsScalar(1);
+            return
+        }
 
         averageDistance.value += person.height / 4;
         averageDistance.count++;
@@ -188,7 +192,6 @@ const EyePopDrawing: React.FC = () =>
 
         setPersonBoundsScalar(scalarAverage.average)
 
-        console.log('Person bounds scalar:', scalar.toFixed(2), distance.toFixed(2));
     }
 
 
