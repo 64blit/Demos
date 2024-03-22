@@ -4,6 +4,7 @@ import react from "@vitejs/plugin-react";
 import CustomHmr from "./vite-utils/CustomHmr.js";
 import tailwindcss from "tailwindcss";
 import { nodePolyfills } from 'vite-plugin-node-polyfills'
+import json5Plugin from 'vite-plugin-json5'
 
 // This is required for Vite to work correctly with CodeSandbox
 const server = process.env.APP_ENV === "sandbox" ? { hmr: { clientPort: 443 } } : {};
@@ -28,6 +29,7 @@ export default defineConfig({
   },
   plugins: [ react(), 
     nodePolyfills(),
+    json5Plugin()
     // CustomHmr() 
   ],
   css: {
@@ -35,7 +37,7 @@ export default defineConfig({
       plugins: [ tailwindcss ],
     },
   },
-  assetsInclude: ['**/*.glb', '**/*.json']
+  assetsInclude: ['**/*.glb', '**/*.ttf', ]
 });
 
 

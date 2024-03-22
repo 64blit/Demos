@@ -1,225 +1,80 @@
-import { Container, DefaultProperties } from '@react-three/uikit'
-import { colors } from './theme'
-import React, {
-  ComponentPropsWithoutRef,
-  ReactNode,
-  createContext,
-  memo,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react'
-import { X } from '@react-three/uikit-lucide'
+import React, { useState } from 'react';
+import { useSceneStore } from '../../store/SceneStore';
 
-type DialogAnchorSetElement = (prevElement: ReactNode | undefined, element: ReactNode | undefined) => void
-
-const DialogAnchorContext = createContext<DialogAnchorSetElement | undefined>(undefined)
-
-export function DialogAnchor({ children }: { children?: ReactNode }) {
-  const [element, setElement] = useState<ReactNode | undefined>(undefined)
-  const set = useCallback<DialogAnchorSetElement>(
-    (prevElement, element) => setElement((e) => (e === prevElement ? element : e)),
-    [],
-  )
-  return (
-    <>
-      <DialogAnchorProvider set={set} children={children} />
-      {element}
-    </>
-  )
+interface DialogProps
+{
+    onClose: () => void;
 }
 
-const DialogAnchorProvider = memo(({ children, set }: { children?: ReactNode; set: DialogAnchorSetElement }) => {
-  return <DialogAnchorContext.Provider value={set}>{children}</DialogAnchorContext.Provider>
-})
 
-const DialogContext = createContext<
-  | {
-      setOpen: (open: boolean) => void
-      setContent: (element: ReactNode) => void
-    }
-  | undefined
->(undefined)
 
-export function useDialogContext() {
-  const ctx = useContext(DialogContext)
-  if (ctx == null) {
-    throw new Error(`Can only be used inside a <Dialog> component.`)
-  }
-  return ctx
-}
+const Dialog: React.FC<DialogProps> = ({ onClose }) =>
+{
+    const { setRepsPerSet, setTotalSets, setWorkoutRoutine, workoutRules, repsPerSet, totalSets, reset } = useSceneStore();
 
-export function Dialog({
-  children,
-  open: providedOpen,
-  onOpenChange,
-  defaultOpen,
-}: {
-  children?: ReactNode
-  open?: boolean
-  defaultOpen?: boolean
-  onOpenChange?: (open: boolean) => void
-}) {
-  const [uncontrolled, setUncontrolled] = useState(defaultOpen ?? false)
-  const open = providedOpen ?? uncontrolled
-  const setElement = useContext(DialogAnchorContext)
-  if (setElement == null) {
-    throw new Error(`Can only be used inside a <DialogAnchor> component.`)
-  }
-  const contentRef = useRef<ReactNode | undefined>(undefined)
-  const displayedRef = useRef<ReactNode | undefined>(undefined)
-  useEffect(() => {
-    if (!open) {
-      setElement(displayedRef.current, undefined)
-      displayedRef.current = undefined
-      return
-    }
-    if (contentRef.current == null) {
-      return
-    }
-    setElement(undefined, contentRef.current)
-    displayedRef.current = contentRef.current
-  }, [open, setElement])
-  const ref = useRef(onOpenChange)
-  ref.current = onOpenChange
-  const openWasProvided = providedOpen != null
-  const value = useMemo(
-    () => ({
-      setContent(content: ReactNode) {
-        if (displayedRef.current != null) {
-          setElement(displayedRef.current, content)
-          displayedRef.current = content
-        }
-        contentRef.current = content
-      },
-      setOpen(open: boolean) {
-        if (!openWasProvided) {
-          setUncontrolled(open)
-        }
-        ref.current?.(open)
-      },
-    }),
-    [openWasProvided, setElement],
-  )
-  return <DialogContext.Provider value={value}>{children}</DialogContext.Provider>
-}
+    return (
+        <div className="bg-white rounded p-4 flex flex-col gap-3 justify-center">
+            <h2 className="text-center">Workout Routine</h2>
+            <label className='flex flex-row justify-evenly items-center gap-3'>
+                <div className='w-24'>
+                    Workout Routine:
+                </div>
+                <textarea
+                    value={workoutRules}
+                    onChange={(e) =>
+                    {
+                        // add a \r\n to the end of each line if it doesn't already exist
+                        const value = e.target.value.split('\n').map((line) => line.trim()).join('\r\n');
 
-export function DialogTrigger({ children }: { children?: ReactNode }) {
-  const { setOpen } = useDialogContext()
-  return <Container onClick={() => setOpen(true)}>{children}</Container>
-}
+                        setWorkoutRoutine(value)
+                    }}
+                    className="border border-gray-300 rounded p-2"
+                    rows={8}
+                    cols={40}
+                />
+            </label>
+            <br />
+            <br />
+            <label className='flex flex-row justify-evenly items-center gap-3  '>
+                <div className='w-24'>
+                    Reps per Set:
+                </div>
+                <input
+                    type="number"
+                    value={repsPerSet}
+                    onChange={(e) => setRepsPerSet(Number(e.target.value))}
+                    className="border border-gray-300 rounded p-2"
+                />
+            </label>
+            <br />
+            <label className='flex flex-row justify-evenly items-center gap-3  '>
+                <div className='w-24'>
+                    Total Set Count:
+                </div>
+                <input
+                    type="number"
+                    value={totalSets}
+                    onChange={(e) => setTotalSets(Number(e.target.value))}
+                    className="border border-gray-300 rounded p-2"
+                />
+            </label>
+            <br />
+            <div className="flex justify-center">
+                <button
+                    onClick={reset}
+                    className=" btn  text-white rounded p-2 mr-2"
+                >
+                    Reset
+                </button>
+                <button
+                    onClick={onClose}
+                    className=" btn  text-white rounded p-2"
+                >
+                    Close
+                </button>
+            </div>
+        </div>
+    );
+};
 
-export function DialogOverlay(props: ComponentPropsWithoutRef<typeof Container>) {
-  return (
-    <Container
-      onPointerMove={(e) => e.stopPropagation()}
-      onPointerEnter={(e) => e.stopPropagation()}
-      onPointerLeave={(e) => e.stopPropagation()}
-      onWheel={(e) => e.stopPropagation()}
-      positionType="absolute"
-      inset={0}
-      zIndexOffset={50}
-      backgroundColor="black"
-      backgroundOpacity={0.8}
-      {...props}
-    />
-  )
-}
-
-export function useCloseDialog() {
-  const { setOpen } = useDialogContext()
-  return useCallback(() => setOpen(false), [setOpen])
-}
-
-export function DialogContentPrimitive({ children }: { children?: ReactNode }) {
-  const dialogContext = useDialogContext()
-  useEffect(() =>
-    dialogContext.setContent(<DialogContext.Provider value={dialogContext}>{children}</DialogContext.Provider>),
-  )
-  return null
-}
-
-export function DialogContent({ children, sm, ...props }: ComponentPropsWithoutRef<typeof Container>) {
-  const close = useCloseDialog()
-  return (
-    <DialogContentPrimitive>
-      <DialogOverlay
-        onClick={(e) => {
-          close()
-          e.stopPropagation()
-        }}
-        alignItems="center"
-        justifyContent="center"
-      >
-        <Container
-          onClick={(e) => e.stopPropagation()}
-          positionType="relative"
-          width="100%"
-          gap={16}
-          border={1}
-          backgroundColor={colors.background}
-          padding={24}
-          sm={{ borderRadius: 8, ...sm }}
-          {...props}
-        >
-          {children}
-          <X
-            color={colors.mutedForeground}
-            onClick={close}
-            cursor="pointer"
-            positionType="absolute"
-            zIndexOffset={50}
-            positionRight={16}
-            positionTop={16}
-            borderRadius={2}
-            opacity={0.7}
-            backgroundOpacity={0.7}
-            hover={{ opacity: 1, backgroundOpacity: 1 }}
-            width={16}
-            height={16}
-          />
-        </Container>
-      </DialogOverlay>
-    </DialogContentPrimitive>
-  )
-}
-
-export function DialogHeader({ children, ...props }: ComponentPropsWithoutRef<typeof Container>) {
-  return (
-    <Container flexDirection="column" gap={6} {...props}>
-      <DefaultProperties horizontalAlign="center" sm={{ horizontalAlign: 'left' }}>
-        {children}
-      </DefaultProperties>
-    </Container>
-  )
-}
-
-export function DialogFooter(props: ComponentPropsWithoutRef<typeof Container>) {
-  return (
-    <Container
-      flexDirection="column-reverse"
-      sm={{ flexDirection: 'row', justifyContent: 'flex-end' }}
-      gap={8}
-      {...props}
-    />
-  )
-}
-
-export function DialogTitle({ children }: { children?: ReactNode }) {
-  return (
-    <DefaultProperties fontSize={18} lineHeight={1} letterSpacing={-0.4} fontWeight="semi-bold">
-      {children}
-    </DefaultProperties>
-  )
-}
-
-export function DialogDescription({ children }: { children?: ReactNode }) {
-  return (
-    <DefaultProperties fontSize={14} lineHeight={1.43} color={colors.mutedForeground}>
-      {children}
-    </DefaultProperties>
-  )
-}
+export default Dialog;
