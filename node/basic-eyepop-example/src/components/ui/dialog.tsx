@@ -13,7 +13,7 @@ const Dialog: React.FC<DialogProps> = ({ onClose }) =>
     const { setRepsPerSet, setTotalSets, setWorkoutRoutine, workoutRules, repsPerSet, totalSets, reset } = useSceneStore();
 
     return (
-        <div className="bg-white rounded p-4 flex flex-col gap-3 justify-center">
+        <div className="bg-white rounded p-4 flex flex-col gap-3 justify-center text-black">
             <h2 className="text-center">Workout Settings</h2>
             <label className='flex flex-row justify-evenly items-center gap-3'>
                 <div className='w-24'>
@@ -28,34 +28,34 @@ const Dialog: React.FC<DialogProps> = ({ onClose }) =>
 
                         setWorkoutRoutine(value)
                     }}
-                    className="border border-gray-300 rounded p-2"
+                    className="border border-gray-100 rounded p-2 text-white"
                     rows={8}
-                    cols={40}
+                    cols={80}
                 />
             </label>
             <br />
             <br />
             <label className='flex flex-row justify-evenly items-center gap-3  '>
-                <div className='w-24'>
+                <div className='w-40'>
                     Reps per Set:
                 </div>
                 <input
                     type="number"
                     value={repsPerSet}
                     onChange={(e) => setRepsPerSet(Number(e.target.value))}
-                    className="border border-gray-300 rounded p-2"
+                    className="border border-gray-300 rounded p-2 text-white"
                 />
             </label>
             <br />
             <label className='flex flex-row justify-evenly items-center gap-3  '>
-                <div className='w-24'>
+                <div className='w-40'>
                     Total Set Count:
                 </div>
                 <input
                     type="number"
                     value={totalSets}
                     onChange={(e) => setTotalSets(Number(e.target.value))}
-                    className="border border-gray-300 rounded p-2"
+                    className="border border-gray-300 rounded p-2 text-white"
                 />
             </label>
             <br />

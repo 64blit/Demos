@@ -4,15 +4,13 @@ import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
 import { produce } from 'immer';
 
-import { atom, useAtom } from 'jotai'
-import { atomWithDefault } from "jotai/utils";
-import { get } from "http";
+import { Atom, atom, useAtom } from 'jotai'
 
 
 
 class EyePopManager 
 {
-    public config: EyePopConfig;
+    public config: EyePopConfig | null;
     public videoElement: HTMLVideoElement | null | undefined = null;
     public ready: boolean = false;
 
@@ -25,7 +23,7 @@ class EyePopManager
 
 
 
-    constructor(config: EyePopConfig)
+    constructor(config: EyePopConfig | null)
     {
         this.config = config;
         this.egressId = undefined;
@@ -209,20 +207,16 @@ type EyePopConfig = {
 
 
 // Create an atom to hold the instance of EyePopManager
-let eyePopManagerAtom = null;
+let eyePopManagerAtom: Atom<EyePopManager> | null = null;
 
-const webcamVideoAtom = atom(
-    (get) => get(eyePopManagerAtom)?.videoElement
-)
-
-const useEyePop = (config?: EyePopConfig | null | undefined = null) =>
+const useEyePop = (config: EyePopConfig | null | undefined = null) =>
 {
     if (!eyePopManagerAtom)
     {
         eyePopManagerAtom = atom(new EyePopManager(config))
     }
 
-    const [ eyePopManager, setEyePopManager ] = useAtom(eyePopManagerAtom)
+    const [ eyePopManager ] = useAtom(eyePopManagerAtom)
 
     return { eyePopManager, webcamVideo: eyePopManager.videoElement }
 }

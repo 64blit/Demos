@@ -17,7 +17,12 @@ const EyePopDrawing: React.FC = () =>
     const { eyePopManager } = useEyePop();
     const groupRef = useRef<THREE.Group>(null);
     const personBoundsRef = useRef<THREE.Group>(null);
-    const { incrementRep, workoutRules } = useSceneStore();
+    const { incrementRep, workoutRules, } = useSceneStore();
+
+    const [ personBoundsScalar, setPersonBoundsScalar ] = useState(0);
+
+    let averageDistance = { average: 0, value: 0, count: 0 };
+    let scalarAverage = { average: 0, value: 0, count: 0 };
 
     const normalizePosition = (x: number, y: number, width: number, height: number, sourceWidth: number, sourceHeight: number) =>
     {
@@ -47,7 +52,6 @@ const EyePopDrawing: React.FC = () =>
         const { x: xMax, y: yMax } = normalizePosition((person.x + person.width), person.y + person.height, person.width, person.height, sourceWidth, sourceHeight);
 
         const z = .01;
-
         for (const child of groupChildren)
         {
             if (child.type === 'Mesh')
@@ -68,8 +72,7 @@ const EyePopDrawing: React.FC = () =>
                     z - parentPosition.z
                 );
 
-                personBoundsRef.current?.scale.set(width, height * 2, 1);
-
+                // personBoundsRef.current?.scale.set(1, personBoundsScalar, 1);
             }
         }
 
@@ -92,6 +95,8 @@ const EyePopDrawing: React.FC = () =>
 
     }
 
+    // meter start scale 0 and go to 100
+    // remove balls from the indicator
     const manageLowCodeRules = (prediction) =>
     {
 
@@ -101,20 +106,89 @@ const EyePopDrawing: React.FC = () =>
             return
         }
 
-        const rulesArray = EyePopSDK.Rules.createConditional(workoutRules);
-
-        let log = EyePopSDK.Rules.Check(prediction, [ rulesArray ], rulesStateArray);
-
-        if (log.length <= 0) return
-        if (log[ 0 ].length <= 0) return
-
-        if (log[ 0 ][ 0 ] === true)
+        try
         {
-            console.log('Rule 1 passed');
+            const rulesArray = EyePopSDK.Rules.createConditional(workoutRules);
 
-            incrementRep();
+            let log = EyePopSDK.Rules.Check(prediction, [ rulesArray ], rulesStateArray);
+
+            if (log.length <= 0) return
+            if (log[ 0 ].length <= 0) return
+
+            if (log[ 0 ][ 0 ] === true)
+            {
+                incrementRep();
+            }
+        } catch (e)
+        {
+            console.log('Error parsing rules', e);
+        }
+
+    }
+
+    // This function will manage the bounds of the person
+    //   we make the scale of the personBoundsIndicator be proportional to the inverse of the distance from the
+    //   waist to the knee of the person
+    const managePersonBoundsIndicator = (person, prediction) =>
+    {
+        let kneePosition = null;
+        let waistPosition = null;
+
+        if (!('keyPoints' in person)) return;
+
+        for (let i = 0; i < person.keyPoints.length; i++)
+        {
+            const pointsArray = person.keyPoints[ i ].points;
+            for (let j = 0; j < pointsArray.length; j++)
+            {
+                {
+                    const point = pointsArray[ j ];
+                    if (point.classLabel === 'right knee')
+                    {
+                        kneePosition = new THREE.Vector2(point.x, point.y);
+                    }
+                    if (point.classLabel === 'right hip')
+                    {
+                        waistPosition = new THREE.Vector2(point.x, point.y);
+                    }
+                }
+            }
 
         }
+
+        if (!kneePosition || !waistPosition) return;
+
+
+        const distance = Math.abs(waistPosition.y - kneePosition.y)
+
+        averageDistance.value += person.height / 4;
+        averageDistance.count++;
+
+        averageDistance.average = averageDistance.value / averageDistance.count;
+
+        if (averageDistance.count === 1000)
+        {
+            averageDistance.value = 0;
+            averageDistance.count = 0;
+        }
+
+        const scalar = Math.max(1 - THREE.MathUtils.mapLinear(distance, 0, averageDistance.average, 0, 1), 0);
+
+        scalarAverage.value += scalar;
+        scalarAverage.count++;
+
+        scalarAverage.average = scalarAverage.value / scalarAverage.count;
+
+        if (scalarAverage.count === 50)
+        {
+            scalarAverage.value = 0;
+            scalarAverage.count = 0;
+        }
+
+
+        setPersonBoundsScalar(scalarAverage.average)
+
+        console.log('Person bounds scalar:', scalar.toFixed(2), distance.toFixed(2));
     }
 
 
@@ -141,6 +215,7 @@ const EyePopDrawing: React.FC = () =>
 
         manageDynamicMeshes(person, prediction);
         manageLowCodeRules(prediction);
+        managePersonBoundsIndicator(person, prediction);
     });
 
 
@@ -148,7 +223,7 @@ const EyePopDrawing: React.FC = () =>
         <group ref={groupRef}>
 
             <group ref={personBoundsRef} position={[ -100, -100, -100 ]} >
-                <PersonBoundsIndicator scale={[ .01, .01, .01 ]} />
+                <PersonBoundsIndicator scale={[ .01, .02 * personBoundsScalar, .01 ]} />
             </group>
 
             <WorkoutIndicator />

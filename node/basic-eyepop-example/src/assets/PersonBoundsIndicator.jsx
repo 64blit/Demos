@@ -12,15 +12,13 @@ export const PersonBoundsIndicator = React.forwardRef((props, ref) =>
   const { nodes, materials } = useGLTF(gltfModel)
   return (
     <group {...props}>
-      <group name="Scene">
 
-        <mesh name="line" geometry={nodes.line.geometry} material={materials.basic_grey} rotation={[ 0, 0, 0 ]} scale={[ 1, 1, 1 ]} />
+      <mesh name="line" geometry={nodes.line.geometry} material={materials.basic_grey} rotation={[ 0, 0, 0 ]} scale={[ 1, 1, 1 ]} />
 
-        <mesh name="top" geometry={nodes.top.geometry} material={materials[ 'basic_white.001' ]} position={[ 0, 0, 0, ]} scale={[ 1, 1, 1 ]} />
+      <mesh name="top" geometry={nodes.top.geometry} material={materials[ 'basic_white.001' ]} position={[ 0, 0, 0, ]} scale={[ 1, 1, 1 ]} />
 
-        <mesh name="bottom" geometry={nodes.bottom.geometry} material={materials[ 'basic_white.001' ]} position={[ 0, 0, 0 ]} scale={[ 1, 1, 1 ]} />
+      <mesh name="bottom" geometry={nodes.bottom.geometry} material={materials[ 'basic_white.001' ]} position={[ 0, 0, 0 ]} scale={[ 1, 1, 1 ]} />
 
-      </group>
 
     </group>
   )
