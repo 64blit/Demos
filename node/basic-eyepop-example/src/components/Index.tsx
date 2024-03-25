@@ -1,8 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { Box, CameraControls, DragControls, Environment, Html, Text, TransformControls } from '@react-three/drei'
+import { Canvas, } from '@react-three/fiber'
+import { CameraControls, DragControls, Environment, } from '@react-three/drei'
 import * as THREE from 'three';
-import { Container, Fullscreen, Root } from '@react-three/uikit';
 
 import WebcamMesh from './visuals/WebcamMesh';
 import useEyePop from '../store/EyePopStore';

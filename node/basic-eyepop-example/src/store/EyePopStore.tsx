@@ -142,7 +142,7 @@ class EyePopManager
         const tempStream = await navigator.mediaDevices.getUserMedia({
             audio: false,
             video: {
-                facingMode: 'user',
+                // facingMode: 'user',
                 width: { ideal: 1920 },
                 height: { ideal: 1080 }
             }
