@@ -4,11 +4,9 @@ Command: npx gltfjsx@6.2.16 .\eyepop_squats_ui.glb -T -p 6 -j -s -K -k -R 2048
 Files: .\eyepop_squats_ui.glb [3.03MB] > C:\Users\edmun\OneDrive\Documents\_SPACE\EyePop\EyePopDemos\node\basic-eyepop-example\src\assets\eyepop_squats_ui_1-transformed.glb [826.14KB] (73%)
 */
 import gltfUrl from './eyepop_squats_ui_2-transformed.glb'
-import dosisFont from './Dosis v1.7/Dosis-SemiBold.ttf'
 import React, { useEffect, useRef, useState } from 'react'
-import { Text, Text3D, useGLTF } from '@react-three/drei'
+import { Text3D, useGLTF } from '@react-three/drei'
 import gsap from 'gsap'
-import { useFrame } from '@react-three/fiber'
 import font3d from './Open_Sans_Condensed_Bold.json';
 import { useSceneStore } from '../store/SceneStore'
 
@@ -22,8 +20,9 @@ export function WorkoutIndicator()
 
   const [ wiggleTimeline, setWiggleTimeline ] = useState(null)
 
+
   const workoutIndicator = useRef()
-  // refs for each tick
+
   const tick_1 = useRef(null)
   const tick_2 = useRef(null)
   const tick_3 = useRef(null)
@@ -48,21 +47,15 @@ export function WorkoutIndicator()
 
   const tickRefs = [ tick_1, tick_2, tick_3, tick_4, tick_5, tick_6, tick_7, tick_8, tick_9, tick_10, tick_11, tick_12, tick_13, tick_14, tick_15, tick_16, tick_17, tick_18, tick_19, tick_20, tick_21 ]
 
-
-  useFrame((mouse, camera, delta) =>
-  {
-    if (!workoutIndicator.current) return;
-
-    // make it rotate towards the mouse position on screen
-    // const targetRotation = Math.atan2(mouse.mouse.x, mouse.mouse.y);
-    // workoutIndicator.current.rotation.y = THREE.MathUtils.lerp(workoutIndicator.current.rotation.y, targetRotation, 0.1);
-  })
-
   useEffect(() =>
   {
     if (wiggleTimeline) return;
     if (!workoutIndicator.current) return;
 
+    materials.eyepop_blue.depthWrite = true;
+    materials.eyepop_blue.depthTest = true;
+    materials.eyepop_blue.transparent = false;
+    materials.eyepop_blue.opacity = 1;
 
     const startRotation = workoutIndicator.current.rotation.y
 
@@ -159,13 +152,13 @@ export function WorkoutIndicator()
         <Text3D
           font={font3d}
           scale={[ 1.25, 1.25, .5 ]}
-          position={[ 2.9, -1, 0 ]}
+          position={[ 3.5, -1, -.5 ]}
           bevelEnabled
           bevelSize={0.015}
           rotation={[ 0, Math.PI, 0 ]}
         >
           sets {currentSet} / {totalSets}
-          <meshStandardMaterial color={'rgb(159, 159, 159)'} roughness={.5} metalness={0.95} />
+          <meshStandardMaterial color={'rgb(159, 159, 159)'} roughness={.5} metalness={0.95} depthTest={true} depthWrite={true} />
         </Text3D>
 
         <mesh name="bg" castShadow receiveShadow geometry={nodes.bg.geometry} material={materials[ 'bake.002' ]} position={[ 0, 0, 0.037076 ]} rotation={[ Math.PI / 2, 0, 0 ]} />

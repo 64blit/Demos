@@ -1,30 +1,42 @@
-# React + TypeScript + Vite
+# Squat Workout Counter
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This project is a workout counter application that focuses on counting squats. It uses the EyePop SDK to track the user's movements and count the number of squats performed. The application is built using EyePop's low code rules, which simplifies the development process and allows for rapid prototyping.
 
-Currently, two official plugins are available:
+## Project Structure
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+The project is structured as follows:
 
-## Expanding the ESLint configuration
+- `src/assets`: This directory contains the UI assets for the application.
+- `src/store`: This directory contains the Zustand store used for state management in the application.
+- `src/style`: This directory contains the CSS styles for the application.
+- `src/main.tsx`: This is the main entry point for the application.
+- `src/vite-env.d.ts`: This file contains TypeScript definitions for Vite environment variables.
+- `vite.config.ts`: This file contains the configuration for the Vite build tool.
+- `tailwind.config.js`: This file contains the configuration for the Tailwind CSS framework.
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+## Installation
 
-- Configure the top-level `parserOptions` property like this:
+To install the project, run the following command:
 
-```js
-export default {
-  // other rules...
-  parserOptions: {
-    ecmaVersion: 'latest',
-    sourceType: 'module',
-    project: ['./tsconfig.json', './tsconfig.node.json'],
-    tsconfigRootDir: __dirname,
-  },
-}
+```sh
+yarn install
 ```
 
-- Replace `plugin:@typescript-eslint/recommended` to `plugin:@typescript-eslint/recommended-type-checked` or `plugin:@typescript-eslint/strict-type-checked`
-- Optionally add `plugin:@typescript-eslint/stylistic-type-checked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and add `plugin:react/recommended` & `plugin:react/jsx-runtime` to the `extends` list
+Running the Project
+To run the project in development mode, use the following command:
+```sh
+yarn dev
+```
+
+Dependencies
+The project uses several dependencies, including:
+
+@eyepop.ai/javascript-sdk: The EyePop SDK for tracking user movements.
+@react-three/fiber, @react-three/drei: Libraries for working with Three.js in React.
+zustand: A small, fast state management library.
+tailwindcss: A utility-first CSS framework.
+daisyui: A plugin for Tailwind CSS that provides UI components.
+Please refer to the package.json file for a full list of dependencies and devDependencies.
+
+Contributing
+Contributions are welcome. Please submit a pull request or open an issue to discuss your proposed changes.

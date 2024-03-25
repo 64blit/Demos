@@ -7,7 +7,7 @@ import { useFrame } from '@react-three/fiber';
 const WebcamMesh: React.FC<WebcamMeshProps> = () =>
 {
 
-    const { eyePopManager, webcamVideo } = useEyePop();
+    const { eyePop, webcamVideo } = useEyePop();
 
     const [ videoTexture, setVideoTexture ] = useState<THREE.VideoTexture | null>(null);
 
@@ -18,7 +18,7 @@ const WebcamMesh: React.FC<WebcamMeshProps> = () =>
     {
         // initialize the webcam texture after eyepop is ready
         if (!boxMeshRef.current) return;
-        if (!eyePopManager?.ready)
+        if (!eyePop?.ready)
         {
             boxMeshRef.current.material.visible = false;
             return;

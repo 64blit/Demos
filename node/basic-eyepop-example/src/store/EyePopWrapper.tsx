@@ -1,14 +1,7 @@
 import EyePop from "@eyepop.ai/eyepop";
-
 import { create } from 'zustand';
-import { devtools, persist } from 'zustand/middleware';
-import { produce } from 'immer';
 
-import { Atom, atom, useAtom } from 'jotai'
-
-
-
-class EyePopManager 
+class EyePopWrapper 
 {
     public config: EyePopConfig | null;
     public videoElement: HTMLVideoElement | null | undefined = null;
@@ -40,16 +33,15 @@ class EyePopManager
 
     setup = async () =>
     {
-        console.log('-----Setting up EyePop.ai');
         if (this.endpoint) return;
 
         try
         {
             const auth: EyePop.Authentication = {};
 
-            if (this.config.secretKey)
+            if (this.config?.secretKey)
             {
-                auth.secretKey = this.config.secretKey
+                auth.secretKey = this.config?.secretKey
             } else
             {
                 auth.oAuth2 = true
@@ -58,7 +50,7 @@ class EyePopManager
             // API key and popID are easily obtained from the EyePop.ai dashboard
             this.endpoint = await EyePop.endpoint({
                 auth: auth,
-                popId: this.config.popId,
+                popId: this.config?.popId,
             })
                 .onStateChanged((from: string, to: string) =>
                 {
@@ -71,14 +63,10 @@ class EyePopManager
 
             await this.endpoint.connect();
 
-            this.startWebcamStream();
-
-
             console.log('EyePop.ai endpoint connected')
 
         } catch (error)
         {
-            // alert('Error initializing EyePop.ai: ' + error);
             console.error('Error initializing EyePop.ai:', error);
         }
 
@@ -142,14 +130,12 @@ class EyePopManager
         const tempStream = await navigator.mediaDevices.getUserMedia({
             audio: false,
             video: {
-                // facingMode: 'user',
                 width: { ideal: 1920 },
                 height: { ideal: 1080 }
             }
         });
 
         const ingressStream = await this.endpoint?.liveIngress(tempStream);
-
         this.ingressId = ingressStream.ingressId();
         this.startWebcamPrediction(this.ingressId);
 
@@ -205,13 +191,14 @@ type EyePopConfig = {
 }
 
 type EyePopStore = {
-    eyePopManager: EyePopManager | null;
+    eyePop: EyePopWrapper | null;
     webcamVideo: HTMLVideoElement | null;
     initialize: (config: EyePopConfig | null | undefined) => void;
+    startWebcam: () => void;
 }
 
-export const useEyePop = create<EyePopStore>((set) => ({
-    eyePopManager: null,
+export const useEyePop = create<EyePopStore>((set, get) => ({
+    eyePop: null,
     webcamVideo: null,
     initialize: (config: EyePopConfig | null | undefined) =>
     {
@@ -221,7 +208,20 @@ export const useEyePop = create<EyePopStore>((set) => ({
             return;
         }
 
-        const eyePopManager = new EyePopManager(config);
-        set({ eyePopManager, webcamVideo: eyePopManager.videoElement });
+        const eyePop = new EyePopWrapper(config);
+
+        set({ eyePop, webcamVideo: eyePop.videoElement });
+
+        return eyePop.setup();
     },
+
+    startWebcam: () =>
+    {
+        const { eyePop } = get();
+
+        if (!eyePop) return;
+
+        eyePop.startWebcamStream();
+
+    }
 }));

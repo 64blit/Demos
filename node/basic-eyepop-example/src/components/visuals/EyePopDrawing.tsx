@@ -14,15 +14,17 @@ const rulesStateArray = [];
 
 const EyePopDrawing: React.FC = () =>
 {
-    const { eyePopManager } = useEyePop();
-    const groupRef = useRef<THREE.Group>(null);
-    const personBoundsRef = useRef<THREE.Group>(null);
+
+    // Our external state stores, use for simplifying state management accross components
+    const { eyePop } = useEyePop();
     const { incrementRep, workoutRules, } = useSceneStore();
 
-    const [ personBoundsScalar, setPersonBoundsScalar ] = useState(0);
 
-    let averageDistance = { average: 0, value: 0, count: 0 };
-    let scalarAverage = { average: 0, value: 0, count: 0 };
+    const personBoundsRef = useRef<THREE.Group>(null);
+    const groupRef = useRef<THREE.Group>(null);
+    const [ personBoundsScalar, setPersonBoundsScalar ] = useState(0);
+    const averageDistance = { average: 0, value: 0, count: 0 };
+    const scalarAverage = { average: 0, value: 0, count: 0 };
 
     const normalizePosition = (x: number, y: number, width: number, height: number, sourceWidth: number, sourceHeight: number) =>
     {
@@ -91,6 +93,7 @@ const EyePopDrawing: React.FC = () =>
             groupRef.current.add(personBoundsRef.current);
         }
 
+        managePersonBoundsIndicator(person, prediction);
     }
 
     // meter start scale 0 and go to 100
@@ -194,17 +197,16 @@ const EyePopDrawing: React.FC = () =>
 
     }
 
-
+    // The primary update loop which will run per frame
     useFrame(() =>
     {
         if (!groupRef.current) return;
-        if (!eyePopManager?.ready) return;
+        if (!eyePop?.ready) return;
 
-        const prediction = eyePopManager?.getPrediction();
+        // The computer vision prediction result from the EyePop SDK
+        const prediction = eyePop?.getPrediction();
 
         if (!prediction) return;
-        if (!groupRef.current) return;
-
         if (!prediction.objects) return;
         if (prediction.objects.length === 0) return;
 
@@ -212,13 +214,16 @@ const EyePopDrawing: React.FC = () =>
         const people = prediction.objects.filter((o: any) => o.classLabel === 'person');
         if (people.length === 0) return;
 
-        const person = people.reduce((a: any, b: any) => a.width > b.width ? a : b);
+        // find the person with the biggest width and height
+        const person = people.reduce((prev, current) => (prev.width * prev.height > current.width * current.height) ? prev : current);
 
         if (!person.traceId) return;
 
+        // Handles the person indicator bar which is a dynamic mesh
         manageDynamicMeshes(person, prediction);
+
+        // Handles the low code rules
         manageLowCodeRules(prediction);
-        managePersonBoundsIndicator(person, prediction);
     });
 
 
