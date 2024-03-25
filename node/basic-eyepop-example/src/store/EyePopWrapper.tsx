@@ -219,7 +219,11 @@ export const useEyePop = create<EyePopStore>((set, get) => ({
     {
         const { eyePop } = get();
 
-        if (!eyePop) return;
+        if (!eyePop)
+        {
+            console.error('EyePop.ai not yet initialized. Please call initialize() first');
+            return;
+        }
 
         eyePop.startWebcamStream();
 
