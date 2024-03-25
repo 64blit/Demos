@@ -10,7 +10,7 @@ interface DialogProps
 
 const Dialog: React.FC<DialogProps> = ({ onClose }) =>
 {
-    const { setRepsPerSet, setTotalSets, setWorkoutRoutine, workoutRules, repsPerSet, totalSets, reset } = useSceneStore();
+    const { incrementRep, setRepsPerSet, setTotalSets, setWorkoutRoutine, workoutRules, repsPerSet, totalSets, reset } = useSceneStore();
 
     return (
         <div className="bg-white rounded p-4 flex flex-col gap-3 justify-center text-black">
@@ -35,6 +35,12 @@ const Dialog: React.FC<DialogProps> = ({ onClose }) =>
             </label>
             <br />
             <br />
+
+            <div className="btn w-24 self-center text-blue-500 " onClick={() =>
+            {
+                incrementRep()
+            }}>+1 Rep</div>
+
             <label className='flex flex-row justify-evenly items-center gap-3  '>
                 <div className='w-40'>
                     Reps per Set:

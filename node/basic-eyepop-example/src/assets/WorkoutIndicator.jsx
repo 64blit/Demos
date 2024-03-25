@@ -7,7 +7,7 @@ import gltfUrl from './eyepop_squats_ui_2-transformed.glb'
 import React, { useEffect, useRef, useState } from 'react'
 import { Text3D, useGLTF } from '@react-three/drei'
 import gsap from 'gsap'
-import font3d from './Open_Sans_Condensed_Bold.json';
+import font3d from './dosis.json';
 import { useSceneStore } from '../store/SceneStore'
 
 import * as THREE from 'three'
