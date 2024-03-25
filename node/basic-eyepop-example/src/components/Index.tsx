@@ -4,7 +4,7 @@ import { CameraControls, DragControls, Environment, } from '@react-three/drei'
 import * as THREE from 'three';
 
 import WebcamMesh from './visuals/WebcamMesh';
-import useEyePop from '../store/EyePopStore';
+import { useEyePop } from '../store/EyePopWrapper';
 import EyePopDrawing from './visuals/EyePopDrawing';
 import { Perf } from 'r3f-perf';
 import UI from './ui/UI';
@@ -12,22 +12,32 @@ import UI from './ui/UI';
 
 const Index: React.FC = () =>
 {
+    const { initialize, eyePopManager } = useEyePop();
+
     const [ webcamMesh, setWebcamMesh ] = useState<THREE.Mesh | null>(null);
     const cameraRef = useRef(null);
 
-    useEyePop(
-        {
-            popId: 'e4fd9369a9de42f6becfb90e11f4620c',
-            'secretKey': 'AAEx0k5X9gzahbFdKDNq33wLZ0FBQUFBQmwtS2NTMmZiVEJISU9yelBXVnVPUnQ4cC1wOVBHSDBWa3lrZW5QSnRIdVcxQXFBMmJobEFCSUV6dnNheG01aWVJdHc1SEZKN2VkaGhTMXViS3ZtaTRESy1GeW1fVnYxZFl5LWVtTTZ2RzJBN01CWnM9'
-        });
+    // initialize the EyePop SDK
+    useEffect(() =>
+    {
+        if (eyePopManager) return
+        if (eyePopManager?.ready) return
 
+        console.log('---------------Initializing EyePop SDK');
+
+        initialize({
+            popId: 'e4fd9369a9de42f6becfb90e11f4620c',
+            secretKey: 'AAHHcbNafB-AyslKYRhYSFaMZ0FBQUFBQm1BYkpJWXFxeTVEbGVoaEFOSzJueW9jbnpDMGZZU3JHTTR3MElKZTBlN3VMRVpveWtEM1dISVlHTGhUc2JKUHJDVjY5eW5LUkRtV3BISExJSFo0TUtrZ3V1Nmdmc1Utc0JhY0NVTW1HZUFlZUZsdGM9'
+        })
+    }, [ initialize, eyePopManager ]);
+
+
+    // Setup the camera controls
     useEffect(() =>
     {
         if (!cameraRef.current) return;
         if (!webcamMesh) return;
 
-        console.log('Fitting camera to webcamMesh', cameraRef.current, webcamMesh);
-        cameraRef.current.near
         cameraRef.current.fitToBox(webcamMesh, true);
         cameraRef.current.saveState();
         cameraRef.current.mouseButtons.left = null;
@@ -37,11 +47,14 @@ const Index: React.FC = () =>
         cameraRef.current.touches.two = null;
         cameraRef.current.touches.three = null;
         cameraRef.current.touches.one = null;
+
     }, [ cameraRef, webcamMesh ])
 
 
+    // Reset camera on escape key
     useEffect(() =>
     {
+
         const handleEscape = (e: KeyboardEvent) =>
         {
             if (e.key === 'Escape')
@@ -49,8 +62,10 @@ const Index: React.FC = () =>
                 cameraRef?.current.reset(true);
             }
         }
+
         window.addEventListener('keydown', handleEscape);
         return () => window.removeEventListener('keydown', handleEscape);
+
     })
 
     return (
@@ -63,16 +78,17 @@ const Index: React.FC = () =>
             {/* <Perf position="top-left" /> */}
 
             <CameraControls ref={cameraRef} />
-            <Environment preset="city" />
+            <Environment preset="city" resolution={512} />
+            <pointLight position={[ 0, 0, 10 ]} decay={0} intensity={5} />
 
-            <spotLight position={[ 0, 0, 10 ]} penumbra={1} decay={.5} intensity={20} />
-            <pointLight position={[ 0, 0, 10 ]} decay={0} intensity={Math.PI / 4} />
 
             <UI />
+
 
             <DragControls >
                 <EyePopDrawing />
             </DragControls>
+
 
             <group ref={(node) =>
             {

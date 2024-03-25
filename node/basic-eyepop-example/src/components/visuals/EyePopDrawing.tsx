@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
 import { useFrame } from '@react-three/fiber';
-import useEyePop from '../../store/EyePopStore';
+import { useEyePop } from '../../store/EyePopWrapper';
 import { WorkoutIndicator } from '../../assets/WorkoutIndicator';
 import { PersonBoundsIndicator } from '../../assets/PersonBoundsIndicator';
 
@@ -108,7 +108,7 @@ const EyePopDrawing: React.FC = () =>
         {
             const rulesArray = EyePopSDK.Rules.createConditional(workoutRules);
 
-            let log = EyePopSDK.Rules.Check(prediction, [ rulesArray ], rulesStateArray);
+            const log = EyePopSDK.Rules.Check(prediction, [ rulesArray ], rulesStateArray);
 
             if (log.length <= 0) return
             if (log[ 0 ].length <= 0) return

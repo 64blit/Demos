@@ -73,7 +73,6 @@ const store = (set): SceneStore => ({
         set((state) =>
         {
             let newRepCount = state.repCount + 1;
-            console.log('Incrementing rep count', newRepCount, state.repsPerSet);
 
             if (newRepCount > state.repsPerSet)
             {

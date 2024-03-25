@@ -199,26 +199,29 @@ class EyePopManager
 }
 
 
-
 type EyePopConfig = {
     popId: string;
     secretKey?: string;
 }
 
-
-// Create an atom to hold the instance of EyePopManager
-let eyePopManagerAtom: Atom<EyePopManager> | null = null;
-
-const useEyePop = (config: EyePopConfig | null | undefined = null) =>
-{
-    if (!eyePopManagerAtom)
-    {
-        eyePopManagerAtom = atom(new EyePopManager(config))
-    }
-
-    const [ eyePopManager ] = useAtom(eyePopManagerAtom)
-
-    return { eyePopManager, webcamVideo: eyePopManager.videoElement }
+type EyePopStore = {
+    eyePopManager: EyePopManager | null;
+    webcamVideo: HTMLVideoElement | null;
+    initialize: (config: EyePopConfig | null | undefined) => void;
 }
 
-export default useEyePop
+export const useEyePop = create<EyePopStore>((set) => ({
+    eyePopManager: null,
+    webcamVideo: null,
+    initialize: (config: EyePopConfig | null | undefined) =>
+    {
+        if (!config)
+        {
+            console.error('Please provide a valid EyePop.ai configuration object');
+            return;
+        }
+
+        const eyePopManager = new EyePopManager(config);
+        set({ eyePopManager, webcamVideo: eyePopManager.videoElement });
+    },
+}));

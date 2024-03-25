@@ -117,7 +117,6 @@ export function WorkoutIndicator()
   useEffect(() =>
   {
     if (!repCount) return;
-    console.log('repCount', repCount, repsPerSet)
 
     animateRepTicks(repCount / repsPerSet)
 
