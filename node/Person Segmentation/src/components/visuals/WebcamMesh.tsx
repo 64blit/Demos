@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
-import { useEyePop } from 'eyepop-react-wrapper';
+import { useEyePop } from 'C:\\Users\\edmun\\OneDrive\\Documents\\_SPACE\\EyePop\\64blit\\eyepop-react-wrapper\\EyePopWrapper.tsx';
 import { useFrame } from '@react-three/fiber';
 
 
