@@ -7,7 +7,7 @@ import * as THREE from 'three';
 import { Perf } from 'r3f-perf';
 
 import WebcamMesh from './components/visuals/WebcamMesh';
-import { useEyePop } from 'eyepop-react-wrapper';
+import { useEyePop } from './store/EyePopWrapper';
 import EyePopDrawing from './components/visuals/EyePopDrawing';
 import UI from './components/ui/UI';
 

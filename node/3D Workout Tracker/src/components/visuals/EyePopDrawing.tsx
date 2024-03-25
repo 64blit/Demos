@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { useEyePop } from 'eyepop-react-wrapper';
+import { useEyePop } from '../../store/EyePopWrapper';
 import { WorkoutIndicator } from '../../assets/WorkoutIndicator';
 import { PersonBoundsIndicator } from '../../assets/PersonBoundsIndicator';
 
