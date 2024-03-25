@@ -33,6 +33,7 @@ const Dialog: React.FC<DialogProps> = ({ onClose }) =>
                     cols={80}
                 />
             </label>
+
             <br />
             <br />
 
@@ -42,17 +43,22 @@ const Dialog: React.FC<DialogProps> = ({ onClose }) =>
             }}>+1 Rep</div>
 
             <label className='flex flex-row justify-evenly items-center gap-3  '>
+
                 <div className='w-40'>
                     Reps per Set:
                 </div>
+
                 <input
                     type="number"
                     value={repsPerSet}
                     onChange={(e) => setRepsPerSet(Number(e.target.value))}
                     className="border border-gray-300 rounded p-2 text-white"
                 />
+
             </label>
+
             <br />
+
             <label className='flex flex-row justify-evenly items-center gap-3  '>
                 <div className='w-40'>
                     Total Set Count:
@@ -64,7 +70,9 @@ const Dialog: React.FC<DialogProps> = ({ onClose }) =>
                     className="border border-gray-300 rounded p-2 text-white"
                 />
             </label>
+
             <br />
+
             <div className="flex justify-center">
                 <button
                     onClick={reset}
@@ -79,6 +87,7 @@ const Dialog: React.FC<DialogProps> = ({ onClose }) =>
                     Close
                 </button>
             </div>
+
         </div>
     );
 };
