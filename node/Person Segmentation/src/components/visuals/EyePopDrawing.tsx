@@ -1,12 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
 // import { useEyePop } from 'eyepop-react-wrapper';
-import { useEyePop } from 'C:\\Users\\edmun\\OneDrive\\Documents\\_SPACE\\EyePop\\64blit\\eyepop-react-wrapper\\EyePopWrapper.tsx';
-import { WorkoutIndicator } from '../../assets/WorkoutIndicator';
-import { PersonBoundsIndicator } from '../../assets/PersonBoundsIndicator';
+import { useEyePop } from '../../EyePopWrapper';
 
 import * as THREE from 'three';
 import { useSceneStore } from '../../store/SceneStore';
+import TextContainer from './TextContainer';
 
 
 const rulesStateArray = [];
@@ -16,15 +15,9 @@ const EyePopDrawing: React.FC = () =>
 {
 
     // Our external state stores, use for simplifying state management accross components
-    const { eyePop, getBiggestPerson } = useEyePop();
-    const { incrementRep, workoutRules, } = useSceneStore();
+    const { eyePop, getOutline, webcamVideo } = useEyePop();
 
-
-    const personBoundsRef = useRef<THREE.Group>(null);
     const groupRef = useRef<THREE.Group>(null);
-    const [ personBoundsScalar, setPersonBoundsScalar ] = useState(0);
-    const averageDistance = { average: 0, value: 0, count: 0 };
-    const scalarAverage = { average: 0, value: 0, count: 0 };
 
     const normalizePosition = (x: number, y: number, width: number, height: number, sourceWidth: number, sourceHeight: number) =>
     {
@@ -72,25 +65,23 @@ const EyePopDrawing: React.FC = () =>
         if (!eyePop?.ready) return;
 
         // The computer vision prediction result from the EyePop SDK
-        const prediction = getBiggestPerson();
+        const outline = getOutline();
 
-        if (!prediction) return;
+        if (!outline) return;
 
-        console.log('prediction', prediction);
-
+        console.log('Outline', outline);
     });
 
 
     return (
-        <group ref={groupRef}>
+        <>
+            <group ref={groupRef}>
 
-            <group ref={personBoundsRef} position={[ -100, -100, -100 ]} >
-                <PersonBoundsIndicator scale={[ .01, .02 * personBoundsScalar, .01 ]} />
+
             </group>
 
-            <WorkoutIndicator />
-
-        </group>
+            <TextContainer text="Hello World" />
+        </>
     );
 };
 

@@ -7,7 +7,7 @@ import * as THREE from 'three';
 import { Perf } from 'r3f-perf';
 
 import WebcamMesh from './components/visuals/WebcamMesh';
-import { useEyePop } from 'C:\\Users\\edmun\\OneDrive\\Documents\\_SPACE\\EyePop\\64blit\\eyepop-react-wrapper\\EyePopWrapper.tsx';
+import { useEyePop } from './EyePopWrapper.tsx';
 import EyePopDrawing from './components/visuals/EyePopDrawing';
 import UI from './components/ui/UI';
 
@@ -20,21 +20,31 @@ const App: React.FC = () =>
   const cameraRef = useRef(null);
 
   // initialize the EyePop SDK
-  useEffect(() =>
+  useMemo(() =>
   {
-    if (eyePop) return
+    console.log('Initializing EyePop', eyePop, eyePop?.ready);
+
+    if (eyePop) return;
     if (eyePop?.ready) return;
 
+    console.log('first run');
 
     const setup = async () =>
     {
 
       await initialize({
-        popId: '7798a7faaad645aeb7021b9c231c8dc2',
-        secretKey: 'AAFwS4f6xPBT7j6WISwcrT_-Z0FBQUFBQm1BZlJKd19XUG5DZWNKU3VXY3daR1p3aHVydjlqcnBoVEs3TDdJWlBRMWxrbF9Fcm9RTTBWZTd6WlNVNGx2S1ZBM056Vkx0VEtscWljemhLbldtY3hRNFM4Sk9yUDdvNWVsMHJiN25UcGh4THJzUlU9'
+        popId: '0e5b2512f4bd479286c83b38ad8ddb5d',
+        auth: {
+          // secretKey: 'AAHxDcUVQYaApQSRqktcUv9UZ0FBQUFBQm1Bd3dEOFVyY0h6emU1OWVDTFhEaUQzcS1tLWtfeENMd3RXRzhxX2E0MW5vZGFqeERfVC1QV2tKT3o2czcxTHBCZG9ITjl3cDYyZlBXTC1sTjhMRFdtelRESlBfLWxuMVlZT2I2djRXVkdIVzc2TlE9'
+          oAuth2: true
+        },
+        eyepopUrl: 'https://staging-api.eyepop.ai',
       })
+      console.log('EyePop initialized');
 
       await startWebcam();
+
+      console.log('Webcam started');
 
     };
 
