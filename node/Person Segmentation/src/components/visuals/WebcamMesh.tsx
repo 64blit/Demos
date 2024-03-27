@@ -36,12 +36,12 @@ const WebcamMesh: React.FC<WebcamMeshProps> = () =>
 
         const texture = new THREE.VideoTexture(webcamVideo);
         texture.colorSpace = THREE.SRGBColorSpace;
+        texture.needsUpdate = true;
+        setVideoTexture(texture);
 
 
         const aspect = webcamVideo.width / webcamVideo.height;
-        texture.needsUpdate = true;
 
-        setVideoTexture(texture);
         setAspectRatio(aspect);
 
     })

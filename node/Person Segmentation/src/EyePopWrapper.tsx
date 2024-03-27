@@ -91,6 +91,7 @@ class EyePopWrapper
                 {
                     for await (const result of results)
                     {
+                        console.log('Prediction:', result)
                         this.prediction = result;
                     }
 
