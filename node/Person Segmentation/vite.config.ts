@@ -28,8 +28,7 @@ export default defineConfig({
     }
   },
   plugins: [ react(), 
-    nodePolyfills(),
-    json5Plugin()
+    nodePolyfills()
     // CustomHmr() 
   ],
   css: {

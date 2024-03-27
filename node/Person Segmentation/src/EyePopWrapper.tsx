@@ -115,6 +115,7 @@ class EyePopWrapper
         const tempStream = await navigator.mediaDevices.getUserMedia({
             audio: false,
             video: {
+                userFacing: true,
                 width: { ideal: 1920 },
                 height: { ideal: 1080 }
             }

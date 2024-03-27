@@ -95,7 +95,8 @@ const App: React.FC = () =>
       gl={{ localClippingEnabled: true }}
       dpr={window.devicePixelRatio * 2}>
 
-      {/* <Perf position="top-left" /> */}
+      <Perf position="top-left" />
+
       <CameraControls ref={cameraRef} />
       <Environment preset="city" resolution={512} />
       <pointLight position={[ 0, 0, 10 ]} decay={0} intensity={5} />
@@ -104,9 +105,7 @@ const App: React.FC = () =>
       <UI />
 
 
-      <DragControls >
-        <EyePopDrawing />
-      </DragControls>
+      <EyePopDrawing />
 
 
       <group ref={(node) => { setWebcamMesh(node); }}>

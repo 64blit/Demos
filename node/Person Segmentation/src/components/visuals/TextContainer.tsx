@@ -1,16 +1,17 @@
 
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, createRef } from 'react';
 import { useThree, useLoader } from '@react-three/fiber';
 import { extend, Object3DNode } from "@react-three/fiber";
 
 import { Box3, Vector3, MeshBasicMaterial } from 'three';
 import { FontLoader, Font } from 'three/examples/jsm/loaders/FontLoader.js';
 import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js';
-import font3d from '../../assets/dosis.json';
+import font3d from '../../assets/Dosis-Medium.ttf';
 import { useSceneStore } from '../../store/SceneStore';
 import * as THREE from 'three';
 import test from 'node:test';
+import gsap from 'gsap';
 
 extend({ TextGeometry });
 declare module "@react-three/fiber" {
@@ -34,22 +35,26 @@ interface Line
     yPosition: number;
 }
 
-const TextContainer: React.FC<TextContainerProps> = ({ text, fontUrl = 'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/fonts/helvetiker_regular.typeface.json', size = .1, color = '#0d31ff' }) =>
+const TextContainer: React.FC<TextContainerProps> = ({ text, fontUrl = 'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/fonts/helvetiker_regular.typeface.json', size = .1, color = '#16efff', padding = .1 }) =>
 {
     const { camera } = useThree();
     const font = useLoader(FontLoader, fontUrl);
     const [ lines, setLines ] = useState<[]>([]);
     const { aspectRatio } = useSceneStore();
 
-    const bufferGeometry = new THREE.BufferGeometry();
+    const lineRefs = lines.map(() => createRef<THREE.Mesh>());
 
     useEffect(() =>
     {
         let fontSize = size; // Start with the initial font size
         let lines = [];
         let totalHeight = 0;
-
         const words = text.split(' '); // Define the words variable
+        words.push('_'); // Add an empty string to the end of the words array
+        words.push('_'); // Add an empty string to the end of the words array
+        words.push('_'); // Add an empty string to the end of the words array
+        words.push('_'); // Add an empty string to the end of the words array
+        words.push('_'); // Add an empty string to the end of the words array
         let scale = 1;
 
         // Function to calculate lines and total height for a given font size
@@ -57,34 +62,33 @@ const TextContainer: React.FC<TextContainerProps> = ({ text, fontUrl = 'https://
         {
             lines = [];
             totalHeight = 0;
-            let yPosition = 0;
+            let yPosition = -(padding / 2);
             let textLine = "";
+
             words.forEach((word, index) =>
             {
                 let testLine = textLine + word + ' ';
+
                 const textGeometry = new TextGeometry(testLine, { font: font as Font, size: fontSize * scale, height: 0, curveSegments: 1 });
 
                 textGeometry.computeBoundingBox();
-                const textWidth = textGeometry.boundingBox.max.x - textGeometry.boundingBox.min.x;
+                const textWidth = textGeometry.boundingBox.max.x - textGeometry.boundingBox.min.x * 2;
                 const textHeight = textGeometry.boundingBox.max.y - textGeometry.boundingBox.min.y;
 
-                // if (index === 0)
-                // {
-                //     yPosition = textHeight;
-                // }
-
                 // If the text width is greater than the aspect ratio or it's the last word
-                if (textWidth > aspectRatio || index === words.length - 1)
+                if (textWidth * 1.5 > (aspectRatio - (padding)))
                 {
+                    // remove all underscores
+                    textLine = textLine.replace(/_/g, '');
 
-                    // If the current line is the last line, add it to the lines array
-                    if (index === words.length - 1)
-                    {
-                        textLine += words[ index ];
-                    }
+                    // remove any leading or trailing spaces
+                    textLine = textLine.trim();
+
+                    // make the string uppercase
+                    textLine = textLine.toUpperCase();
 
                     // Add the current line to the lines array
-                    lines.push({ text: textLine, yPosition, scale, xOffset: 0 });
+                    lines.push({ text: textLine, yPosition, scale, xOffset: padding });
                     // Start a new line with the word that caused the overflow
                     textLine = word + ' '
                     // Move the y-position down
@@ -105,7 +109,7 @@ const TextContainer: React.FC<TextContainerProps> = ({ text, fontUrl = 'https://
         calculateLines();
 
         // // Calculate the desired height based on the aspect ratio
-        const desiredHeight = 1; // Adjust this value as needed
+        const desiredHeight = 1 - (padding / 2); // Adjust this value as needed
 
 
         while (totalHeight > desiredHeight && fontSize > 0.01)
@@ -115,67 +119,52 @@ const TextContainer: React.FC<TextContainerProps> = ({ text, fontUrl = 'https://
             calculateLines();
         }
 
+        // console.log('Lines', lines);
         setLines(lines);
 
     }, [ text, font, size, color, camera ]);
 
-    function getTextSize(textMesh: THREE.Mesh): Vector3
+    useEffect(() =>
     {
-        // loop over vertices to find the width and height of the text geometry
-        let minX = Infinity;
-        let minY = Infinity;
-        let maxX = -Infinity;
-        let maxY = -Infinity;
 
-        const vertices = [];
+        if (lines.length <= 0) return;
+        if (lineRefs.length <= 0) return;
 
-        const positionAttribute = textMesh.geometry.getAttribute('position');
-        for (let i = 0; i < positionAttribute.count; i++)
+        //use gsap to animate in the lines in a nice staggered way
+        for (let i = 0; i < lines.length; i++)
         {
-            const vertex = new THREE.Vector3();
-            vertex.x = positionAttribute.getX(i);
-            vertex.y = positionAttribute.getY(i);
-            vertex.z = positionAttribute.getZ(i);
-            vertices.push(vertex);
+            const line = lineRefs[ i ].current;
+            line.position.y = -10;
+            // line.scale.x = .1
+            // line.scale.y = .1
+            gsap.to(line.position, { y: lines[ i ].yPosition, delay: i * 0.1, duration: .5 });
+            // gsap.to(line.scale, { x: 1, y: 1, delay: i * 0.1, duration: 1 })
         }
 
-        vertices.forEach((vertex) =>
-        {
-            if (vertex.x < minX) minX = vertex.x;
-            if (vertex.x > maxX) maxX = vertex.x;
-            if (vertex.y < minY) minY = vertex.y;
-            if (vertex.y > maxY) maxY = vertex.y;
-        });
 
-        return new Vector3(maxX - minX, maxY - minY, 0);
-    }
+    }, [ lines, lineRefs ])
 
-    function getCameraWidth(camera: THREE.PerspectiveCamera): number
-    {
-        const vFOV = camera.fov * Math.PI / 180;
-        const height = 2 * Math.tan(vFOV / 2) * camera.position.z;
-        const width = height * camera.aspect;
-        return width;
-    }
 
     return (
         <>
             <group position={[ -aspectRatio / 2, .5 - size, 0 ]} >
                 {
                     lines.map((line, index) => (
-                        <mesh key={index} position={[ line.xOffset, line.yPosition, 0 ]} >
+                        <mesh ref={lineRefs[ index ]} key={index} position={[ line.xOffset, line.yPosition - padding, 0 ]} >
 
-                            <textGeometry args={[ line.text, { font: font as Font, size: size * line.scale, height: 0.01, curveSegments: 4 } ]} />
+                            <textGeometry args={[ line.text, { font: font as Font, size: size * line.scale, height: 0.025, curveSegments: 6 } ]} />
 
-                            <meshNormalMaterial attach="material" color={color} metalness={0} roughness={1} />
+                            <meshPhysicalMaterial attach="material" color={color} metalness={0} roughness={1} />
 
                         </mesh>
                     ))}
             </group >
-            {/* <mesh>
-                <boxGeometry args={[ aspectRatio, 1, 0.01 ]} />
-                < meshBasicMaterial attach="material" color="red" wireframe />
-            </mesh> */}
+
+
+            <mesh position={[ 0, 0, 0 ]} >
+                <boxGeometry args={[ aspectRatio, 1, 0.1 ]} />
+                <meshBasicMaterial visible={false} color="red" wireframe={true} />
+            </mesh>
         </>
     );
 }

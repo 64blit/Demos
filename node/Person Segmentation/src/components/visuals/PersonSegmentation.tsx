@@ -34,6 +34,8 @@ const PersonSegmentation: React.FC = () =>
         if (!outline) return;
         if (!outline.points) return;
 
+        // console.log('Outline', outline);
+
         material.uniforms.personTexture.value = videoTexture;
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -48,6 +50,9 @@ const PersonSegmentation: React.FC = () =>
 
         ctx.closePath();
         ctx.fill();
+
+        // blur the mask
+        ctx.filter = 'blur(.5rem)';
 
         maskTexture.needsUpdate = true;
         videoTexture.needsUpdate = true;
@@ -69,12 +74,15 @@ const PersonSegmentation: React.FC = () =>
         canvas.height = webcamVideo.height;
 
         const maskCtx = canvas.getContext('2d');
+        maskCtx.fillStyle = 'white';
+        maskCtx.fillRect(0, 0, canvas.width, canvas.height);
 
         setCtx(maskCtx);
         setCanvas(canvas);
 
-        // canvas.style.display = 'none';
+        canvas.style.display = 'none';
         const tempMask = new THREE.CanvasTexture(canvas);
+        tempMask.needsUpdate = true;
 
         setMaskTexture(tempMask);
 
@@ -116,7 +124,7 @@ const PersonSegmentation: React.FC = () =>
     return (
         <>
             {material &&
-                <mesh position={[ 0, 0, .1 ]} material={material} >
+                <mesh position={[ 0, 0, .15 ]} material={material} >
 
                     <planeGeometry args={[ aspectRatio, 1, 1 ]} />
 

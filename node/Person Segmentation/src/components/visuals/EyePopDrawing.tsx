@@ -1,15 +1,79 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useFrame } from '@react-three/fiber';
-// import { useEyePop } from 'eyepop-react-wrapper';
-import { useEyePop } from '../../EyePopWrapper';
 
 import * as THREE from 'three';
 import { useSceneStore } from '../../store/SceneStore';
 import TextContainer from './TextContainer';
 import PersonSegmentation from './PersonSegmentation';
+import { DragControls } from '@react-three/drei';
 
 const EyePopDrawing: React.FC = () =>
 {
+    const [ text, setText ] = useState<string>('');
+
+    // here we use the javascript voice to text API to get the text from the user
+    useEffect(() =>
+    {
+        const recognition = new (window as any).webkitSpeechRecognition();
+        recognition.lang = 'en-US';
+        recognition.continuous = true;
+        recognition.interimResults = true;
+
+        console.log('Speech Recognition started', recognition);
+
+        recognition.onaudiostart = () =>
+        {
+            console.log('Audio started');
+        }
+
+        recognition.onaudioend = () =>
+        {
+            console.log('Speech Audio ended');
+        }
+
+        recognition.onend = () =>
+        {
+            console.log('Speech recognition ended');
+            setText('');
+
+            recognition.start();
+        };
+
+        recognition.onerror = (event) =>
+        {
+            console.error('Speech recognition error', event);
+        };
+        const maxWords = -5;
+        recognition.onresult = (event) =>
+        {
+            let interimTranscript = '';
+            for (let i = event.resultIndex; i < event.results.length; i++)
+            {
+                let transcript = event.results[ i ][ 0 ].transcript;
+
+                // keep only the last 80 characters of the transcript but make sure we don't cut off a word
+                transcript = transcript.split(' ').slice(maxWords).join(' ');
+
+                if (event.results[ i ].isFinal)
+                {
+                    // setText(transcript);
+                }
+                else
+                {
+                    interimTranscript += transcript;
+                    interimTranscript = interimTranscript.split(' ').slice(maxWords).join(' ');
+
+                    setText(interimTranscript);
+                }
+            }
+        };
+
+        recognition.start();
+
+        return () =>
+        {
+            recognition.stop();
+        }
+    }, []);
 
     const normalizePosition = (x: number, y: number, width: number, height: number, sourceWidth: number, sourceHeight: number) =>
     {
@@ -54,9 +118,14 @@ const EyePopDrawing: React.FC = () =>
 
     return (
         <>
-            <PersonSegmentation />
+            <DragControls>
+                <PersonSegmentation />
+            </DragControls>
 
-            <TextContainer text="This is placeholder text for the future of humanity" size={.15} />
+
+            <DragControls>
+                <TextContainer text={text} size={.33} />
+            </DragControls>
         </>
     );
 };

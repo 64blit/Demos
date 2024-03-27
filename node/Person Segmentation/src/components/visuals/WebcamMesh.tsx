@@ -48,7 +48,7 @@ const WebcamMesh: React.FC<WebcamMeshProps> = () =>
 
     return (
         <>
-            <mesh ref={boxMeshRef}>
+            <mesh ref={boxMeshRef} visible={false}>
                 <planeGeometry args={[ aspectRatio, 1, ]} />
                 <meshBasicMaterial map={videoTexture ? videoTexture : null} needsUpdate={true} />
             </mesh>
