@@ -80,7 +80,6 @@ class EyePopWrapper
 
     private startWebcamPrediction(ingressId?: number)
     {
-        return;
 
         console.log('Starting prediction process for ingressId:', ingressId);
 
@@ -203,13 +202,13 @@ class EyePopWrapper
     public getOutline(): JSON
     {
         const prediction = this.getBiggestPerson();
+
         if (!prediction) return null;
         if (!("contours" in prediction)) return null;
-
         // we return the contours of the person as an array of points
         if (prediction.contours.length < 1) return null;
 
-        return prediction.contours[ 0 ];
+        return { contours: prediction.contours[ 0 ], width: prediction.width, height: prediction.height };
     }
 
 
@@ -229,10 +228,10 @@ type EyePopStore = {
     isReady: boolean;
     eyePop: EyePopWrapper | null;
     webcamVideo: HTMLVideoElement | null;
-    getBiggestPerson: () => JSON;
+    getBiggestPerson: () => JSON | any;
     initialize: (config: EyePopConfig | null | undefined) => void;
     startWebcam: () => void;
-    getOutline: () => JSON;
+    getOutline: () => JSON | any;
 }
 
 export const useEyePop = create<EyePopStore>((set, get) => ({

@@ -35,7 +35,6 @@ const App: React.FC = () =>
       await initialize({
         popId: '0e5b2512f4bd479286c83b38ad8ddb5d',
         auth: {
-          // secretKey: 'AAHxDcUVQYaApQSRqktcUv9UZ0FBQUFBQm1Bd3dEOFVyY0h6emU1OWVDTFhEaUQzcS1tLWtfeENMd3RXRzhxX2E0MW5vZGFqeERfVC1QV2tKT3o2czcxTHBCZG9ITjl3cDYyZlBXTC1sTjhMRFdtelRESlBfLWxuMVlZT2I2djRXVkdIVzc2TlE9'
           oAuth2: true
         },
         eyepopUrl: 'https://staging-api.eyepop.ai',
@@ -63,11 +62,11 @@ const App: React.FC = () =>
     cameraRef.current.saveState();
     cameraRef.current.mouseButtons.left = null;
     cameraRef.current.mouseButtons.right = null;
-    cameraRef.current.mouseButtons.middle = null;
-    cameraRef.current.mouseButtons.wheel = null;
     cameraRef.current.touches.two = null;
     cameraRef.current.touches.three = null;
     cameraRef.current.touches.one = null;
+    // cameraRef.current.mouseButtons.wheel = null;
+    // cameraRef.current.mouseButtons.middle = null;
 
   }, [ cameraRef, webcamMesh ])
 

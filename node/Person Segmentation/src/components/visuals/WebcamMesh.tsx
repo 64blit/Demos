@@ -9,8 +9,9 @@ const WebcamMesh: React.FC<WebcamMeshProps> = () =>
 {
 
     const { eyePop, webcamVideo } = useEyePop();
-    const { aspectRatio, videoTexture, setAspectRatio, setVideoTexture } = useSceneStore();
+    const { aspectRatio, setAspectRatio } = useSceneStore();
 
+    const [ videoTexture, setVideoTexture ] = useState<THREE.VideoTexture | null>(null);
     const boxMeshRef = useRef<THREE.Mesh>(null);
 
     useFrame(() =>
@@ -37,19 +38,21 @@ const WebcamMesh: React.FC<WebcamMeshProps> = () =>
         texture.colorSpace = THREE.SRGBColorSpace;
 
 
-        const aspectRatio = webcamVideo.width / webcamVideo.height;
+        const aspect = webcamVideo.width / webcamVideo.height;
         texture.needsUpdate = true;
 
         setVideoTexture(texture);
-        setAspectRatio(aspectRatio);
+        setAspectRatio(aspect);
 
     })
 
     return (
-        <mesh ref={boxMeshRef}>
-            <planeGeometry args={[ aspectRatio, 1, ]} />
-            <meshBasicMaterial map={videoTexture} needsUpdate={true} />
-        </mesh>
+        <>
+            <mesh ref={boxMeshRef}>
+                <planeGeometry args={[ aspectRatio, 1, ]} />
+                <meshBasicMaterial map={videoTexture ? videoTexture : null} needsUpdate={true} />
+            </mesh>
+        </>
     );
 };
 
