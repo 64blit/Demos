@@ -2,76 +2,92 @@ import React, { useEffect, useMemo, useState } from 'react';
 import * as THREE from 'three';
 import { useSceneStore } from '../../store/SceneStore';
 import { useEyePop } from '../../EyePopWrapper';
+import { useFrame } from '@react-three/fiber';
+import { is } from '@react-three/fiber/dist/declarations/src/core/utils';
 
 
 const PersonSegmentation: React.FC = () =>
 {
 
-    const { aspectRatio, segMask, width, height } = useSceneStore(); // replace with your store
+    const { aspectRatio } = useSceneStore(); // replace with your store
     const [ videoTexture, setVideoTexture ] = useState<THREE.VideoTexture | null>(null);
-    const { webcamVideo } = useEyePop();
+    const [ canvas, setCanvas ] = useState<HTMLCanvasElement | null>(null);
+    const [ ctx, setCtx ] = useState<CanvasRenderingContext2D | null>(null);
+    const [ maskTexture, setMaskTexture ] = useState<THREE.CanvasTexture | null>(null);
+    const [ material, setMaterial ] = useState<THREE.ShaderMaterial | null>(null);
+
+    const { getOutline, isReady, webcamVideo, eyePop } = useEyePop();
 
 
-    useEffect(() =>
+    useFrame(() =>
     {
-        if (videoTexture) return;
-        if (!webcamVideo) return;
-        if (!webcamVideo.width) return;
-        if (!webcamVideo.height) return;
+        if (!isReady) return;
+        if (!material && !canvas && !ctx && !maskTexture && !videoTexture && webcamVideo.width && webcamVideo.height)
+        {
+            setup();
+            return;
+        }
+
+        // The computer vision prediction result from the EyePop SDK
+        const outline = getOutline();
+
+        if (!outline) return;
+        if (!outline.points) return;
+
+        material.uniforms.personTexture.value = videoTexture;
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = 'white';
+        ctx.beginPath();
+        ctx.moveTo(outline.points[ 0 ].x, outline.points[ 0 ].y);
+
+        for (let i = 1; i < outline.points.length; i++)
+        {
+            ctx.lineTo(outline.points[ i ].x, outline.points[ i ].y);
+        }
+
+        ctx.closePath();
+        ctx.fill();
+
+        maskTexture.needsUpdate = true;
+        videoTexture.needsUpdate = true;
+        material.needsUpdate = true;
+    });
+
+    const setup = () =>
+    {
+
+        let canvas = document.getElementById('maskCanvas');
+
+        if (!canvas)
+        {
+            canvas = document.createElement('canvas');
+            canvas.id = 'maskCanvas';
+            document.body.appendChild(canvas);
+        }
+        canvas.width = webcamVideo.width;
+        canvas.height = webcamVideo.height;
+
+        const maskCtx = canvas.getContext('2d');
+
+        setCtx(maskCtx);
+        setCanvas(canvas);
+
+        // canvas.style.display = 'none';
+        const tempMask = new THREE.CanvasTexture(canvas);
+
+        setMaskTexture(tempMask);
+
 
         const texture = new THREE.VideoTexture(webcamVideo);
         texture.colorSpace = THREE.SRGBColorSpace;
         texture.needsUpdate = true;
         setVideoTexture(texture);
-    }, [ videoTexture, webcamVideo ]);
 
-    // Ray-casting algorithm to check if a point is inside a polygon
-    function isInside(point, polygon)
-    {
-        const x = point.x, y = point.y;
-        let inside = false;
-        for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++)
-        {
-            const xi = polygon[ i ].x, yi = polygon[ i ].y;
-            const xj = polygon[ j ].x, yj = polygon[ j ].y;
-            const intersect = ((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
-            if (intersect) inside = !inside;
-        }
-        return inside;
-    }
-
-    const createDataTexture = (width, height, points) =>
-    {
-        // Assuming points is an array of {x, y} objects forming a polygon
-        const data = new Uint8Array(width * height * 4);
-
-        for (let i = 0; i < width; i++)
-        {
-            for (let j = 0; j < height; j++)
-            {
-                const index = (i + j * width) * 4;
-
-
-                if (isInside({ x: i, y: j }, points))
-                {
-                    data[ index ] = 255; // Red component
-                    data[ index + 1 ] = 255; // Green component
-                    data[ index + 2 ] = 255; // Blue component
-                    data[ index + 3 ] = 255; // Alpha component
-                }
-            }
-        }
-
-        return new THREE.DataTexture(data, width, height, THREE.RGBAFormat);
-    }
-
-
-    const material = useMemo(() =>
-    {
-        return new THREE.ShaderMaterial({
+        const material = new THREE.ShaderMaterial({
             uniforms: {
-                personTexture: { value: null },
-                mask: { value: null }
+                personTexture: { value: texture },
+                mask: { value: tempMask }
             },
             vertexShader: `
             varying vec2 vUv;
@@ -86,39 +102,26 @@ const PersonSegmentation: React.FC = () =>
             varying vec2 vUv;
             void main() {
                 vec4 maskValue = texture2D(mask, vUv);
-                gl_FragColor = maskValue;
-                // if (maskValue.r < 0.5) discard; // adjust threshold based on your mask values
-                // gl_FragColor = texture2D(personTexture, vUv);
+                if (maskValue.r < 0.5) discard;
+                gl_FragColor = texture2D(personTexture, vUv);
             }
-            `
-        });
-    }, []);
+            `,
+            transparent: true,
+            side: THREE.DoubleSide
+        })
 
-    useEffect(() =>
-    {
-        if (!material) return;
-        if (!videoTexture) return;
-        if (!segMask) return;
-        if (!width) return;
-        if (!height) return;
-
-        console.log('updating material', segMask.length);
-
-        material.uniforms.personTexture.value = videoTexture;
-        material.uniforms.mask.value = createDataTexture(width, height, segMask);
-        material.needsUpdate = true;
-
-    }, [ videoTexture, segMask, width, height, material ]);
+        setMaterial(material)
+    }
 
     return (
         <>
+            {material &&
+                <mesh position={[ 0, 0, .1 ]} material={material} >
 
-            <mesh material={material} >
+                    <planeGeometry args={[ aspectRatio, 1, 1 ]} />
 
-                <planeGeometry args={[ aspectRatio, 1, 1 ]} />
-
-            </mesh >
-
+                </mesh >
+            }
         </>
     );
 };

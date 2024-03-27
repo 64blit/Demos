@@ -91,7 +91,7 @@ class EyePopWrapper
                 {
                     for await (const result of results)
                     {
-                        console.log('Prediction:', result)
+                        // console.log('Prediction:', result)
                         this.prediction = result;
                     }
 
@@ -209,7 +209,7 @@ class EyePopWrapper
         // we return the contours of the person as an array of points
         if (prediction.contours.length < 1) return null;
 
-        return { contours: prediction.contours[ 0 ], width: prediction.width, height: prediction.height };
+        return prediction.contours[ 0 ];
     }
 
 

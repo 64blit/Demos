@@ -11,12 +11,6 @@ import PersonSegmentation from './PersonSegmentation';
 const EyePopDrawing: React.FC = () =>
 {
 
-    // Our external state stores, use for simplifying state management accross components
-    const { eyePop, getOutline, } = useEyePop();
-
-    const { setHeight, setWidth, setSegMask } = useSceneStore();
-    const personSegmentationRef = useRef<THREE.Group>(null);
-
     const normalizePosition = (x: number, y: number, width: number, height: number, sourceWidth: number, sourceHeight: number) =>
     {
         // since we are using a plane which is resized to the aspect ratio of the video,
@@ -56,24 +50,6 @@ const EyePopDrawing: React.FC = () =>
 
     }
 
-    // The primary update loop which will run per frame
-    useFrame(() =>
-    {
-        if (!eyePop?.ready) return;
-
-        // The computer vision prediction result from the EyePop SDK
-        const outline = getOutline();
-        if (!outline) return;
-
-        if (!outline.contours) return;
-        if (!outline.contours.points) return;
-
-        setWidth(outline.width);
-        setHeight(outline.height);
-
-        setSegMask(outline.contours.points);
-
-    });
 
 
     return (
