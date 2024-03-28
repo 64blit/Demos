@@ -115,7 +115,6 @@ class EyePopWrapper
         const tempStream = await navigator.mediaDevices.getUserMedia({
             audio: false,
             video: {
-                userFacing: true,
                 width: { ideal: 1920 },
                 height: { ideal: 1080 }
             }
@@ -257,7 +256,7 @@ export const useEyePop = create<EyePopStore>((set, get) => ({
         return eyePop.setup();
     },
 
-    startWebcam: () =>
+    startWebcam: async () =>
     {
         const { eyePop } = get();
 
@@ -267,12 +266,13 @@ export const useEyePop = create<EyePopStore>((set, get) => ({
             return;
         }
 
+
+        await eyePop.startWebcamStream();
+
         set({
             isReady: true,
             webcamVideo: eyePop.videoElement
         });
-
-        eyePop.startWebcamStream();
 
     },
 

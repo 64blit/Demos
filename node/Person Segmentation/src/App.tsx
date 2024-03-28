@@ -10,6 +10,7 @@ import WebcamMesh from './components/visuals/WebcamMesh';
 import { useEyePop } from './EyePopWrapper.tsx';
 import EyePopDrawing from './components/visuals/EyePopDrawing';
 import UI from './components/ui/UI';
+import gsap from 'gsap';
 
 
 const App: React.FC = () =>
@@ -67,6 +68,20 @@ const App: React.FC = () =>
     cameraRef.current.touches.one = null;
     // cameraRef.current.mouseButtons.wheel = null;
     // cameraRef.current.mouseButtons.middle = null;
+    const angles = { azimuth: cameraRef.current.azimuthAngle, polar: cameraRef.current.polarAngle };
+    const animation = { angle: 0 };
+    gsap.to(animation, {
+      angle: "+=6.28319", // 360 degrees in radians
+      duration: 10, // duration of the animation in seconds
+      repeat: -1, // repeat indefinitely
+      ease: "sine", // linear easing for a constant speed
+      onUpdate: () =>
+      {
+        // Use the animated variable to calculate the azimuth and polar angles
+        cameraRef.current.azimuthAngle = angles.azimuth + Math.cos(animation.angle) * (0.0872665 / 4); // 5 degrees in radians
+        cameraRef.current.polarAngle = angles.polar + Math.sin(animation.angle) * (0.0872665 / 4); // 5 degrees in radians
+      }
+    });
 
   }, [ cameraRef, webcamMesh ])
 
@@ -95,7 +110,7 @@ const App: React.FC = () =>
       gl={{ localClippingEnabled: true }}
       dpr={window.devicePixelRatio * 2}>
 
-      <Perf position="top-left" />
+      {/* <Perf position="top-left" /> */}
 
       <CameraControls ref={cameraRef} />
       <Environment preset="city" resolution={512} />
