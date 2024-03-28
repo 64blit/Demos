@@ -3,9 +3,6 @@ import * as THREE from 'three';
 import { useSceneStore } from '../../store/SceneStore';
 import { useEyePop } from '../../EyePopWrapper';
 import { useFrame, useThree } from '@react-three/fiber';
-import { is } from '@react-three/fiber/dist/declarations/src/core/utils';
-import gsap from 'gsap';
-import { max } from 'three/examples/jsm/nodes/Nodes.js';
 
 
 const PersonSegmentation: React.FC = () =>
@@ -17,7 +14,7 @@ const PersonSegmentation: React.FC = () =>
     const [ canvas, setCanvas ] = useState<HTMLCanvasElement | null>(null);
     const [ ctx, setCtx ] = useState<CanvasRenderingContext2D | null>(null);
     const [ maskTexture, setMaskTexture ] = useState<THREE.CanvasTexture | null>(null);
-    const [ material, setMaterial ] = useState<THREE.ShaderMaterial | undefined>(undefined);
+    const [ shaderMaterial, setShaderMaterial ] = useState<THREE.ShaderMaterial | undefined>(undefined);
     const [ scale, setScale ] = useState<number>(1);
     const meshRef = useRef<THREE.Mesh>(null);
 
@@ -25,14 +22,9 @@ const PersonSegmentation: React.FC = () =>
 
     useEffect(() =>
     {
-        console.log('Person Segmentation', isReady);
         if (!isReady) return;
-
-        if (!webcamVideo)
-        {
-            console.log('no webcam video');
-            return;
-        }
+        if (!webcamVideo) return;
+        if (shaderMaterial) return;
 
         let canvas = document.getElementById('maskCanvas');
 
@@ -63,7 +55,6 @@ const PersonSegmentation: React.FC = () =>
         setCanvas(canvas);
         setScale(scale)
 
-        canvas.style.display = 'none';
         const tempMask = new THREE.CanvasTexture(canvas);
         tempMask.needsUpdate = true;
         setMaskTexture(tempMask);
@@ -100,13 +91,13 @@ const PersonSegmentation: React.FC = () =>
 
         })
 
-        console.log('material created', material);
-        setMaterial(material)
-    }, [ webcamVideo, isReady ]);
+        setShaderMaterial(material)
+    }, [ webcamVideo, isReady, shaderMaterial ]);
 
     useFrame(() =>
     {
         if (!isReady) return
+        if (!shaderMaterial) return;
 
         // The computer vision prediction result from the EyePop SDK
         const outline = getOutline();
@@ -114,7 +105,7 @@ const PersonSegmentation: React.FC = () =>
         if (!outline) return;
         if (!outline.points) return;
 
-        if (outline.points.length < 10) return;
+        if (outline.points.length < 50) return;
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -130,11 +121,14 @@ const PersonSegmentation: React.FC = () =>
         ctx.closePath();
         ctx.fill();
 
-        material.needsUpdate = true;
-        material.uniforms.personTexture.value = videoTexture;
-        material.uniforms.maskTexture.value = maskTexture;
-        material.uniforms.personTexture.value.needsUpdate = true;
-        material.uniforms.maskTexture.value.needsUpdate = true;
+        // add a blur effect to the mask
+        // ctx.filter = 'blur(2px)';
+
+        shaderMaterial.needsUpdate = true;
+        shaderMaterial.uniforms.personTexture.value = videoTexture;
+        shaderMaterial.uniforms.maskTexture.value = maskTexture;
+        shaderMaterial.uniforms.personTexture.value.needsUpdate = true;
+        shaderMaterial.uniforms.maskTexture.value.needsUpdate = true;
 
         // Here we force a redraw, for some reason the material doesn't update without this
         invalidate()
@@ -142,10 +136,15 @@ const PersonSegmentation: React.FC = () =>
 
     return (
         <>
-            {material &&
-                <mesh ref={meshRef} position={[ 0, 0, .01 ]} material={material}>
+            {shaderMaterial ?
+                <mesh ref={meshRef} position={[ 0, 0, .01 ]} material={shaderMaterial}>
                     <planeGeometry args={[ aspectRatio, 1, 1 ]} />
                 </mesh >
+                :
+                <mesh position={[ 0, 0, 0 ]} >
+                    <boxGeometry args={[ aspectRatio, 1, 0.1 ]} />
+                    <meshBasicMaterial color="red" wireframe={true} />
+                </mesh>
             }
         </>
     );

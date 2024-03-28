@@ -35,6 +35,18 @@ interface Line
     yPosition: number;
 }
 
+/**
+ * Renders a container for displaying text with speech recognition and text wrapping functionality.
+ *
+ * @component
+ * @param {Object} props - The component props.
+ * @param {string} [props.textInput=''] - The input text for the container.
+ * @param {string} [props.fontUrl='https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/fonts/helvetiker_regular.typeface.json'] - The URL of the font file to be used.
+ * @param {number} [props.size=0.1] - The font size.
+ * @param {string} [props.color='#16efff'] - The color of the text.
+ * @param {number} [props.padding=0.2] - The padding around the text.
+ * @returns {JSX.Element} The rendered TextContainer component.
+ */
 const TextContainer: React.FC<TextContainerProps> = ({ textInput = '', fontUrl = 'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/fonts/helvetiker_regular.typeface.json', size = .1, color = '#16efff', padding = .2 }) =>
 {
     const { camera } = useThree();
@@ -109,13 +121,6 @@ const TextContainer: React.FC<TextContainerProps> = ({ textInput = '', fontUrl =
 
         recognition.start();
 
-        // setInterval(() =>
-        // {
-        //     const randomWords = [ 'Hello', 'World', 'This', 'is', 'a', 'test', 'of', 'the', 'speech', 'recognition', 'system', ' ' ];
-        //     const randomSentence = Array(5).fill(0).map(() => randomWords[ Math.floor(Math.random() * randomWords.length) ]).join(' ');
-        //     updateText(randomSentence);
-        // }, 2000);
-
         return () =>
         {
             recognition.stop();
@@ -128,15 +133,11 @@ const TextContainer: React.FC<TextContainerProps> = ({ textInput = '', fontUrl =
         let fontSize = size; // Start with the initial font size
         let lines = [];
         let totalHeight = 0;
-        const words = text.split(' '); // Define the words variable
+        const words = text.split(' ');
 
         // Here we add some empty strings to the end of the words array to ensure that the last word is processed
         //  This is a hack and there is probably a better way to do this
-        words.push('_'); // Add an empty string to the end of the words array
-        words.push('_'); // Add an empty string to the end of the words array
-        words.push('_'); // Add an empty string to the end of the words array
-        words.push('_'); // Add an empty string to the end of the words array
-        words.push('_'); // Add an empty string to the end of the words array
+        words.push('_', '_', '_', '_', '_');
         let scale = 1;
 
         // Function to calculate lines and total height for a given font size
