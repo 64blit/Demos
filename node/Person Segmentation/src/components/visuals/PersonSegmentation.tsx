@@ -33,6 +33,7 @@ const PersonSegmentation: React.FC = () =>
             canvas = document.createElement('canvas');
             canvas.id = 'maskCanvas';
             document.body.appendChild(canvas);
+            canvas.style.display = 'none';
         }
 
         // const maxWidth = 1280;
@@ -40,7 +41,6 @@ const PersonSegmentation: React.FC = () =>
         // const widthDifference = webcamVideo.width - maxWidth;
         // const heightDifference = webcamVideo.height - maxHeight;
         // const scale = widthDifference > heightDifference ? maxWidth / webcamVideo.width : maxHeight / webcamVideo.height;
-
         // canvas.width = maxWidth;
         // canvas.height = maxHeight;
 

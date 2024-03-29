@@ -12,6 +12,7 @@ import { useSceneStore } from '../../store/SceneStore';
 import * as THREE from 'three';
 import test from 'node:test';
 import gsap from 'gsap';
+import { scaleMap } from './scaleMap.js'
 
 extend({ TextGeometry });
 declare module "@react-three/fiber" {
@@ -47,14 +48,16 @@ interface Line
  * @param {number} [props.padding=0.2] - The padding around the text.
  * @returns {JSX.Element} The rendered TextContainer component.
  */
-const TextContainer: React.FC<TextContainerProps> = ({ textInput = '', fontUrl = 'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/fonts/helvetiker_regular.typeface.json', size = .1, color = '#16efff', padding = .2 }) =>
+const TextContainer: React.FC<TextContainerProps> = ({ textInput = '', fontUrl = 'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/fonts/helvetiker_regular.typeface.json', size = .1, color = '#16efff', padding = .1 }) =>
 {
     const { camera } = useThree();
     const font = useLoader(FontLoader, fontUrl);
     const [ lines, setLines ] = useState<[]>([]);
     const { aspectRatio } = useSceneStore();
+    const [ isAudioStarted, setIsAudioStarted ] = useState<boolean>(false);
 
     const lineRefs = lines.map(() => createRef<THREE.Mesh>());
+
 
     // handles speech recognition
     useEffect(() =>
@@ -69,6 +72,7 @@ const TextContainer: React.FC<TextContainerProps> = ({ textInput = '', fontUrl =
         recognition.onaudiostart = () =>
         {
             console.log('Audio started');
+            setIsAudioStarted(true);
         }
 
         recognition.onaudioend = () =>
@@ -81,41 +85,37 @@ const TextContainer: React.FC<TextContainerProps> = ({ textInput = '', fontUrl =
         recognition.onend = () =>
         {
             console.log('Speech recognition ended');
-            updateText('');
+            updateTextDynamic('');
             clearTimeout(startTimeout);
 
             startTimeout = setTimeout(() =>
             {
                 recognition.start();
-            }, 1000);
+            }, 100);
         };
 
         recognition.onerror = (event) =>
         {
             console.error('Speech recognition error', event);
         };
-        const maxWords = -5;
+
+        const maxWords = -10;
+
         recognition.onresult = (event) =>
         {
+            // console.log('Speech recognition result', event);
+
             let interimTranscript = '';
             for (let i = event.resultIndex; i < event.results.length; i++)
             {
                 let transcript = event.results[ i ][ 0 ].transcript;
 
-                // keep only the last 80 characters of the transcript but make sure we don't cut off a word
-                transcript = transcript.split(' ').slice(maxWords).join(' ');
+                // if (event.results[ i ].isFinal)
+                // {
+                //     updateTextDynamic(transcript);
+                // }
+                updateTextDynamic(transcript);
 
-                if (event.results[ i ].isFinal)
-                {
-                    // setText(transcript);
-                }
-                else
-                {
-                    interimTranscript += transcript;
-                    interimTranscript = interimTranscript.split(' ').slice(maxWords).join(' ');
-
-                    updateText(interimTranscript);
-                }
             }
         };
 
@@ -128,7 +128,7 @@ const TextContainer: React.FC<TextContainerProps> = ({ textInput = '', fontUrl =
     }, []);
 
     // handles text wrapping
-    const updateText = (text) =>
+    const updateTextDynamic = (text) =>
     {
         let fontSize = size; // Start with the initial font size
         let lines = [];
@@ -145,7 +145,7 @@ const TextContainer: React.FC<TextContainerProps> = ({ textInput = '', fontUrl =
         {
             lines = [];
             totalHeight = 0;
-            let yPosition = -(padding / 2);
+            let yPosition = (padding);
             let textLine = "";
 
             words.forEach((word, index) =>
@@ -192,6 +192,8 @@ const TextContainer: React.FC<TextContainerProps> = ({ textInput = '', fontUrl =
 
         };
 
+        scale = scaleMap.get(text.length) || 1;
+
         // Calculate lines and total height for the initial font size
         calculateLines();
 
@@ -201,7 +203,9 @@ const TextContainer: React.FC<TextContainerProps> = ({ textInput = '', fontUrl =
         while (totalHeight > desiredHeight && fontSize > 0.01)
         {
             lines = [];
-            scale *= 0.95;
+            // console.log('scale', scale);
+            scale *= .95;
+
             calculateLines();
         }
 
@@ -209,13 +213,6 @@ const TextContainer: React.FC<TextContainerProps> = ({ textInput = '', fontUrl =
 
     }
 
-    // handles text animations
-    useEffect(() =>
-    {
-
-        animateUp(lines);
-
-    }, [ lines, lineRefs ])
 
     const animateUp = (line: any) =>
     {
@@ -277,9 +274,9 @@ const TextContainer: React.FC<TextContainerProps> = ({ textInput = '', fontUrl =
             </group >
 
 
-            <mesh position={[ 0, 0, 0 ]} >
-                <boxGeometry args={[ aspectRatio, 1, 0.1 ]} />
-                <meshBasicMaterial visible={false} color="red" wireframe={true} />
+            <mesh position={[ (aspectRatio / 2) - .2, -.45, 0 ]} scale={[ 1, 1, .1 ]} >
+                <sphereGeometry args={[ 0.01 ]} />
+                <meshBasicMaterial visible={isAudioStarted} color="red" wireframe={false} />
             </mesh>
         </>
     );
