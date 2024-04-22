@@ -78,17 +78,17 @@ class EyePopWrapper
         this.videoElement.setAttribute('playsinline', 'true');
     }
 
-    public async startVideo(path: string)
+    public async startVideo(fileContent: File)
     {
-        this.videoElement.src = path;
+        this.videoElement.srcObject = fileContent;
         this.videoElement.play();
-        this.startVideoPrediction();
+        this.startVideoPrediction(fileContent);
     }
 
-    private startVideoPrediction()
+    private startVideoPrediction(fileContent: File)
     {
         console.log('Starting prediction process for video');
-        this.endpoint.process({ video: this.videoElement })
+        this.endpoint.process({ file: fileContent })
             .then((results) =>
             {
                 // starts a new prediction process in the background
@@ -96,7 +96,6 @@ class EyePopWrapper
                 {
                     for await (const result of results)
                     {
-                        // console.log('Prediction:', result)
                         this.prediction = result;
                     }
 
@@ -117,7 +116,6 @@ class EyePopWrapper
                 {
                     for await (const result of results)
                     {
-                        // console.log('Prediction:', result)
                         this.prediction = result;
                     }
 
@@ -256,10 +254,10 @@ type EyePopStore = {
     eyePop: EyePopWrapper | null;
     webcamVideo: HTMLVideoElement | null;
     video: HTMLVideoElement | null;
-    startVideo: () => void;
+    startVideo: (fileContent: File) => void;
     getBiggestPerson: () => JSON | any;
     initialize: (config: EyePopConfig | null | undefined) => void;
-    startWebcam: (path: string) => void;
+    startWebcam: () => void;
     getOutline: () => JSON | any;
 }
 
@@ -285,7 +283,7 @@ export const useEyePop = create<EyePopStore>((set, get) => ({
         return eyePop.setup();
     },
 
-    startVideo: (path) =>
+    startVideo: (fileContent) =>
     {
         const { eyePop } = get();
 
@@ -295,7 +293,7 @@ export const useEyePop = create<EyePopStore>((set, get) => ({
             return;
         }
 
-        eyePop.startVideo(path);
+        eyePop.startVideo(fileContent);
     },
 
     startWebcam: async () =>
