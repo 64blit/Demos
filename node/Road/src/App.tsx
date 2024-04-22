@@ -32,7 +32,7 @@ const App: React.FC = () =>
     {
 
       await initialize({
-        popId: '0e5b2512f4bd479286c83b38ad8ddb5d',
+        popId: '8d88113ee4814b6683eba5a69fba7454',
         auth: {
           oAuth2: true
         },

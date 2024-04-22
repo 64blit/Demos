@@ -62,7 +62,7 @@ class EyePopWrapper
 
     private createVideoElement()
     {
-        const existingVideoElement = document.getElementById('webcam-video-eyepop');
+        const existingVideoElement = document.getElementById('video-eyepop');
         if (existingVideoElement)
         {
             this.videoElement = existingVideoElement as HTMLVideoElement;
@@ -70,7 +70,7 @@ class EyePopWrapper
         }
 
         this.videoElement = document.createElement('video');
-        this.videoElement.setAttribute('id', 'webcam-video-eyepop');
+        this.videoElement.setAttribute('id', 'video-eyepop');
         this.videoElement.style.display = 'none';
         document.body.appendChild(this.videoElement);
         this.videoElement.setAttribute('autoplay', 'true');
