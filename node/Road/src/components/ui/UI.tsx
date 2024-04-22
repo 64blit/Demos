@@ -8,10 +8,23 @@ const UI: React.FC = () =>
 {
     const [ open, setOpen ] = React.useState(false);
 
+    const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) =>
+    {
+        const file = event.target.files?.[ 0 ];
+        // Handle the selected file here
+
+        console.log('Selected file:', file)
+
+    };
+
     return (
         <>
             <Html fullscreen transform={false} >
+
                 <div className='flex flex-row w-100 h-100 min-h-100 justify-end p-5' style={{ height: '100%' }}>
+
+                    <input type="file" accept="video/*" onChange={handleFileSelect} />
+
                     <div className="btn w-14 bg-gray-600 text-white m-4 " onClick={() =>
                     {
                         setOpen(!open)
@@ -35,7 +48,6 @@ const UI: React.FC = () =>
                     {open && <Dialog onClose={() => { setOpen(!open) }} />}
 
                 </div>
-
 
             </Html>
         </>

@@ -14,7 +14,7 @@ const EyePopProvider = ({ children }) =>
     {
         // API key and popID are easily obtained from the EyePop.ai dashboard
         EyePop.endpoint({
-            auth: { secretKey: 'AAF8CqARHHgQBcLhHqLPUjJxZ0FBQUFBQmw0QXNqX2pqMzlaZ292b05LdHhrRmowUGlrNUREUDVYQTE2TW1zQWYyU2U0eVRmQS0xSVdnWkZvRldQOGd2Y2hKWG9kYnI0MzJnRGwyWGJoTExYNkVwQzVLdHZvRzBIMTlLdTFaZ2JEWFJPTERzbTQ9' },
+            auth: { oAuth2: true },
             popId: 'e4fd9369a9de42f6becfb90e11f4620c',
         })
             .onStateChanged((from, to) =>

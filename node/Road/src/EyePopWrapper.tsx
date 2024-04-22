@@ -78,6 +78,32 @@ class EyePopWrapper
         this.videoElement.setAttribute('playsinline', 'true');
     }
 
+    public async startVideo(path: string)
+    {
+        this.videoElement.src = path;
+        this.videoElement.play();
+        this.startVideoPrediction();
+    }
+
+    private startVideoPrediction()
+    {
+        console.log('Starting prediction process for video');
+        this.endpoint.process({ video: this.videoElement })
+            .then((results) =>
+            {
+                // starts a new prediction process in the background
+                (async () =>
+                {
+                    for await (const result of results)
+                    {
+                        // console.log('Prediction:', result)
+                        this.prediction = result;
+                    }
+
+                })();
+            });
+    }
+
     private startWebcamPrediction(ingressId?: number)
     {
 
@@ -229,9 +255,11 @@ type EyePopStore = {
     isReady: boolean;
     eyePop: EyePopWrapper | null;
     webcamVideo: HTMLVideoElement | null;
+    video: HTMLVideoElement | null;
+    startVideo: () => void;
     getBiggestPerson: () => JSON | any;
     initialize: (config: EyePopConfig | null | undefined) => void;
-    startWebcam: () => void;
+    startWebcam: (path: string) => void;
     getOutline: () => JSON | any;
 }
 
@@ -239,6 +267,7 @@ export const useEyePop = create<EyePopStore>((set, get) => ({
     isReady: false,
     eyePop: null,
     webcamVideo: null,
+    video: null,
     initialize: (config: EyePopConfig | null | undefined) =>
     {
         set({ isReady: false });
@@ -254,6 +283,19 @@ export const useEyePop = create<EyePopStore>((set, get) => ({
         set({ eyePop });
 
         return eyePop.setup();
+    },
+
+    startVideo: (path) =>
+    {
+        const { eyePop } = get();
+
+        if (!eyePop)
+        {
+            console.error('EyePop.ai not yet initialized. Please call initialize() first');
+            return;
+        }
+
+        eyePop.startVideo(path);
     },
 
     startWebcam: async () =>
