@@ -1,4 +1,6 @@
+import * as THREE from 'three';
 var vehicles = new Map();
+
 
 
 class Car
@@ -16,6 +18,7 @@ class Car
         this.accelerations = [];
         this.accelerationTimes = [];
         this.collisionFactor = 0.0;
+        this.trafficFactor = 0.0;
         this.active = true;
         this.arrow = null;
     }
@@ -41,7 +44,7 @@ class Car
         this.y = newY;
 
         // Update acceleration history, maintaining a fixed size of history
-        if (this.accelerations.length >= 40)
+        if (this.accelerations.length >= 20)
         {
             this.accelerations.shift();
             this.accelerationTimes.shift();
@@ -55,6 +58,8 @@ class Car
 
         this.velocity.x = this.velocities.reduce((sum, vel) => sum + vel.x, 0) / this.velocities.length;
         this.velocity.y = this.velocities.reduce((sum, vel) => sum + vel.y, 0) / this.velocities.length;
+        // this.velocity.x = newVelocityX;
+        // this.velocity.y = newVelocityY;
         this.velocity.x *= 2;
         this.velocity.y *= 2;
     }
@@ -108,23 +113,23 @@ class Car
 
 }
 
-function findClosestCar(x, y, carMap, threshold = 100)
+function findClosestVehicle(x, y, vehiclesMap, threshold = 100)
 {
 
-    let closestCar = null;
+    let closestVehicle = null;
     let closestDistance = Infinity;
 
-    for (const car of carMap.values())
+    for (const vehicle of vehiclesMap.values())
     {
-        const distance = Math.sqrt((car.x - x) ** 2 + (car.y - y) ** 2);
+        const distance = Math.sqrt((vehicle.x - x) ** 2 + (vehicle.y - y) ** 2);
         if (distance < closestDistance && distance <= threshold)
         {
-            closestCar = car;
+            closestVehicle = vehicle;
             closestDistance = distance;
         }
     }
 
-    return closestCar;
+    return closestVehicle;
 
 }
 
@@ -138,33 +143,105 @@ function generateUniqueId()
     return newId;
 }
 
-function detectCollision(carMap)
+// a function to detect and count the flow of vehicles in opposing directions
+//  based on the velocity of the vehicles
+function getFlowStatistics()
 {
-    for (const car of carMap.values())
+    const flowCount = {
+        'flow1': { direction: new THREE.Vector2(), velocities: [], count: 0 },
+        'flow2': { direction: new THREE.Vector2(), velocities: [], count: 0 }
+    };
+
+    // loop over all vehicles and average their velocities
+    //  together into flow1, skipping all velocities which are not closer than a  
+    //  threshold to flow1. If the velocity is closer to flow2, we add it to
+    //  flow2 instead.
+    for (const car of getVehicles(true).values())
     {
-        const dynamicThreshold = car.getDynamicAccelerationThreshold();
-        const lastAcceleration = Math.abs(car.accelerations[ car.accelerations.length - 1 ] || 0);
+        let velocity = car.getVelocity();
 
-        const sequentialAccelerationCount = car.getSequentialAccelerationCount();
+        if (!velocity.x || !velocity.y) { continue; }
 
-        if (lastAcceleration > 1)
-        {
-            console.log('Car:', car.id, 'Last acceleration:', lastAcceleration, 'Threshold:', dynamicThreshold);
-        }
+        velocity = new THREE.Vector2(-1 * velocity.x, velocity.y);
 
-        if (lastAcceleration > dynamicThreshold && sequentialAccelerationCount >= 2)
+        velocity.normalize();
+
+        if (flowCount.flow1.direction.angleTo(velocity) <= Math.PI / 2)
         {
 
-            car.collisionFactor = 1.0;
+            flowCount.flow1.direction.lerp(velocity, 0.5);
+            flowCount.flow1.velocities.push(velocity);
+            flowCount.flow1.count += 1;
 
-            car.clearAccelerations();
+        } else
+        {
 
-            return true;
+            flowCount.flow2.direction.lerp(velocity, 0.5);
+            flowCount.flow2.velocities.push(velocity);
+            flowCount.flow2.count += 1;
 
         }
     }
 
-    return false;
+
+    flowCount.flow1.direction.rotateAround(new THREE.Vector2(0, 0), Math.PI);
+    flowCount.flow2.direction.rotateAround(new THREE.Vector2(0, 0), Math.PI);
+
+    flowCount.flow1.direction.normalize();
+    flowCount.flow2.direction.normalize();
+
+    // rotate the flow directions by 180 degrees to get the opposing flow direction
+
+    return flowCount;
+}
+
+function detectCollision(vehicleMap)
+{
+    let collisionDetected = false;
+    let trafficDetected = false;
+    let vehiclesInTraffic = 0;
+    for (const vehicle of vehicleMap.values())
+    {
+        // detect dynamic collision based on acceleration change
+        const dynamicThreshold = vehicle.getDynamicAccelerationThreshold();
+        const lastAcceleration = Math.abs(vehicle.accelerations[ vehicle.accelerations.length - 1 ] || 0);
+
+        const sequentialAccelerationCount = vehicle.getSequentialAccelerationCount();
+
+        if (lastAcceleration > dynamicThreshold && sequentialAccelerationCount >= 2)
+        {
+
+            vehicle.collisionFactor = 1.0;
+
+            // vehicle.clearAccelerations();
+            collisionDetected = true;
+        }
+
+
+        // detect traffic congestion based on average velocity
+        if (vehicle.velocities.length >= 5)
+        {
+            const velocities = vehicle.velocities.slice(vehicle.velocities.length - 5, vehicle.velocities.length);
+            const averageVelocity = velocities.reduce((sum, vel) => sum + Math.sqrt(vel.x ** 2 + vel.y ** 2), 0) / velocities.length;
+
+            if (averageVelocity < 20)
+            {
+                vehicle.trafficFactor = 1.0;
+                vehiclesInTraffic += 1;
+            } else
+            {
+                vehicle.trafficFactor = 0.0;
+            }
+
+        }
+    }
+
+    if (vehiclesInTraffic > 1)
+    {
+        trafficDetected = true;
+    }
+
+    return { traffic: trafficDetected, collision: collisionDetected };
 }
 
 
@@ -174,15 +251,12 @@ function processFrame(frameData)
     if (!frameData) { return; }
     if (!frameData.objects) { return; }
 
-    console.log(frameData);
-
     // mark all vehicles as inactive if they were not updated in the current frame
     for (const vehidle of vehicles.values())
     {
         if (vehidle.active)
         {
             vehidle.active = false;
-            vehidle.collisionFactor = 0.0;
         }
     }
 
@@ -197,7 +271,8 @@ function processFrame(frameData)
         )
         {
 
-            const closestCar = findClosestCar(object.x, object.y, vehicles);
+            const closestCar = findClosestVehicle(object.x, object.y, vehicles);
+
             if (closestCar)
             {
                 closestCar.updatePosition(frameData.seconds, object.x, object.y, object.width, object.height);
@@ -220,11 +295,15 @@ function processFrame(frameData)
     return detectCollision(vehicles);
 }
 
-function getVehicles()
+function getVehicles(allVehicles = false)
 {
-    // return Array.from(vehicles.values());
-    // return all active vehicles
+    if (allVehicles)
+    {
+        return vehicles;
+    }
+
+    // Return only active vehicles
     return Array.from(vehicles.values()).filter((car) => car.active);
 }
 
-export { processFrame, getVehicles };
+export { processFrame, getVehicles, getFlowStatistics };

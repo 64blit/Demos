@@ -1,7 +1,7 @@
 import React, { createContext, useState, useContext, useRef, useEffect } from 'react';
 
 import { EyePop } from "@eyepop.ai/eyepop";
-import { processFrame, getVehicles } from "../CollisionDetector.js";
+import { processFrame, getVehicles, getFlowStatistics } from "../CollisionDetector.js";
 
 const EyePopContext = createContext();
 
@@ -12,6 +12,7 @@ const EyePopProvider = ({ children }) =>
     const [ inferenceData, setData ] = useState([]);
     const [ videoURL, setVideoURL ] = useState('');
     const [ isCollision, setCollision ] = useState(false);
+    const [ isTraffic, setTraffic ] = useState(false);
     const [ prediction, setPrediction ] = useState(null);
 
     const videoRef = useRef(null);
@@ -48,7 +49,6 @@ const EyePopProvider = ({ children }) =>
 
     useEffect(() =>
     {
-        console.log('EFFECT 2', videoRef);
         if (!videoRef.current) return;
         videoRef.current.currentTime = 0;
 
@@ -56,10 +56,12 @@ const EyePopProvider = ({ children }) =>
 
         const videoUpdate = () =>
         {
-            const time = videoRef.current.currentTime;
+            const time = videoRef.current.currentTime + .2;
             const closestPrediction = getClosestPrediction(time);
-            const isCollision = processFrame(closestPrediction);
-            setCollision(isCollision);
+            const frameResults = processFrame(closestPrediction);
+            if (!frameResults) return;
+            setCollision(frameResults.collision);
+            setTraffic(frameResults.traffic);
             setPrediction(closestPrediction);
         }
 
@@ -71,18 +73,6 @@ const EyePopProvider = ({ children }) =>
         }
 
     }, [ videoRef.current ]);
-
-    useEffect(() =>
-    {
-        if (!videoRef.current) return;
-
-        if (isCollision)
-        {
-            console.log('Collision detected');
-            videoRef.current.pause();
-        }
-
-    }, [ videoRef.current, isCollision ]);
 
     function getClosestPrediction(second)
     {
@@ -158,6 +148,14 @@ const EyePopProvider = ({ children }) =>
 
     }
 
+    function reset()
+    {
+        const vehicles = getVehicles(true);
+
+        // clear the vehicles map
+        vehicles.clear();
+    }
+
 
 
     return (
@@ -171,7 +169,10 @@ const EyePopProvider = ({ children }) =>
             getClosestPrediction,
             getVehicles,
             isCollision,
+            isTraffic,
             prediction,
+            reset,
+            getFlowStatistics
         }}>
 
             {
