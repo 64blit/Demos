@@ -49,21 +49,17 @@ const App: React.FC = () =>
 
 
   return (
-    <Canvas
-      dpr={window.devicePixelRatio * 2}>
+    <Canvas dpr={window.devicePixelRatio * 2}>
 
       <CameraControls ref={cameraRef} />
       <Environment preset="city" resolution={512} />
       <pointLight position={[ 0, 0, 10 ]} decay={0} intensity={5} />
-
-
 
       <UI />
 
       <EyePopDrawing />
 
       <WebcamMesh />
-
 
     </Canvas >
   );
