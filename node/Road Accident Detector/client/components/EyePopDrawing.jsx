@@ -145,10 +145,20 @@ const EyePopDrawing = () =>
 
             if (vehicle.collisionFactor > 0.5)
             {
+
                 ctx.strokeStyle = 'red';
-                console.log('Collision detected', vehicle.accelerations, vehicle.getDynamicAccelerationThreshold()?.toFixed(2));
-                ctx.lineWidth = 20;
-                vehicle.collisionFactor = 0.0;
+
+                if (vehicle.wasProcessed)
+                {
+                    ctx.lineWidth = 5;
+                } else
+                {
+                    ctx.lineWidth = 20;
+                }
+
+                vehicle.wasProcessed = true;
+                // vehicle.collisionFactor = 0.0;
+
             } else
             {
                 ctx.lineWidth = 2;
@@ -163,20 +173,6 @@ const EyePopDrawing = () =>
             ctx.fillStyle = 'white';
             ctx.font = 'bold 14px Arial';
             ctx.fillText(vehicle.id, vehicle.x + vehicle.width / 4, vehicle.y + vehicle.height / 2);
-
-            // // draw the last acceleration value of the vehicle
-            // ctx.fillStyle = 'black';
-            // ctx.font = 'bold 14px Arial';
-            // ctx.fillText(Math.abs(vehicle.accelerations[ vehicle.accelerations.length - 1 ] || 0)?.toFixed(2), vehicle.x + vehicle.width / 4, vehicle.y + vehicle.height / 2 + 20);
-
-            // // draw the dynamic vehicle.getDynamicAccelerationThreshold() value
-
-            // ctx.fillStyle = 'black';
-            // ctx.font = 'bold 14px Arial';
-            // ctx.fillText(vehicle.getDynamicAccelerationThreshold()?.toFixed(2), vehicle.x + vehicle.width / 4, vehicle.y + vehicle.height / 2 + 40);
-
-
-
 
         }
 

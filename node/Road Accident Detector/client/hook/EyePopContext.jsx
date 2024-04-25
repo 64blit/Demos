@@ -1,7 +1,7 @@
 import React, { createContext, useState, useContext, useRef, useEffect } from 'react';
 
 import { EyePop } from "@eyepop.ai/eyepop";
-import { processFrame, getVehicles, getFlowStatistics } from "../CollisionDetector.js";
+import { processFrame, getVehicles, getFlowStatistics, resetCollisionDetection } from "../CollisionDetector.js";
 
 const EyePopContext = createContext();
 
@@ -16,6 +16,7 @@ const EyePopProvider = ({ children }) =>
     const [ prediction, setPrediction ] = useState(null);
 
     const videoRef = useRef(null);
+
 
     const eyepopInference =
         `ep_infer id=1  category-name="vehicle"
@@ -66,6 +67,7 @@ const EyePopProvider = ({ children }) =>
 
         console.log('Video URL:', videoURL);
         let animationFrameId;
+        let cancelTime = -1;
 
         const onVideoUpdate = () =>
         {
@@ -80,14 +82,27 @@ const EyePopProvider = ({ children }) =>
                 setPrediction(closestPrediction);
             }
 
-            animationFrameId = requestAnimationFrame(onVideoUpdate);
-            // Request the next frame
+            if (frameResults.collision && Math.abs(cancelTime - time) > 1.0)
+            {
+                cancelTime = time;
+                // Pause the loop
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            } else
+            {
+                // Request the next frame
+                animationFrameId = requestAnimationFrame(onVideoUpdate);
+            }
         }
 
         const onVideoStart = () =>
         {
-            // Start the loop
-            animationFrameId = requestAnimationFrame(onVideoUpdate);
+            // Start the loop if it's not already running
+            if (!animationFrameId)
+            {
+                console.log('Video started');
+                animationFrameId = requestAnimationFrame(onVideoUpdate);
+            }
         }
 
         videoRef.current.addEventListener('play', onVideoStart);
@@ -176,10 +191,7 @@ const EyePopProvider = ({ children }) =>
 
     function reset()
     {
-        const vehicles = getVehicles(true);
-
-        // clear the vehicles map
-        vehicles.clear();
+        resetCollisionDetection();
     }
 
 

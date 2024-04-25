@@ -20,23 +20,28 @@ class Car
         this.collisionFactor = 0.0;
         this.trafficFactor = 0.0;
         this.active = true;
+        this.threshold = 10;
+        this.wasProcessed = false;
     }
 
     updatePosition(time, newX, newY, newWidth, newHeight)
     {
+        const distX = Math.abs(newX - this.x);
+        const distY = Math.abs(newY - this.y);
 
-        this.active = true;
+        if (distX < 10 && distY < 10 || !(distX === 0 || distY === 0))
+        {
+            this.active = true;
+        } else
+        {
+            this.active = false;
+        }
+
         if (newX === this.x || newY === this.y)
         {
             return;
         }
 
-        if (Math.abs(newX - this.x) > 100 || Math.abs(newY - this.y) > 100)
-        {
-            this.x = newX;
-            this.y = newY;
-            return;
-        }
 
         this.width = newWidth;
         this.height = newHeight;
@@ -70,10 +75,9 @@ class Car
 
         this.velocity.x = this.velocities.reduce((sum, vel) => sum + vel.x, 0) / this.velocities.length;
         this.velocity.y = this.velocities.reduce((sum, vel) => sum + vel.y, 0) / this.velocities.length;
-        // this.velocity.x = newVelocityX;
-        // this.velocity.y = newVelocityY;
-        this.velocity.x *= 6;
-        this.velocity.y *= 6;
+
+        this.velocity.x *= 4;
+        this.velocity.y *= 4;
     }
 
     getVelocity()
@@ -84,20 +88,33 @@ class Car
         };
     }
 
-    getDynamicAccelerationThreshold()
+    isAboveThreshold(sample)
     {
-        if (this.accelerations.length < 2) { return 10; } // Default threshold if not enough data
+        if (this.accelerations.length < 2) { return 100; } // Default threshold if not enough data
 
-        // Calculate mean of accelerations
-        const mean = this.accelerations.reduce((a, b) => a + b) / this.accelerations.length;
+        // calculate the mean of accelerations but only sample if the acceleration is less than 2x the previous acceleration
+        let meanAcceleration = 0;
+        let count = 0;
+        for (let i = 1; i < this.accelerations.length; i++)
+        {
+            if (Math.abs(this.accelerations[ i ] - this.accelerations[ i - 1 ]) < 10)
+            {
+                meanAcceleration += Math.abs(this.accelerations[ i ]);
+                count += 1;
+            }
+        }
 
-        // Calculate standard deviation of accelerations
-        const variance = this.accelerations.reduce((sum, acc) => sum + (acc - mean) ** 2, 0) / this.accelerations.length;
-        const stdDeviation = Math.sqrt(variance);
-        const scalar = 1.8;
-        const threshold = (Math.abs(mean) + 2 * stdDeviation) * scalar;
 
-        return threshold; // Can adjust the factor based on sensitivity needed
+        meanAcceleration /= count;
+        this.threshold = meanAcceleration * 4;
+
+        const sampleDistance = Math.abs(sample - meanAcceleration);
+        if (sampleDistance > 20)
+        {
+            return false;
+        }
+
+        return Math.abs(sample) >= this.threshold;
     }
 
     clearAccelerations()
@@ -106,10 +123,9 @@ class Car
         this.accelerationTimes = [];
     }
 
-    getSequentialAccelerationCount()
+    hasEnoughConsecutiveSamples(threshold = 35)
     {
         let count = 0;
-        let lastTime = -1;
 
         for (let i = 1; i < this.accelerationTimes.length; i++)
         {
@@ -119,13 +135,17 @@ class Car
             const lastTime = this.accelerationTimes[ i - 1 ];
             const time = this.accelerationTimes[ i ];
 
-            if (time - lastTime <= 1 && Math.abs(lastPosition.x - currentPosition.x) < 10 && Math.abs(lastPosition.y - currentPosition.y) < 10)
+            if (
+                time - lastTime <= .2 &&
+                Math.abs(lastPosition.x - currentPosition.x) < 25 &&
+                Math.abs(lastPosition.y - currentPosition.y) < 25
+            )
             {
                 count += 1;
             }
         }
 
-        return count;
+        return count > threshold;
     }
 
 }
@@ -140,15 +160,8 @@ function findClosestVehicle(object, vehiclesMap, threshold = 100)
     return closestVehicle;
 }
 
-function generateUniqueId()
-{
-    let newId;
-    do
-    {
-        newId = Math.random().toString(36).slice(0, 9);
-    } while (vehicles.has(newId));
-    return newId;
-}
+
+var primaryDirections = [];
 
 function getFlowStatistics()
 {
@@ -164,7 +177,16 @@ function getFlowStatistics()
 
     if (allVelocities.length < 2) return { flow1: { direction: new THREE.Vector2(0, 0), count: 0 }, flow2: { direction: new THREE.Vector2(0, 0), count: 0 } };
 
-    const primaryDirections = findPrimaryDirections(allVelocities);
+    let flow1Direction = null;
+    let flow2Direction = null;
+
+    if (primaryDirections.length > 0)
+    {
+        flow1Direction = primaryDirections[ 0 ];
+        flow2Direction = primaryDirections[ 1 ];
+    }
+
+    primaryDirections = findPrimaryDirections(allVelocities, flow1Direction, flow2Direction);
 
     const direction = {
         flow1:
@@ -194,7 +216,7 @@ function getFlowStatistics()
     return direction;
 }
 
-function findPrimaryDirections(velocities)
+function findPrimaryDirections(velocities, direction1 = null, direction2 = null)
 {
     const numBuckets = 8; // You can adjust the number of buckets based on the granularity you need
     const buckets = new Array(numBuckets).fill().map(() => ({
@@ -221,10 +243,37 @@ function findPrimaryDirections(velocities)
             return avgVector.normalize();
         });
 
-    // Sort directions by count
-    directions.sort((a, b) => buckets[ directions.indexOf(b) ].count - buckets[ directions.indexOf(a) ].count);
+    if (!direction1 && !direction2)
+    {
+        // Sort directions by count
+        directions.sort((a, b) => buckets[ directions.indexOf(b) ].count - buckets[ directions.indexOf(a) ].count);
 
-    return [ directions[ 0 ], directions[ 0 ].clone().negate() ];
+        return [ directions[ 0 ], directions[ 0 ].clone().negate() ];
+    } else
+    {
+        // find the two directions closest to the previous directions1, and directions2
+        let closestDirection1 = null;
+        let closestDirection2 = null;
+        let minAngle1 = 100;
+        let minAngle2 = 100;
+        for (const dir of directions)
+        {
+            let angle1 = dir.angleTo(direction1);
+            let angle2 = dir.angleTo(direction2);
+            if (angle1 < minAngle1)
+            {
+                minAngle1 = angle1;
+                closestDirection1 = dir;
+            }
+            if (angle2 < minAngle2)
+            {
+                minAngle2 = angle2;
+                closestDirection2 = dir;
+            }
+        }
+
+        return [ closestDirection1, closestDirection2 ];
+    }
 }
 
 function detectCollision(vehicleMap)
@@ -232,24 +281,22 @@ function detectCollision(vehicleMap)
     let collisionDetected = false;
     let trafficDetected = false;
     let vehiclesInTraffic = 0;
-    for (const vehicle of vehicleMap.values())
+    for (const vehicle of getVehicles())
     {
         // detect dynamic collision based on acceleration change
-        const dynamicThreshold = vehicle.getDynamicAccelerationThreshold();
         const lastAcceleration = Math.abs(vehicle.accelerations[ vehicle.accelerations.length - 1 ] || 0);
 
-
-        const sequentialAccelerationCount = vehicle.getSequentialAccelerationCount() >= 20;
-
-        if (lastAcceleration > dynamicThreshold && sequentialAccelerationCount)
+        if (
+            vehicle.isAboveThreshold(lastAcceleration) &&
+            vehicle.hasEnoughConsecutiveSamples() &&
+            !vehicle.wasProcessed
+        )
         {
+            console.log('Collision detected', vehicle.id, lastAcceleration, vehicle.threshold?.toFixed(2));
 
             vehicle.collisionFactor = 1.0;
-            // vehicle.clearAccelerations();
-
             collisionDetected = true;
         }
-
 
         // detect traffic congestion based on average velocity
         if (vehicle.velocities.length >= 5)
@@ -257,7 +304,7 @@ function detectCollision(vehicleMap)
             const velocities = vehicle.velocities.slice(vehicle.velocities.length - 5, vehicle.velocities.length);
             const averageVelocity = velocities.reduce((sum, vel) => sum + Math.sqrt(vel.x ** 2 + vel.y ** 2), 0) / velocities.length;
 
-            if (averageVelocity < 20)
+            if (averageVelocity < 10)
             {
                 vehicle.trafficFactor = 1.0;
                 vehiclesInTraffic += 1;
@@ -269,7 +316,7 @@ function detectCollision(vehicleMap)
         }
     }
 
-    if (vehiclesInTraffic > 1)
+    if (vehiclesInTraffic > 3)
     {
         trafficDetected = true;
     }
@@ -341,4 +388,13 @@ function getVehicles(allVehicles = false)
     return Array.from(vehicles.values()).filter((car) => car.active);
 }
 
-export { processFrame, getVehicles, getFlowStatistics };
+function resetCollisionDetection()
+{
+
+    const vehicles = getVehicles(true);
+    // clear the vehicles map
+    vehicles.clear();
+    primaryDirections = [];
+}
+
+export { processFrame, getVehicles, getFlowStatistics, resetCollisionDetection };

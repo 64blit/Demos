@@ -7,14 +7,14 @@ const Controls = () =>
     const { startInference, setInferenceData, reset, isCollision, isTraffic, videoRef, getFlowStatistics } = useEyePop();
     const videoURlRef = useRef(null);
 
-    const [ collisionDetected, setCollisionDetected ] = useState(false);
+    // const [ collisionDetected, setCollisionDetected ] = useState(false);
     const [ trafficDetected, setTrafficDetected ] = useState(false);
     const [ collisionQueued, setCollisionQueued ] = useState(false);
 
     useEffect(() =>
     {
-        setCollisionDetected(isCollision);
         setTrafficDetected(isTraffic);
+        console.log('isCollision:', isCollision, collisionQueued);
 
         if (isCollision)
         {
