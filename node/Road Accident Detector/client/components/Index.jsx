@@ -11,7 +11,7 @@ export function Index()
 {
 
     return (
-        <div className='flex flex-col justify-center items-center gap-5 m-5 text-white h-full'>
+        <div className='flex flex-col justify-center items-center gap-2 m-5 text-white h-full'>
 
             <Controls />
 

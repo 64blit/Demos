@@ -60,6 +60,7 @@ const EyePopDrawing = () =>
 
         return { eyePopTexture: tempCanvasTexture, videoTexture: texture };
     }
+
     const setupShaderMaterial = (videoTex, canvasTex) =>
     {
         const material = new THREE.ShaderMaterial({
@@ -119,25 +120,6 @@ const EyePopDrawing = () =>
         for (const vehicle of vehicles)
         {
 
-            // draw on the ctx an arrow pointing in the direction of the vehicle velocity and a rectangle around the vehicle
-            if (vehicle.trafficFactor > 0.5)
-            {
-                ctx.strokeStyle = 'orange';
-            } else
-            {
-                ctx.strokeStyle = 'green';
-            }
-
-            if (vehicle.collisionFactor > 0.5)
-            {
-                ctx.strokeStyle = 'red';
-            }
-            ctx.beginPath();
-            ctx.rect(vehicle.x, vehicle.y, vehicle.width, vehicle.height);
-
-            ctx.lineWidth = 2;
-            ctx.stroke();
-
             ctx.strokeStyle = 'green';
             ctx.beginPath();
             ctx.moveTo(vehicle.x + vehicle.width / 2, vehicle.y + vehicle.height / 2);
@@ -151,10 +133,48 @@ const EyePopDrawing = () =>
             ctx.lineWidth = 3;
             ctx.stroke();
 
+
+            // draw on the ctx an arrow pointing in the direction of the vehicle velocity and a rectangle around the vehicle
+            if (vehicle.trafficFactor > 0.5)
+            {
+                ctx.strokeStyle = 'orange';
+            } else
+            {
+                ctx.strokeStyle = 'green';
+            }
+
+            if (vehicle.collisionFactor > 0.5)
+            {
+                ctx.strokeStyle = 'red';
+                console.log('Collision detected', vehicle.accelerations, vehicle.getDynamicAccelerationThreshold()?.toFixed(2));
+                ctx.lineWidth = 20;
+                vehicle.collisionFactor = 0.0;
+            } else
+            {
+                ctx.lineWidth = 2;
+            }
+
+            ctx.beginPath();
+            ctx.rect(vehicle.x, vehicle.y, vehicle.width, vehicle.height);
+
+            ctx.stroke();
+
             // draw the vehicle id
             ctx.fillStyle = 'white';
             ctx.font = 'bold 14px Arial';
             ctx.fillText(vehicle.id, vehicle.x + vehicle.width / 4, vehicle.y + vehicle.height / 2);
+
+            // draw the last acceleration value of the vehicle
+            ctx.fillStyle = 'black';
+            ctx.font = 'bold 14px Arial';
+            ctx.fillText(Math.abs(vehicle.accelerations[ vehicle.accelerations.length - 1 ] || 0)?.toFixed(2), vehicle.x + vehicle.width / 4, vehicle.y + vehicle.height / 2 + 20);
+
+            // draw the dynamic vehicle.getDynamicAccelerationThreshold() value
+
+            ctx.fillStyle = 'black';
+            ctx.font = 'bold 14px Arial';
+            ctx.fillText(vehicle.getDynamicAccelerationThreshold()?.toFixed(2), vehicle.x + vehicle.width / 4, vehicle.y + vehicle.height / 2 + 40);
+
 
 
 
@@ -203,7 +223,7 @@ const EyePopDrawing = () =>
         ctx.fillText(flowCount1, canvas.width / 4 - 100, canvas.height / 2 + 100);
         ctx.fillText(flowCount2, canvas.width / 4 - 100, canvas.height / 4 + 100);
 
-        eyePopRenderer.draw(prediction);
+        // eyePopRenderer.draw(prediction);
 
         shaderMaterial.needsUpdate = true;
         shaderMaterial.uniforms.videoTexture.value = videoTexture;

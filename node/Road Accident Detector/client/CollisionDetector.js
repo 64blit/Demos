@@ -20,7 +20,6 @@ class Car
         this.collisionFactor = 0.0;
         this.trafficFactor = 0.0;
         this.active = true;
-        this.arrow = null;
     }
 
     updatePosition(time, newX, newY, newWidth, newHeight)
@@ -28,6 +27,30 @@ class Car
         this.width = newWidth;
         this.height = newHeight;
         this.active = true;
+
+        if (newX === this.x || newY === this.y)
+        {
+            return;
+        }
+
+        // detect if the position of the vehicle has changed drastically
+        //  if it has beyond a certain threshold, we can assume that the vehicle id is incorrect
+        //  and we can reset the vehicle data
+        if (Math.abs(newX - this.x) > 25 || Math.abs(newY - this.y) > 25)
+        {
+            // this.velocity = { x: 0, y: 0 };
+            // this.positions = [];
+            // this.velocities = [];
+            // this.accelerations = [];
+            // this.accelerationTimes = [];
+            // this.collisionFactor = 0.0;
+            // this.trafficFactor = 0.0;
+            this.x = newX;
+            this.y = newY;
+
+            return;
+        }
+
         this.positions.push({ x: newX, y: newY });
 
         // Calculate new velocity
@@ -44,7 +67,7 @@ class Car
         this.y = newY;
 
         // Update acceleration history, maintaining a fixed size of history
-        if (this.accelerations.length >= 20)
+        if (this.accelerations.length >= 40)
         {
             this.accelerations.shift();
             this.accelerationTimes.shift();
@@ -60,8 +83,8 @@ class Car
         this.velocity.y = this.velocities.reduce((sum, vel) => sum + vel.y, 0) / this.velocities.length;
         // this.velocity.x = newVelocityX;
         // this.velocity.y = newVelocityY;
-        this.velocity.x *= 2;
-        this.velocity.y *= 2;
+        this.velocity.x *= 6;
+        this.velocity.y *= 6;
     }
 
     getVelocity()
@@ -82,7 +105,7 @@ class Car
         // Calculate standard deviation of accelerations
         const variance = this.accelerations.reduce((sum, acc) => sum + (acc - mean) ** 2, 0) / this.accelerations.length;
         const stdDeviation = Math.sqrt(variance);
-        const scalar = 1.3;
+        const scalar = 1.5;
         const threshold = (Math.abs(mean) + 2 * stdDeviation) * scalar;
 
         return threshold; // Can adjust the factor based on sensitivity needed
@@ -113,24 +136,14 @@ class Car
 
 }
 
-function findClosestVehicle(x, y, vehiclesMap, threshold = 100)
+function findClosestVehicle(object, vehiclesMap, threshold = 100)
 {
 
-    let closestVehicle = null;
-    let closestDistance = Infinity;
+    if (!object.traceId) return null;
 
-    for (const vehicle of vehiclesMap.values())
-    {
-        const distance = Math.sqrt((vehicle.x - x) ** 2 + (vehicle.y - y) ** 2);
-        if (distance < closestDistance && distance <= threshold)
-        {
-            closestVehicle = vehicle;
-            closestDistance = distance;
-        }
-    }
+    let closestVehicle = vehiclesMap.get(object.traceId);
 
     return closestVehicle;
-
 }
 
 function generateUniqueId()
@@ -143,56 +156,81 @@ function generateUniqueId()
     return newId;
 }
 
-// a function to detect and count the flow of vehicles in opposing directions
-//  based on the velocity of the vehicles
 function getFlowStatistics()
 {
-    const flowCount = {
-        'flow1': { direction: new THREE.Vector2(), velocities: [], count: 0 },
-        'flow2': { direction: new THREE.Vector2(), velocities: [], count: 0 }
-    };
-
-    // loop over all vehicles and average their velocities
-    //  together into flow1, skipping all velocities which are not closer than a  
-    //  threshold to flow1. If the velocity is closer to flow2, we add it to
-    //  flow2 instead.
+    const allVelocities = [];
     for (const car of getVehicles(true).values())
     {
         let velocity = car.getVelocity();
 
         if (!velocity.x || !velocity.y) { continue; }
 
-        velocity = new THREE.Vector2(-1 * velocity.x, velocity.y);
+        allVelocities.push(new THREE.Vector2(-1 * velocity.x, velocity.y));
+    }
 
-        velocity.normalize();
+    if (allVelocities.length < 2) return { flow1: { direction: new THREE.Vector2(0, 0), count: 0 }, flow2: { direction: new THREE.Vector2(0, 0), count: 0 } };
 
-        if (flowCount.flow1.direction.angleTo(velocity) <= Math.PI / 2)
+    const primaryDirections = findPrimaryDirections(allVelocities);
+
+    const direction = {
+        flow1:
         {
+            direction: primaryDirections[ 0 ],
+            count: 0
+        },
+        flow2:
+        {
+            direction: primaryDirections[ 1 ],
+            count: 0
+        },
 
-            flowCount.flow1.direction.lerp(velocity, 0.5);
-            flowCount.flow1.velocities.push(velocity);
-            flowCount.flow1.count += 1;
+    };
 
+    for (const vel of allVelocities)
+    {
+        if (vel.angleTo(direction.flow1.direction) < Math.PI / 2)
+        {
+            direction.flow1.count += 1;
         } else
         {
-
-            flowCount.flow2.direction.lerp(velocity, 0.5);
-            flowCount.flow2.velocities.push(velocity);
-            flowCount.flow2.count += 1;
-
+            direction.flow2.count += 1;
         }
     }
 
+    return direction;
+}
 
-    flowCount.flow1.direction.rotateAround(new THREE.Vector2(0, 0), Math.PI);
-    flowCount.flow2.direction.rotateAround(new THREE.Vector2(0, 0), Math.PI);
+function findPrimaryDirections(velocities)
+{
+    const numBuckets = 8; // You can adjust the number of buckets based on the granularity you need
+    const buckets = new Array(numBuckets).fill().map(() => ({
+        vectorSum: new THREE.Vector2(0, 0),
+        count: 0
+    }));
 
-    flowCount.flow1.direction.normalize();
-    flowCount.flow2.direction.normalize();
+    // Distribute vectors into buckets based on their angle
+    for (const velocity of velocities)
+    {
+        let angle = velocity.angle();
 
-    // rotate the flow directions by 180 degrees to get the opposing flow direction
+        const index = Math.floor(angle / (2 * Math.PI) * numBuckets);
+        buckets[ index ].vectorSum.add(velocity);
+        buckets[ index ].count += 1;
+    }
 
-    return flowCount;
+    // Compute average direction for each bucket
+    const directions = buckets
+        .filter(bucket => bucket.count > 0) // Filter out empty buckets
+        .map(bucket =>
+        {
+            const avgVector = bucket.vectorSum.clone().divideScalar(bucket.count);
+            return avgVector.normalize();
+        });
+
+    // Sort directions by count
+    directions.sort((a, b) => buckets[ directions.indexOf(b) ].count - buckets[ directions.indexOf(a) ].count);
+
+    return [ directions[ 0 ], directions[ 0 ].clone().negate() ];
 }
 
 function detectCollision(vehicleMap)
@@ -206,14 +244,17 @@ function detectCollision(vehicleMap)
         const dynamicThreshold = vehicle.getDynamicAccelerationThreshold();
         const lastAcceleration = Math.abs(vehicle.accelerations[ vehicle.accelerations.length - 1 ] || 0);
 
+        const secondLastAcceleration = vehicle.accelerations[ vehicle.accelerations.length - 2 ] || lastAcceleration;
+        const isLastAccelerationReasonable = lastAcceleration <= Math.abs(secondLastAcceleration) * 20;
+
         const sequentialAccelerationCount = vehicle.getSequentialAccelerationCount();
 
-        if (lastAcceleration > dynamicThreshold && sequentialAccelerationCount >= 2)
+        if (lastAcceleration > dynamicThreshold && sequentialAccelerationCount >= 30 && isLastAccelerationReasonable)
         {
 
             vehicle.collisionFactor = 1.0;
-
             // vehicle.clearAccelerations();
+
             collisionDetected = true;
         }
 
@@ -271,7 +312,7 @@ function processFrame(frameData)
         )
         {
 
-            const closestCar = findClosestVehicle(object.x, object.y, vehicles);
+            const closestCar = findClosestVehicle(object, vehicles);
 
             if (closestCar)
             {
@@ -281,7 +322,9 @@ function processFrame(frameData)
             } else
             {
 
-                const newId = generateUniqueId();
+                const newId = object.traceId;
+                if (!newId) continue;
+
                 const newCar = new Car(newId, object.x, object.y, object.width, object.height);
                 vehicles.set(newId, newCar);
 

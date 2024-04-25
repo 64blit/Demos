@@ -13,7 +13,6 @@ const Controls = () =>
 
     useEffect(() =>
     {
-        console.log('Collision:', isCollision, 'Traffic:', isTraffic);
         setCollisionDetected(isCollision);
         setTrafficDetected(isTraffic);
 
@@ -107,7 +106,7 @@ const Controls = () =>
 
             </div>
 
-            <div className='flex flex-row justify-center items-center gap-5 m-2 text-white h-20'>
+            <div className='flex flex-row justify-center items-center gap-5 m-2 text-white h-12'>
 
                 {trafficDetected && <div className='text-yellow-500'>Traffic Detected</div>}
 

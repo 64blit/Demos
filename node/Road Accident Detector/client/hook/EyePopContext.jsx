@@ -17,6 +17,17 @@ const EyePopProvider = ({ children }) =>
 
     const videoRef = useRef(null);
 
+    const eyepopInference =
+        `ep_infer id=1  category-name="vehicle"
+            model=eyepop-vehicle:EPVehicleB1_Vehicle_TorchScriptCuda_float32 threshold=0.5
+            ! ep_infer id=2
+            tracing=deepsort
+            model=legacy:reid-mobilenetv2_x1_4_ImageNet_TensorFlowLite_int8
+            secondary-to-id=1
+            secondary-for-class-ids=<0,1,2,3,4,5>
+            thread=true
+            ! ep_mixer name="meta_mixer"`;
+
     // Initialize the EyePop.ai endpoint
     useEffect(() =>
     {
@@ -38,6 +49,8 @@ const EyePopProvider = ({ children }) =>
 
                 setEndpoint(endpoint);
 
+                await endpoint.changePopComp(eyepopInference);
+
                 setLoading(false);
             }).catch((error) =>
             {
@@ -46,31 +59,44 @@ const EyePopProvider = ({ children }) =>
 
     }, []);
 
-
     useEffect(() =>
     {
         if (!videoRef.current) return;
         videoRef.current.currentTime = 0;
 
         console.log('Video URL:', videoURL);
+        let animationFrameId;
 
-        const videoUpdate = () =>
+        const onVideoUpdate = () =>
         {
-            const time = videoRef.current.currentTime + .2;
+            const time = videoRef.current.currentTime;
             const closestPrediction = getClosestPrediction(time);
             const frameResults = processFrame(closestPrediction);
-            if (!frameResults) return;
-            setCollision(frameResults.collision);
-            setTraffic(frameResults.traffic);
-            setPrediction(closestPrediction);
+
+            if (frameResults)
+            {
+                setCollision(frameResults.collision);
+                setTraffic(frameResults.traffic);
+                setPrediction(closestPrediction);
+            }
+
+            animationFrameId = requestAnimationFrame(onVideoUpdate);
+            // Request the next frame
         }
 
-        videoRef.current.addEventListener('timeupdate', videoUpdate);
+        const onVideoStart = () =>
+        {
+            // Start the loop
+            animationFrameId = requestAnimationFrame(onVideoUpdate);
+        }
+
+        videoRef.current.addEventListener('play', onVideoStart);
 
         return () =>
         {
-            videoRef.current.removeEventListener('timeupdate', videoUpdate);
-        }
+            videoRef.current.removeEventListener('play', onVideoStart);
+            cancelAnimationFrame(animationFrameId); // Cancel the animation frame when the component unmounts
+        };
 
     }, [ videoRef.current ]);
 
