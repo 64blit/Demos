@@ -115,7 +115,7 @@ const EyePopDrawing = () =>
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
 
-        const vehicles = getVehicles();
+        const vehicles = getVehicles(false);
 
         for (const vehicle of vehicles)
         {
@@ -164,16 +164,16 @@ const EyePopDrawing = () =>
             ctx.font = 'bold 14px Arial';
             ctx.fillText(vehicle.id, vehicle.x + vehicle.width / 4, vehicle.y + vehicle.height / 2);
 
-            // draw the last acceleration value of the vehicle
-            ctx.fillStyle = 'black';
-            ctx.font = 'bold 14px Arial';
-            ctx.fillText(Math.abs(vehicle.accelerations[ vehicle.accelerations.length - 1 ] || 0)?.toFixed(2), vehicle.x + vehicle.width / 4, vehicle.y + vehicle.height / 2 + 20);
+            // // draw the last acceleration value of the vehicle
+            // ctx.fillStyle = 'black';
+            // ctx.font = 'bold 14px Arial';
+            // ctx.fillText(Math.abs(vehicle.accelerations[ vehicle.accelerations.length - 1 ] || 0)?.toFixed(2), vehicle.x + vehicle.width / 4, vehicle.y + vehicle.height / 2 + 20);
 
-            // draw the dynamic vehicle.getDynamicAccelerationThreshold() value
+            // // draw the dynamic vehicle.getDynamicAccelerationThreshold() value
 
-            ctx.fillStyle = 'black';
-            ctx.font = 'bold 14px Arial';
-            ctx.fillText(vehicle.getDynamicAccelerationThreshold()?.toFixed(2), vehicle.x + vehicle.width / 4, vehicle.y + vehicle.height / 2 + 40);
+            // ctx.fillStyle = 'black';
+            // ctx.font = 'bold 14px Arial';
+            // ctx.fillText(vehicle.getDynamicAccelerationThreshold()?.toFixed(2), vehicle.x + vehicle.width / 4, vehicle.y + vehicle.height / 2 + 40);
 
 
 

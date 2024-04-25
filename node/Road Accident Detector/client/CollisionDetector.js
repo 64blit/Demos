@@ -24,33 +24,22 @@ class Car
 
     updatePosition(time, newX, newY, newWidth, newHeight)
     {
-        this.width = newWidth;
-        this.height = newHeight;
-        this.active = true;
 
+        this.active = true;
         if (newX === this.x || newY === this.y)
         {
             return;
         }
 
-        // detect if the position of the vehicle has changed drastically
-        //  if it has beyond a certain threshold, we can assume that the vehicle id is incorrect
-        //  and we can reset the vehicle data
-        if (Math.abs(newX - this.x) > 25 || Math.abs(newY - this.y) > 25)
+        if (Math.abs(newX - this.x) > 100 || Math.abs(newY - this.y) > 100)
         {
-            // this.velocity = { x: 0, y: 0 };
-            // this.positions = [];
-            // this.velocities = [];
-            // this.accelerations = [];
-            // this.accelerationTimes = [];
-            // this.collisionFactor = 0.0;
-            // this.trafficFactor = 0.0;
             this.x = newX;
             this.y = newY;
-
             return;
         }
 
+        this.width = newWidth;
+        this.height = newHeight;
         this.positions.push({ x: newX, y: newY });
 
         // Calculate new velocity
@@ -105,7 +94,7 @@ class Car
         // Calculate standard deviation of accelerations
         const variance = this.accelerations.reduce((sum, acc) => sum + (acc - mean) ** 2, 0) / this.accelerations.length;
         const stdDeviation = Math.sqrt(variance);
-        const scalar = 1.5;
+        const scalar = 1.8;
         const threshold = (Math.abs(mean) + 2 * stdDeviation) * scalar;
 
         return threshold; // Can adjust the factor based on sensitivity needed
@@ -122,13 +111,18 @@ class Car
         let count = 0;
         let lastTime = -1;
 
-        for (const time of this.accelerationTimes)
+        for (let i = 1; i < this.accelerationTimes.length; i++)
         {
-            if (time - lastTime <= 1)
+
+            const lastPosition = this.positions[ i - 1 ];
+            const currentPosition = this.positions[ i ];
+            const lastTime = this.accelerationTimes[ i - 1 ];
+            const time = this.accelerationTimes[ i ];
+
+            if (time - lastTime <= 1 && Math.abs(lastPosition.x - currentPosition.x) < 10 && Math.abs(lastPosition.y - currentPosition.y) < 10)
             {
                 count += 1;
             }
-            lastTime = time;
         }
 
         return count;
@@ -244,12 +238,10 @@ function detectCollision(vehicleMap)
         const dynamicThreshold = vehicle.getDynamicAccelerationThreshold();
         const lastAcceleration = Math.abs(vehicle.accelerations[ vehicle.accelerations.length - 1 ] || 0);
 
-        const secondLastAcceleration = vehicle.accelerations[ vehicle.accelerations.length - 2 ] || lastAcceleration;
-        const isLastAccelerationReasonable = lastAcceleration <= Math.abs(secondLastAcceleration) * 20;
 
-        const sequentialAccelerationCount = vehicle.getSequentialAccelerationCount();
+        const sequentialAccelerationCount = vehicle.getSequentialAccelerationCount() >= 20;
 
-        if (lastAcceleration > dynamicThreshold && sequentialAccelerationCount >= 30 && isLastAccelerationReasonable)
+        if (lastAcceleration > dynamicThreshold && sequentialAccelerationCount)
         {
 
             vehicle.collisionFactor = 1.0;
