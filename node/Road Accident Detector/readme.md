@@ -1,22 +1,37 @@
-1. 
-```
-npm install; npm run build; npm run start;
-```
-2. 
-```
-http://localhost:3000
-```
-3. 
-Select a webcam and click start.
+# Automated Collision Detector
 
-Error in console inspector:
+The Automated Collision Detector is a project that utilizes the EyePop.ai platform to detect vehicle collisions or accidents in videos. It takes in a video URL and processes it using an EyePop.ai endpoint. The detection is based on simple physics calculations using bounding boxes of vehicles to identify sudden changes in acceleration, which are indicative of collisions.
 
-```
-index-Bg14Ct0b.js:106 Failed to call liveIngress: TypeError: path.randomFillSync is not a function
-    at rng (index-Bg14Ct0b.js:77:5886)
-    at v4 (index-Bg14Ct0b.js:77:6619)
-    at new WebrtcWhip (index-Bg14Ct0b.js:89:157)
-    at Endpoint.liveIngress (index-Bg14Ct0b.js:89:7958)
-    at lu.startWebcamIngress (index-Bg14Ct0b.js:106:2786)
-    at async lu.toggleStart (index-Bg14Ct0b.js:106:1099)
-```
+Please note that this project is purely a demonstration and is based on existing vehicle data. It includes some hacky filtering logic to eliminate data noise. For a more robust and useful result, it is recommended to build a custom model with EyePop.ai, which will handle the filtering on the "model side" and simplify the required logic.
+
+## Getting Started
+
+1. Sign up for EyePop.ai and create a Pop (refer to the developer documentation for more details).
+2. Place your Pop UUID inside the `hook/EyePopContext.jsx` file:
+
+    ```javascript
+    EyePop.endpoint({
+         popId: '<POP_UUID>',
+         auth: {
+              oAuth2: true
+         }
+    })
+    ```
+
+3. Enter a video URL in the top left text box and click "Start Inference". It is recommended to use a short video as this demo is not optimized for large files.
+4. Once the inference is completed, save the JSON data file to save on inference time.
+
+## Running
+
+1. Install and run a development server by running the following commands:
+
+    ```shell
+    npm install
+    npm run dev
+    ```
+
+2. Launch `http://localhost:8000` in your browser.
+
+## Debugging
+
+For debugging purposes, open your browser's inspector console (right-click -> inspect) to view progress and messages.

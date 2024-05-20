@@ -102,13 +102,15 @@ const EyePopProvider = ({ children }) =>
 
             data.push(result);
             console.log('Inference length:', data.length);
-            await seekedPromise;
+            // await seekedPromise;
             if (videoRef.current)
             {
                 videoRef.current.currentTime = result.seconds;
                 videoRef.current.play();
             }
+
             const frameResults = processFrame(result);
+
             if (frameResults)
             {
                 setCollision(frameResults.collision);
