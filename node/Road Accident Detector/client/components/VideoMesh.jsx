@@ -15,6 +15,14 @@ export const VideoMesh = () =>
     const [ videoTexture, setVideoTexture ] = useState(null);
     const [ aspect, setAspect ] = useState(1);
 
+    useEffect(() =>
+    {
+        if (cameraRef.current)
+        {
+            cameraRef.current.fitToBox(meshRef.current, true);
+        }
+    }, [ cameraRef ])
+
     useFrame(() =>
     {
         if (!meshRef.current) return;

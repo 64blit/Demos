@@ -1,5 +1,5 @@
 import EyePop from "@eyepop.ai/eyepop";
-import { create } from 'zustand';
+import create from 'zustand';
 
 class EyePopWrapper 
 {

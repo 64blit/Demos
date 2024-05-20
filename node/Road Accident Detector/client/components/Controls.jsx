@@ -23,7 +23,13 @@ const Controls = () =>
 
         if (!videoRef.current) return;
         if (!isCollision) return;
+
         videoRef.current.pause();
+        setTimeout(() =>
+        {
+            setCollisionQueued(false);
+            videoRef.current.play();
+        }, 250);
 
     }, [ isCollision, isTraffic, videoRef ]);
 
@@ -113,14 +119,13 @@ const Controls = () =>
                 {collisionQueued &&
                     <div className='flex gap-3 text-center justify-items-center'>
                         <div className='text-red-500'>Collision Detected</div>
-
-                        <button className='btn btn-error text-center' onClick={
+                        {/* <button className='btn btn-error text-center' onClick={
                             () =>
                             {
                                 setCollisionQueued(false);
                                 videoRef.current.play();
                             }}
-                        >Continue</button>
+                        >Continue</button> */}
                     </div>
                 }
 

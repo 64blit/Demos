@@ -120,7 +120,7 @@ const EyePopDrawing = () =>
         for (const vehicle of vehicles)
         {
 
-            ctx.strokeStyle = 'green';
+            ctx.strokeStyle = 'blue';
             ctx.beginPath();
             ctx.moveTo(vehicle.x + vehicle.width / 2, vehicle.y + vehicle.height / 2);
             ctx.lineTo(vehicle.x + vehicle.width / 2 + vehicle.velocity.x, vehicle.y + vehicle.height / 2 + vehicle.velocity.y);
@@ -226,7 +226,6 @@ const EyePopDrawing = () =>
         shaderMaterial.uniforms.eyePopTexture.value = canvasTexture;
         shaderMaterial.uniforms.videoTexture.value.needsUpdate = true;
         shaderMaterial.uniforms.eyePopTexture.value.needsUpdate = true;
-
 
     })
 

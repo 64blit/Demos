@@ -3,7 +3,7 @@ var vehicles = new Map();
 
 
 
-class Car
+class Vehicle
 {
     constructor(id, x, y, width, height)
     {
@@ -24,10 +24,20 @@ class Car
         this.wasProcessed = false;
     }
 
+    //
+    //  This function handles the primary "collision" logic. It updates the position of the vehicle
+    //    based on the new position data from the EyePop.ai computer vision pipeline.
+    //
+    //    NOTE: Most of this functions logic is used to filter out poor vision results which is
+    //          uneccessary for clients using custom models.
+    //
     updatePosition(time, newX, newY, newWidth, newHeight)
     {
+        // First check if the new position is within a threshold distance of the previous position
+        //  If it is not, then the new position is not valid and we should ignore it
         const distX = Math.abs(newX - this.x);
         const distY = Math.abs(newY - this.y);
+        const changeSampleCount = 5;
 
         if (distX < 10 && distY < 10 || !(distX === 0 || distY === 0))
         {
@@ -36,16 +46,6 @@ class Car
         {
             this.active = false;
         }
-
-        if (newX === this.x || newY === this.y)
-        {
-            return;
-        }
-
-
-        this.width = newWidth;
-        this.height = newHeight;
-        this.positions.push({ x: newX, y: newY });
 
         // Calculate new velocity
         const newVelocityX = newX - this.x;
@@ -56,9 +56,38 @@ class Car
         const oldSpeed = Math.sqrt(this.velocity.x ** 2 + this.velocity.y ** 2);
         const acceleration = newSpeed - oldSpeed; // Assuming a constant frame rate
 
+        this.width = newWidth;
+        this.height = newHeight;
+
+        this.positions.push({ x: newX, y: newY });
+
         // Update position and velocity using the average of the positions
         this.x = newX;
         this.y = newY;
+
+        // if the new position suddenly makes a large jump, bigger than the last 5 positions, ignore it
+        if (this.positions.length > changeSampleCount)
+        {
+            let averageChangeX = 0;
+            let averageChangeY = 0;
+            for (let i = this.positions.length - changeSampleCount; i >= 0 && i < this.positions.length; i++)
+            {
+                averageChangeX += Math.abs(this.positions[ i ].x - this.positions[ i - 1 ].x);
+                averageChangeY += Math.abs(this.positions[ i ].y - this.positions[ i - 1 ].y);
+            }
+
+            averageChangeX /= changeSampleCount;
+            averageChangeY /= changeSampleCount;
+
+            // console.log('Average Change:', averageChangeX * 2, distX);
+
+            if (distX > averageChangeX * 2 || distY > averageChangeY * 4 || distX > 25 || distY > 25)
+            {
+                this.active = false;
+                return;
+            }
+        }
+
 
         // Update acceleration history, maintaining a fixed size of history
         if (this.accelerations.length >= 40)
@@ -73,11 +102,20 @@ class Car
         this.accelerationTimes.push(time);
         this.accelerations.push(acceleration);
 
-        this.velocity.x = this.velocities.reduce((sum, vel) => sum + vel.x, 0) / this.velocities.length;
-        this.velocity.y = this.velocities.reduce((sum, vel) => sum + vel.y, 0) / this.velocities.length;
+        // Another hack is used here to scale up the velocity values to match our canvas size, purely for drawing
+        // purposes. This should not be done in a real application.
+        this.velocity.x = newVelocityX * 4;
+        this.velocity.y = newVelocityY * 4;
 
-        this.velocity.x *= 4;
-        this.velocity.y *= 4;
+        // If we have enough acceleration samples, we use the the average velocities instead of the last velocity
+        if (this.accelerations.length > 6)
+        {
+            this.velocity.x = this.velocities.reduce((sum, vel) => sum + vel.x, 0) / this.velocities.length;
+            this.velocity.y = this.velocities.reduce((sum, vel) => sum + vel.y, 0) / this.velocities.length;
+
+            this.velocity.x *= 4;
+            this.velocity.y *= 4;
+        }
     }
 
     getVelocity()
@@ -146,6 +184,19 @@ class Car
         }
 
         return count > threshold;
+    }
+
+    reset()
+    {
+        this.active = false;
+        this.positions = [];
+        this.velocities = [];
+        this.accelerations = [];
+        this.accelerationTimes = [];
+        this.collisionFactor = 0.0;
+        this.trafficFactor = 0.0;
+        this.wasProcessed = false;
+
     }
 
 }
@@ -302,7 +353,7 @@ function detectCollision(vehicleMap)
         if (vehicle.velocities.length >= 5)
         {
             const velocities = vehicle.velocities.slice(vehicle.velocities.length - 5, vehicle.velocities.length);
-            const averageVelocity = velocities.reduce((sum, vel) => sum + Math.sqrt(vel.x ** 2 + vel.y ** 2), 0) / velocities.length;
+            const averageVelocity = Math.sqrt(velocities.reduce((sum, vel) => sum + vel.x ** 2 + vel.y ** 2, 0) / velocities.length);
 
             if (averageVelocity < 10)
             {
@@ -351,12 +402,12 @@ function processFrame(frameData)
         )
         {
 
-            const closestCar = findClosestVehicle(object, vehicles);
+            const closestVehicle = findClosestVehicle(object, vehicles);
 
-            if (closestCar)
+            if (closestVehicle)
             {
-                closestCar.updatePosition(frameData.seconds, object.x, object.y, object.width, object.height);
-                vehicles.set(closestCar.id, closestCar);
+                closestVehicle.updatePosition(frameData.seconds, object.x, object.y, object.width, object.height);
+                vehicles.set(closestVehicle.id, closestVehicle);
 
             } else
             {
@@ -364,8 +415,8 @@ function processFrame(frameData)
                 const newId = object.traceId;
                 if (!newId) continue;
 
-                const newCar = new Car(newId, object.x, object.y, object.width, object.height);
-                vehicles.set(newId, newCar);
+                const newVehicle = new Vehicle(newId, object.x, object.y, object.width, object.height);
+                vehicles.set(newId, newVehicle);
 
             }
 

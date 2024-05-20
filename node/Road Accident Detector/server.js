@@ -3,7 +3,7 @@ import FastifyVite from '@fastify/vite';
 import { EyePop } from "@eyepop.ai/eyepop";
 import process from 'process';
 
-const POP_UUID = process.env.EYEPOP_POP_ID || '8d88113ee4814b6683eba5a69fba7454';
+const POP_UUID = process.env.EYEPOP_POP_ID || 'ab3cb23c05c045a29ee6ea00c765f167';
 const POP_API_SECRET = process.env.EYEPOP_SECRET_KEY || '';
 
 const server = Fastify()
@@ -34,7 +34,7 @@ server.get('/eyepop/session', async (req, reply) =>
 
         const endpoint = await EyePop.endpoint(
             {
-                popId: '8d88113ee4814b6683eba5a69fba7454',
+                popId: POP_UUID,
                 auth: { oAuth2: true }
             }).connect();
 

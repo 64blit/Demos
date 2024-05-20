@@ -146,6 +146,7 @@ export default class SceneManager
                     this.showPose && this.drawPose(person);
                     this.showFace && this.drawFace(person);
                     this.showHands && this.drawHands(person);
+                    this.drawTextDetected(person);
                 }
             }
 
@@ -170,6 +171,7 @@ export default class SceneManager
             this.showPose && person.poseData.mesh && (person.poseData.mesh.visible = personOnScreen);
             this.showFace && person.faceData.mesh && (person.faceData.mesh.visible = personOnScreen);
             this.showHands && person.handData.mesh && (person.handData.mesh.visible = personOnScreen);
+            person.detectedText && (person.detectedText.visible = personOnScreen);
         }
     }
 
@@ -249,7 +251,7 @@ export default class SceneManager
             let geometry = new TextGeometry("person " + person.traceId, {
                 font: this.font,
                 size: .0175,
-                height: .025,
+                depth: .025,
                 curveSegments: 20,
                 bevelEnabled: false,
             });
@@ -263,7 +265,69 @@ export default class SceneManager
         text.name = "traceId";
         let point = person.position;
         text.position.x = point.x + person.boundsWidth / 2;
-        text.position.y = person.bounds.min.y + .025;
+        text.position.y = person.bounds.min.y - .025;
+        text.position.z = 0;
+
+        text.lookAt(this.camera.position);
+    }
+
+    drawTextDetected(person)
+    {
+        if (!this.font) return;
+        if (!person) return;
+        if (!person.children) return;
+
+        let text = person.detectedText;
+
+        let textString = "";
+
+        for (let i = 0; i < person.children.length; i++)
+        {
+            if (!person.children) continue;
+
+            const childObject = person.children[ i ];
+
+            if (childObject.classLabel !== "text") continue;
+            if (!childObject.labels) continue;
+
+            for (let j = 0; j < childObject.labels.length; j++)
+            {
+                const label = childObject.labels[ j ];
+                // console.log('found', label);
+                textString += label.label + "\n";
+            }
+
+            textString += "-----------\n";
+        }
+
+        if ((textString === "" || textString === "-----------\n") && text)
+        {
+            this.scene.remove(text);
+            text = null;
+            return;
+        }
+
+        if (!text && textString)
+        {
+            let geometry = new TextGeometry(textString, {
+                font: this.font,
+                size: .0275,
+                depth: .025,
+                curveSegments: 20,
+                bevelEnabled: false,
+            });
+            text = new THREE.Mesh(geometry, this.textMaterial);
+            text.name = "detected";
+            text.scale.y = RenderManager.instance.aspectRatio;
+            this.scene.add(text);
+            person.detectedText = text;
+        }
+
+        if (!text) return;
+
+        let point = person.position;
+        text.position.x = point.x + person.boundsWidth / 2;
+        text.position.y = person.bounds.min.y - .075;
         text.position.z = 0;
 
         text.lookAt(this.camera.position);

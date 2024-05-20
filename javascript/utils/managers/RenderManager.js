@@ -139,6 +139,13 @@ export default class RenderManager
             }
         } else
         {
+            // resize the renderer to fullscreen
+            this.width = window.innerWidth;
+            this.height = window.innerHeight;
+            this.canvas.width = this.width;
+            this.canvas.height = this.height;
+
+            this.reset();
             // make renderer canvas render fullscreen behind other dom elements
             this.domElement.requestFullscreen({ navigationUI: "show" });
         }

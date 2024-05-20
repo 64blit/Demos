@@ -24,6 +24,7 @@ export default class People
         this.pathLineGeometry = null;
 
         this.traceIdText = null;
+        this.detectedText = null;
         this.centerSphere = null;
 
         this.bounds = null;

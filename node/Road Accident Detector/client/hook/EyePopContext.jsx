@@ -60,8 +60,78 @@ const EyePopProvider = ({ children }) =>
 
     }, []);
 
-    useEffect(() =>
+    function getClosestPrediction(second)
     {
+        let closest = null;
+        let closestDistance = Infinity;
+
+        for (const prediction of inferenceData)
+        {
+            const distance = Math.abs(prediction.seconds - second);
+            if (distance < closestDistance)
+            {
+                closest = prediction;
+                closestDistance = distance;
+            }
+        }
+
+        return closest;
+    }
+
+
+    // Analyze an image and parse results
+    async function startInference(url = '')
+    {
+        console.log('URL:', url, endpoint);
+        videoRef.current.src = url;
+        videoRef.current.play();
+
+        const results = await endpoint.process({ url: url });
+
+        const data = [];
+        // Create a promise that resolves when the video has seeked
+        const seekedPromise = new Promise(resolve =>
+        {
+            if (!videoRef.current) { resolve(); return; }
+            videoRef.current.onseeked = resolve;
+        });
+
+
+        for await (let result of results)
+        {
+
+            data.push(result);
+            console.log('Inference length:', data.length);
+            await seekedPromise;
+            if (videoRef.current)
+            {
+                videoRef.current.currentTime = result.seconds;
+                videoRef.current.play();
+            }
+            const frameResults = processFrame(result);
+            if (frameResults)
+            {
+                setCollision(frameResults.collision);
+                setTraffic(frameResults.traffic);
+                setPrediction(result);
+            }
+        }
+
+        const inferenceObj = { "url": url, "data": data };
+
+        // save the data to a data.json file
+        //  by creating a Blob and using URL.createObjectURL and link
+        const json = JSON.stringify(inferenceObj, null, 2);
+        const blob = new Blob([ json ], { type: 'application/json' });
+        const dataUrl = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = dataUrl;
+        link.download = 'data.json';
+        link.click();
+
+        setData(data);
+        setVideoURL(url);
+
         if (!videoRef.current) return;
         videoRef.current.currentTime = 0;
 
@@ -106,62 +176,6 @@ const EyePopProvider = ({ children }) =>
         }
 
         videoRef.current.addEventListener('play', onVideoStart);
-
-        return () =>
-        {
-            videoRef.current.removeEventListener('play', onVideoStart);
-            cancelAnimationFrame(animationFrameId); // Cancel the animation frame when the component unmounts
-        };
-
-    }, [ videoRef.current ]);
-
-    function getClosestPrediction(second)
-    {
-        let closest = null;
-        let closestDistance = Infinity;
-
-        for (const prediction of inferenceData)
-        {
-            const distance = Math.abs(prediction.seconds - second);
-            if (distance < closestDistance)
-            {
-                closest = prediction;
-                closestDistance = distance;
-            }
-        }
-
-        return closest;
-    }
-
-
-    // Analyze an image and parse results
-    async function startInference(url = '')
-    {
-        console.log('URL:', url, endpoint);
-        const results = await endpoint.process({ url: url });
-
-        setLoading(false);
-        const data = [];
-
-        for await (let result of results)
-        {
-            data.push(result);
-            console.log('Inference length:', data.length);
-        }
-        const inferenceObj = { "url": url, "data": data };
-
-        // save the data to a data.json file
-        //  by creating a Blob and using URL.createObjectURL and link
-        const json = JSON.stringify(inferenceObj, null, 2);
-        const blob = new Blob([ json ], { type: 'application/json' });
-        const dataUrl = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = dataUrl;
-        link.download = 'data.json';
-        link.click();
-
-        setData(data);
-        setVideoURL(url);
 
     }
 
@@ -214,12 +228,21 @@ const EyePopProvider = ({ children }) =>
         }}>
 
             {
-                !isLoadingEyePop
-                &&
-                <>
-                    {children}
-                    <video ref={videoRef} controls autoPlay crossOrigin='anonymous' src={videoURL} className='w-full hidden' ></video>
-                </>
+                isLoadingEyePop ?
+                    <div className='absolute top-0 left-0 w-screen h-screen flex flex-col justify-center align-center object-center align-items-center'>
+                        <div className='h1 text-6xl text-white text-center'>
+                            Loading...
+                        </div>
+                        <div className='text text-white text-center'>
+                            (allow popup windows to continue)
+                        </div>
+                    </div>
+                    :
+
+                    <div className='flex justify-center items-center h-screen'>
+                        {children}
+                        <video ref={videoRef} controls autoPlay crossOrigin='anonymous' src={videoURL} className='w-full hidden' ></video>
+                    </div>
             }
 
         </EyePopContext.Provider>
