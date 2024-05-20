@@ -6,17 +6,22 @@ Please note that this project is purely a demonstration and is based on existing
 
 ## Getting Started
 
+#### Default data
+Fastest method:
+1. Install and open the `demo.json` file
+
+Upload your own video file:
 1. Sign up for EyePop.ai and create a Pop (refer to the developer documentation for more details).
 2. Place your Pop UUID inside the `hook/EyePopContext.jsx` file:
 
-    ```javascript
+```javascript
     EyePop.endpoint({
          popId: '<POP_UUID>',
          auth: {
               oAuth2: true
          }
     })
-    ```
+```
 
 3. Enter a video URL in the top left text box and click "Start Inference". It is recommended to use a short video as this demo is not optimized for large files.
 4. Once the inference is completed, save the JSON data file to save on inference time.

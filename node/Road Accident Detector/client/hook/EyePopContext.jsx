@@ -35,7 +35,7 @@ const EyePopProvider = ({ children }) =>
         console.log('Initializing EyePop.ai endpoint...');
 
         EyePop.endpoint({
-            popId: 'ab3cb23c05c045a29ee6ea00c765f167', //production
+            popId: '<POP_UUID>',
             auth: {
                 oAuth2: true
             },
