@@ -16,7 +16,7 @@ export function AutoVideoClipper()
 
     const [ eyePopManager, setEyePopManager ] = useState(null);
     const [ loading, setLoading ] = useState(true);
-    const [ clicked, setClicked ] = useState(false);
+    const [ clicked, setClicked ] = useState(true);
     const [ progress, setProgress ] = useState(0);
     const [ json, setJSON ] = useState();
 
@@ -51,16 +51,9 @@ export function AutoVideoClipper()
 
     useEffect(() =>
     {
+        if (eyePopManager) return
         setupEyePopManager();
-    }, [ eyePopManager, clicked, resultCanvasRef.current, popNameRef.current, videoRef.current ]);
-
-    useEffect(() =>
-    {
-
-        setupEyePopManager();
-
-    }, [ resultCanvasRef.current, popNameRef.current, videoRef.current ]);
-
+    }, []);
 
     return (
         <>

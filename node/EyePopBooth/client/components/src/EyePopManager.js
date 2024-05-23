@@ -2,11 +2,11 @@ import { EyePop } from "@eyepop.ai/eyepop";
 import { Render2d } from "@eyepop.ai/eyepop-render-2d";
 
 
-// refreshes page every 3 minutes
+// refreshes page every 15 minutes
 setTimeout(() =>
 {
     window.location.reload();
-}, 180000);
+}, 900000);
 
 export default class EyePopManager
 {

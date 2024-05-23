@@ -16,6 +16,14 @@ export function Index()
             <Controls />
 
             <Canvas
+                onKeyDown={(e) =>
+                {
+                    if (e.key === 'f')
+                    {
+                        // go fullscreen
+                        document.documentElement.requestFullscreen();
+                    }
+                }}
                 className='w-full h-full'
                 dpr={window.devicePixelRatio * 2}>
 
