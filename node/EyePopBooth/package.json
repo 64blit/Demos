@@ -14,7 +14,7 @@
   "dependencies": {
     "@alenaksu/json-viewer": "^2.0.1",
     "@eyepop.ai/eyepop": "^0.18.2",
-    "@eyepop.ai/eyepop-render-2d": "^0.18.2",
+    "@eyepop.ai/eyepop-render-2d": "latest",
     "@fortawesome/fontawesome-svg-core": "^6.5.1",
     "@fortawesome/free-brands-svg-icons": "^6.5.1",
     "@fortawesome/free-regular-svg-icons": "^6.5.1",

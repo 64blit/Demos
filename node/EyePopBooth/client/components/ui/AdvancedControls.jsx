@@ -15,16 +15,16 @@ const AdvancedControls = ({ className, loading, popNameRef, handleWebcamChange, 
 
     const populateWebcamDevices = async () =>
     {
-        // A hack to get the webcam devices listed if they do not appear
-        await navigator.mediaDevices.getUserMedia({ audio: true, video: true }).then((stream) =>
-        {
+        // // A hack to get the webcam devices listed if they do not appear
+        // await navigator.mediaDevices.getUserMedia({ audio: true, video: true }).then((stream) =>
+        // {
 
-            stream.getTracks().forEach((track) =>
-            {
-                track.stop();
-            });
+        //     stream.getTracks().forEach((track) =>
+        //     {
+        //         track.stop();
+        //     });
 
-        });
+        // });
 
         const devices = await navigator.mediaDevices.enumerateDevices();
 

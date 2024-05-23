@@ -61,4 +61,6 @@ server.setNotFoundHandler((req, reply) =>
 
 
 await server.vite.ready()
-await server.listen({ port: 3000 })
+await server.listen({ port: 8000 })
+
+console.log('http://localhost:8000')

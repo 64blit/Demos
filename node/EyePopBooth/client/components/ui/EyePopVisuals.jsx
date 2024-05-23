@@ -66,9 +66,20 @@ const EyePopVisuals = ({ className, resultCanvasRef, videoRef, setModel }) =>
                     onChange={() => { setModel(modelSelectionRef.current.value); }}
                     className="btn select select-bordered outline border-black max-w-xs w-1/2 m-5 text-white rounded-xl transition-all bg-black hover:bg-purple-500 hover:text-white"
                 >
-                    <option className='text-white bg-black' value="peopleCommon">People + Common Objects</option>
-                    <option className='text-white bg-black' value="peopleBody">People + 2D Body Pose</option>
-                    <option className='text-white bg-black' value="people3d">People + 3D Pose + Hands + Face</option>
+
+                    <option className='text-white bg-black' value="personBody">Person w/ 2D Body Points</option>
+                    <option className='text-white bg-black' value="person3d">Person w/ 3D Face, Body & Hands</option>
+
+                    <option className='text-white bg-black' value="personCommon">Person + Common Objects</option>
+                    <option className='text-white bg-black' value="person2dBodyDemographic">Person w/ 2D Body Points + Demographic Data</option>
+                    <option className='text-white bg-black' value="person">Person</option>
+                    <option className='text-white bg-black' value="personDemographic">Person w/ Demographic Data (Age, Gender, Expression)</option>
+                    <option className='text-white bg-black' value="peopleAnimals">People + Animals</option>
+                    <option className='text-white bg-black' value="peopleDevices">People + Devices</option>
+                    <option className='text-white bg-black' value="personSportsEquipment">Person + Sports Equipment</option>
+                    <option className='text-white bg-black' value="personVehicles">Person + Vehicles</option>
+
+
                 </select>
             </div>
             <canvas
