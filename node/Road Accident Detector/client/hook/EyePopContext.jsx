@@ -17,6 +17,16 @@ const EyePopProvider = ({ children }) =>
 
     const videoRef = useRef(null);
 
+    useEffect(() =>
+    {
+
+        if (!videoURL) return;
+        if (!inferenceData) return;
+
+        startVideo();
+
+    }, [ videoURL, inferenceData ]);
+
 
     const eyepopInference =
         `ep_infer id=1  category-name="vehicle"
@@ -134,6 +144,35 @@ const EyePopProvider = ({ children }) =>
         setData(data);
         setVideoURL(url);
 
+    }
+
+    // Load inference data from a JSON file
+    async function setInferenceData(file)
+    {
+        const reader = new FileReader();
+        let jsonData = null;
+        reader.onload = async (event) =>
+        {
+            if (!event.target.result)
+            {
+                console.error('Failed to read file:', file);
+                return;
+            }
+
+            jsonData = JSON.parse(event.target.result);
+
+            setData(jsonData.data);
+            setVideoURL(jsonData.url);
+
+        }
+
+        reader.readAsText(file);
+
+    }
+
+    function startVideo()
+    {
+
         if (!videoRef.current) return;
         videoRef.current.currentTime = 0;
 
@@ -178,31 +217,7 @@ const EyePopProvider = ({ children }) =>
         }
 
         videoRef.current.addEventListener('play', onVideoStart);
-
-    }
-
-    // Load inference data from a JSON file
-    async function setInferenceData(file)
-    {
-        const reader = new FileReader();
-        let jsonData = null;
-        reader.onload = async (event) =>
-        {
-            if (!event.target.result)
-            {
-                console.error('Failed to read file:', file);
-                return;
-            }
-
-            jsonData = JSON.parse(event.target.result);
-
-            setData(jsonData.data);
-            setVideoURL(jsonData.url);
-
-        }
-
-        reader.readAsText(file);
-
+        videoRef.current.play();
     }
 
     function reset()

@@ -23,7 +23,6 @@ class Vehicle
         this.threshold = 10;
         this.wasProcessed = false;
     }
-
     //
     //  This function handles the primary "collision" logic. It updates the position of the vehicle
     //    based on the new position data from the EyePop.ai computer vision pipeline.
@@ -45,6 +44,12 @@ class Vehicle
         } else
         {
             this.active = false;
+        }
+
+        // We ignore any stagnant positions, as we only care about the position delta
+        if (newX === this.x || newY === this.y)
+        {
+            return;
         }
 
         // Calculate new velocity
@@ -79,9 +84,7 @@ class Vehicle
             averageChangeX /= changeSampleCount;
             averageChangeY /= changeSampleCount;
 
-            // console.log('Average Change:', averageChangeX * 2, distX);
-
-            if (distX > averageChangeX * 2 || distY > averageChangeY * 4 || distX > 25 || distY > 25)
+            if (distX > averageChangeX * 2 || distY > averageChangeY * 4 || averageChangeX > 25 || averageChangeY > 25)
             {
                 this.active = false;
                 return;
@@ -96,6 +99,15 @@ class Vehicle
             this.accelerationTimes.shift();
             this.positions.shift();
             this.velocities.shift();
+        }
+
+        // If the new position is too far from the last position, we ignore it
+        //   but preserve the position data for calculating the velocity.
+        //   This is a hack to prevent erroneous velocity spikes.
+        if (distX > 20 || distY > 20)
+        {
+            this.active = false;
+            return;
         }
 
         this.velocities.push({ x: newVelocityX, y: newVelocityY });

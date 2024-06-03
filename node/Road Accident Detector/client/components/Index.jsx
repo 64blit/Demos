@@ -9,21 +9,37 @@ import Controls from './Controls.jsx';
 
 export function Index()
 {
+    const canvasParentRef = useRef(null);
+
+    // makes the canvas go fullscreen on the f key being pressed
+    const handleKeyDown = (e) =>
+    {
+        if (!canvasParentRef.current)
+        {
+            return;
+        }
+
+        if (e.key === 'f')
+        {
+            canvasParentRef.current.requestFullscreen();
+        }
+    };
+
+    useEffect(() =>
+    {
+        document.addEventListener('keydown', handleKeyDown);
+        return () =>
+        {
+            document.removeEventListener('keydown', handleKeyDown);
+        };
+    }, []);
 
     return (
-        <div className='flex flex-col justify-center items-center gap-2 m-5 text-white h-full'>
+        <div ref={canvasParentRef} className='flex flex-col justify-center items-center gap-2 m-5 text-white h-full'>
 
             <Controls />
 
             <Canvas
-                onKeyDown={(e) =>
-                {
-                    if (e.key === 'f')
-                    {
-                        // go fullscreen
-                        document.documentElement.requestFullscreen();
-                    }
-                }}
                 className='w-full h-full'
                 dpr={window.devicePixelRatio * 2}>
 
