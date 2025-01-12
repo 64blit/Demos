@@ -118,6 +118,10 @@ const TextContainer: React.FC<TextContainerProps> = ({ textInput = '', fontUrl =
                     }, 5000);
                 }
 
+                // if(transcript && transcript.length > 30){
+                //     transcript = transcript.slice(0, 30);
+                // }
+
                 updateTextDynamic(transcript);
 
             }
@@ -213,7 +217,7 @@ const TextContainer: React.FC<TextContainerProps> = ({ textInput = '', fontUrl =
 
     return (
         <>
-            <group position={[ -aspectRatio / 2, .5 - size, 0 ]} >
+            <group position={[-aspectRatio / 2 , .5 - size, 0 ]} >
                 {
                     lines.map((line, index) => (
                         <mesh ref={lineRefs[ index ]} key={index} position={[ line.xOffset, line.yPosition - padding, 0 ]} >

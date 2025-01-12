@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Canvas Video & Line Detection</title>
+    <style>
+        body {
+            margin: 0;
+            background: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+        }
+
+        #myCanvas {
+            border: 1px solid #ccc;
+            background: #000;
+        }
+    </style>
+</head>
+
+<div>processor</div>
+<input type="file" id="my-file-chooser" accept="video/*" placeholder="video" />
+
+<div>result</div>
+<input type="file" id="my-ai-processed-chooser" accept="*/*" placeholder="results" />
+
+<body>
+    <canvas id="myCanvas"></canvas>
+    <script src="https://cdn.jsdelivr.net/npm/@eyepop.ai/eyepop/dist/eyepop.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@eyepop.ai/eyepop-render-2d/dist/eyepop.render2d.min.js"></script>
+
+    <script type="module">
+        // Add event listeners for file inputs
+        document.getElementById('my-file-chooser').addEventListener('change', uploadFile);
+        document.getElementById('my-ai-processed-chooser').addEventListener('change', useJsonFile);
+
+        // Upload and process video file
+        async function uploadFile(event)
+        {
+            let endpoint;
+
+            try
+            {
+                // Connect to EyePop endpoint
+                endpoint = await EyePop.workerEndpoint({
+                    popId: '9f9d31e9e64d4b7db1f8fba7570baa51',
+                    auth: {
+                        secretKey: 'AAFi3_vTCc4ZvkV2HYIfMgXiZ0FBQUFBQm5nQ0pMTkV0MldKam10RVBlT09jeDl3R0VhQ1dPbWZiSERqME5LNEU5M0dnSWE0d3JXa0QxZFdxOFRMajVqMWRrVWxscktnWi0tRWhITGJ4T0g0OWt6MFdTVVI5TEhyMkVlNXVOYnRTVHp5UTgzNGc9'
+                    },
+                }).connect()
+            } catch (e)
+            {
+                console.error('🍉Simple Car Detector/index.html:42/(e):', e)
+            }
+
+            try
+            {
+                // Process video file
+                let results = await endpoint.process({ file: event.target.files[ 0 ] });
+                let allResults = [ { video_name: event.target.files[ 0 ].name } ];
+                for await (let result of results)
+                {
+                    allResults.push(result);
+                }
+                // Save results to a JSON file
+                const blob = new Blob([ JSON.stringify(allResults, null, 2) ], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'results.json';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            } catch (e)
+            {
+                console.error('Error(e):', e)
+            } finally
+            {
+                await endpoint.disconnect();
+            }
+        }
+
+        // Use JSON file for processing
+        async function useJsonFile(event)
+        {
+            const file = event.target.files[ 0 ];
+            const reader = new FileReader();
+
+            let frameData = [];
+            let videoURL = '';
+
+            reader.onload = function (e)
+            {
+                const text = e.target.result;
+                const data = JSON.parse(text);
+
+                videoURL = data[ 0 ].video_name;
+                data.shift();
+                frameData = data;
+            };
+            reader.readAsText(file);
+
+            await new Promise((resolve) => reader.onloadend = resolve);
+
+            /*************************************************************
+             * Global Variables
+             *************************************************************/
+            const canvas = document.getElementById("myCanvas");
+            const ctx = canvas.getContext("2d");
+
+            let renderer = Render2d.renderer(ctx, [
+                Render2d.renderText({ fitToBounds: true }),
+                Render2d.renderBox({
+                    showClass: false,
+                    showTraceId: false,
+                    showNestedClasses: false,
+                    showConfidence: false,
+                }),
+            ])
+
+            let linePoints = [ null, null ];  // Will hold two points { x, y }
+            let clickCount = 0;             // For modulo logic on clicks
+            let carCount = 0; // Global car count
+            let lastIncrementTime = 0; // Last time the car count was incremented
+
+            /*************************************************************
+             * Video Setup
+             *************************************************************/
+            // Setup video element
+            const video = document.createElement("video");
+            video.src = videoURL;              // Path to your video file
+            video.muted = true;                  // Mute if autoplay is desired
+            video.playbackRate = 1.0;
+
+            video.addEventListener("loadedmetadata", () =>
+            {
+                // Calculate aspect ratio
+                const aspectRatio = video.videoWidth / video.videoHeight;
+                canvas.width = 640;
+                canvas.height = canvas.width / aspectRatio;
+
+                video.width = canvas.width;
+                video.height = canvas.height;
+                video.loop = true
+                video.play();
+                requestAnimationFrame(update);
+            });
+
+            /*************************************************************
+             * Utility: Orientation Function
+             * Returns > 0 if point C is on one side of line AB,
+             *         < 0 if on the opposite side, = 0 if collinear.
+             *************************************************************/
+            // Utility: Orientation Function
+            function orientation(pointA, pointB, pointC)
+            {
+                if (!pointA || !pointB || !pointC) return 0;
+
+                const deltaX1 = pointB.x - pointA.x;
+                const deltaY1 = pointB.y - pointA.y;
+                const deltaX2 = pointC.x - pointA.x;
+                const deltaY2 = pointC.y - pointA.y;
+
+                return deltaX1 * deltaY2 - deltaY1 * deltaX2;
+            }
+
+            /*************************************************************
+             * Event: Canvas Click
+             * Every two clicks define one line.
+             *************************************************************/
+            // Event: Canvas Click
+            canvas.addEventListener("click", (e) =>
+            {
+                const rect = canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+
+                linePoints[ clickCount % 2 ] = { x, y };
+                clickCount++;
+            });
+
+            /*************************************************************
+             * Main Render Loop
+             * 1) Draw video frame on canvas
+             * 2) Draw user-defined line (if exists)
+             * 3) Loop over frameData bounding boxes
+             *    and check crossing logic (simplified).
+             * 4) Draw carCount in top-right.
+             *************************************************************/
+            // Main Render Loop
+            function update()
+            {
+                const videoTime = video.currentTime;
+                let frameIndex = frameData.findIndex((frame) => frame.seconds >= videoTime);
+
+                let result = frameData[ frameIndex ] || [];
+                result = result.objects ?? [];
+
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(video, 0, 0, video.width, video.height);
+                renderer.draw(frameData[ frameIndex ]);
+
+                if (linePoints[ 0 ] && linePoints[ 1 ])
+                {
+                    const gradient = ctx.createLinearGradient(linePoints[ 0 ].x, linePoints[ 0 ].y, linePoints[ 1 ].x, linePoints[ 1 ].y);
+                    gradient.addColorStop(0, "rgba(13, 178, 255, 0.8)");
+                    gradient.addColorStop(1, "rgba(05, 15, 255, 0.8)");
+                    ctx.strokeStyle = gradient;
+                    ctx.lineWidth = 8;
+                    ctx.beginPath();
+                    ctx.moveTo(linePoints[ 0 ].x, linePoints[ 0 ].y);
+                    ctx.lineTo(linePoints[ 1 ].x, linePoints[ 1 ].y);
+                    ctx.stroke();
+                }
+
+                const scaleX = canvas.width / video.videoWidth;
+                const scaleY = canvas.height / video.videoHeight;
+
+                result?.forEach((box) =>
+                {
+                    const adjustedBox = {
+                        x: box.x * scaleX,
+                        y: box.y * scaleY,
+                        width: box.width * scaleX,
+                        height: box.height * scaleY
+                    };
+
+                    const center = {
+                        x: adjustedBox.x + adjustedBox.width / 2,
+                        y: adjustedBox.y + adjustedBox.height / 2,
+                    };
+
+                    if (linePoints[ 0 ] && linePoints[ 1 ])
+                    {
+                        const o = orientation(linePoints[ 0 ], linePoints[ 1 ], center);
+                        const currentTime = Date.now();
+                        const isBetweenLine = center.x > Math.min(linePoints[ 0 ].x, linePoints[ 1 ].x) &&
+                            center.x < Math.max(linePoints[ 0 ].x, linePoints[ 1 ].x) &&
+                            center.y > Math.min(linePoints[ 0 ].y, linePoints[ 1 ].y) &&
+                            center.y < Math.max(linePoints[ 0 ].y, linePoints[ 1 ].y);
+
+                        if (o < 0 && isBetweenLine && currentTime - lastIncrementTime > 250)
+                        {
+                            carCount++;
+                            lastIncrementTime = currentTime;
+                        }
+                    }
+
+                    ctx.strokeStyle = "blue";
+                    ctx.lineWidth = 4;
+                    ctx.strokeRect(center.x, center.y, 1, 1);
+                });
+
+                ctx.fillStyle = "#007bff";
+                ctx.font = "36px sans-serif";
+                ctx.fillText(`${carCount}`, canvas.width - 200, 40);
+
+                requestAnimationFrame(update);
+            }
+        }
+    </script>
+</body>
+
+</html>

@@ -114,14 +114,37 @@ class EyePopWrapper
 
         const tempStream = await navigator.mediaDevices.getUserMedia({
             audio: false,
-            video: {
+            video: true
+        });
+
+        // apply constraints to the stream 1080p
+        tempStream.getTracks().forEach((track) =>
+        {
+            track.applyConstraints({
                 width: { ideal: 1920 },
                 height: { ideal: 1080 }
-            }
+            });
         });
+        
 
         const ingressStream = await this.endpoint?.liveIngress(tempStream);
         this.ingressId = ingressStream.ingressId();
+        const liveStream = await ingressStream.stream();
+
+        liveStream.getTracks().forEach((track:any) =>
+        {
+            // apply the constraints to the live stream
+            track.applyConstraints({
+                width: { ideal: 1920 },
+                height: { ideal: 1080 },
+                frameRate: { ideal: 30 }
+            })
+                
+        });
+        
+
+
+        
 
         this.videoElement.srcObject = tempStream;
         this.videoElement?.play();

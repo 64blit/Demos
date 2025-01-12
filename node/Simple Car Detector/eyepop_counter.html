@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8" />
+    <title>EyePop.ai Simple Counter</title>
+    <style>
+        /* Basic page styling:
+           - Set background color, remove margin, use flex layout
+           - Center items horizontally and vertically
+           - Set default font color to white */
+        body {
+            margin: 0;
+            background: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+        }
+
+        /* Style the canvas:
+           - Add border, set background to black */
+        #myCanvas {
+            border: 1px solid #ccc;
+            background: #000;
+        }
+
+        /* Style the debug output area:
+           - Scrollable, fixed width/height, dark background */
+        .debug {
+            overflow-y: auto;
+            width: 40rem;
+            height: 20rem;
+            background-color: #141414;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- File input for video -->
+    <span>1. Select a video file</span>
+    <input type="file" id="my-file-chooser" accept="video/*" placeholder="video" />
+
+    <!-- Canvas where video and drawings appear -->
+    <span>2. Click twice to draw a line for counting objects</span>
+    <canvas width="640" height="360" id="myCanvas"></canvas>
+
+    <!-- Debug output div -->
+    <div id="output" class="debug"></div>
+
+    <!-- Scripts for EyePop.ai library and 2D renderer -->
+    <script src="https://cdn.jsdelivr.net/npm/@eyepop.ai/eyepop/dist/eyepop.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@eyepop.ai/eyepop-render-2d/dist/eyepop.render2d.min.js"></script>
+
+    <script type="module">
+        // Reference to the debug output area
+        const log = document.getElementById('output');
+
+        // Helper function to log messages to the debug area
+        function logMessage(message)
+        {
+            log.innerHTML += `${message}<br>`;
+            log.scrollTop = log.scrollHeight;
+            // Remove oldest children if more than 1000 logs
+            if (log.children.length > 1000)
+            {
+                log.removeChild(log.children[ 0 ]);
+            }
+        }
+        logMessage('Debug output will appear here...');
+
+        // When a file is chosen, trigger the uploadFile function
+        document.getElementById('my-file-chooser').addEventListener('change', uploadFile);
+
+        // Upload file to EyePop endpoint and process frames
+        async function uploadFile(event)
+        {
+            let endpoint;
+
+            // Connect to EyePop endpoint
+            try
+            {
+                logMessage('Connecting to endpoint...');
+                endpoint = await EyePop.workerEndpoint({
+                    popId: '<YOUR_POP_ID>',
+                    auth: { secretKey: '<YOU_SECRET_KEY>' },
+                }).connect();
+                logMessage('Connected to endpoint');
+            } catch (e)
+            {
+                console.error('Error connecting to endpoint:', e);
+                logMessage('Error connecting to endpoint. Check your id and secret');
+            }
+
+            // Once connected, process the uploaded video
+            try
+            {
+                logMessage('Uploading video...' + new Date().toLocaleTimeString());
+                // Endpoint processes the video frames
+                let results = await endpoint.process({ file: event.target.files[ 0 ] });
+                logMessage('Video loaded...' + new Date().toLocaleTimeString());
+
+                // Accumulate frame data
+                let frameData = [];
+                for await (let result of results)
+                {
+                    frameData.push(result);
+                    logMessage(`Processed frame at ${result.seconds} seconds`);
+                }
+                // Pass file and frame data to processVideo function
+                processVideo(event.target.files[ 0 ], frameData);
+            } catch (e)
+            {
+                console.error('Error processing video:', e);
+                logMessage('Error processing video' + e);
+            } finally
+            {
+                // Disconnect endpoint once done
+                await endpoint.disconnect();
+            }
+        }
+
+        // Render video on canvas and overlay detection boxes + counting line
+        async function processVideo(file, frameData)
+        {
+            console.log('📫:97/(frameData):', frameData);
+
+            // Prepare canvas and 2D rendering context
+            const canvas = document.getElementById("myCanvas");
+            const ctx = canvas.getContext("2d");
+
+            // EyePop 2D renderer
+            let renderer = Render2d.renderer(ctx, [
+                Render2d.renderText({ fitToBounds: true }),
+                Render2d.renderBox({
+                    showClass: false,
+                    showTraceId: false,
+                    showNestedClasses: false,
+                    showConfidence: false,
+                }),
+            ]);
+
+            // Track two clicks on canvas (line for counting)
+            let linePoints = [ null, null ];
+            let clickCount = 0;
+
+            // Keep carCount, ensure we don’t increment too quickly
+            let carCount = 0;
+            let lastIncrementTime = 0;
+
+            // Create video element to play the uploaded video
+            const video = document.createElement("video");
+            video.src = URL.createObjectURL(file);
+            video.muted = true;
+            video.playbackRate = 1.0;
+
+            // Set up video event: once loaded, resize canvas and start rendering
+            video.addEventListener("loadedmetadata", () =>
+            {
+                const aspectRatio = video.videoWidth / video.videoHeight;
+                canvas.width = 640;
+                canvas.height = canvas.width / aspectRatio;
+                video.width = canvas.width;
+                video.height = canvas.height;
+                video.loop = true;
+                video.play();
+                requestAnimationFrame(update);
+            });
+
+            // Handle canvas clicks to draw the counting line
+            canvas.addEventListener("click", (e) =>
+            {
+                const rect = canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                linePoints[ clickCount % 2 ] = { x, y };
+                clickCount++;
+            });
+
+            // Orientation helper to see if an object crosses the line
+            function orientation(pointA, pointB, pointC)
+            {
+                if (!pointA || !pointB || !pointC) return 0;
+                const deltaX1 = pointB.x - pointA.x;
+                const deltaY1 = pointB.y - pointA.y;
+                const deltaX2 = pointC.x - pointA.x;
+                const deltaY2 = pointC.y - pointA.y;
+                return deltaX1 * deltaY2 - deltaY1 * deltaX2;
+            }
+
+            /*************************************************************
+             * Main Render Loop
+             * 1) Draw video frame on canvas
+             * 2) Draw user-defined line (if exists)
+             * 3) Loop over frameData bounding boxes
+             *    and check crossing logic (simplified).
+             * 4) Draw carCount in top-right.
+             *************************************************************/
+            function update()
+            {
+                const videoTime = video.currentTime;
+                // Select frame data that matches current video time
+                let frameIndex = frameData.findIndex((frame) => frame.seconds >= videoTime);
+                let result = frameData[ frameIndex ] || [];
+
+                // Clear canvas and draw current video frame
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(video, 0, 0, video.width, video.height);
+
+                // Render bounding boxes / text
+                renderer.draw(result);
+
+                // Draw the counting line if we have 2 points
+                if (linePoints[ 0 ] && linePoints[ 1 ])
+                {
+                    const gradient = ctx.createLinearGradient(
+                        linePoints[ 0 ].x, linePoints[ 0 ].y,
+                        linePoints[ 1 ].x, linePoints[ 1 ].y
+                    );
+                    gradient.addColorStop(0, "rgba(13, 178, 255, 0.8)");
+                    gradient.addColorStop(1, "rgba(05, 15, 255, 0.8)");
+                    ctx.strokeStyle = gradient;
+                    ctx.lineWidth = 8;
+                    ctx.beginPath();
+                    ctx.moveTo(linePoints[ 0 ].x, linePoints[ 0 ].y);
+                    ctx.lineTo(linePoints[ 1 ].x, linePoints[ 1 ].y);
+                    ctx.stroke();
+                }
+
+                // Scale factor for bounding boxes
+                const scaleX = canvas.width / video.videoWidth;
+                const scaleY = canvas.height / video.videoHeight;
+
+                // Loop through detected objects
+                result?.objects?.forEach((object) =>
+                {
+                    // Adjust bounding box for current canvas size
+                    const adjustedBox = {
+                        x: object.x * scaleX,
+                        y: object.y * scaleY,
+                        width: object.width * scaleX,
+                        height: object.height * scaleY
+                    };
+
+                    // Use the center of the box as reference point
+                    adjustedBox.x += adjustedBox.width / 2;
+                    adjustedBox.y += adjustedBox.height / 2;
+
+                    // If line is defined, check orientation
+                    if (linePoints[ 0 ] && linePoints[ 1 ])
+                    {
+                        const o = orientation(linePoints[ 0 ], linePoints[ 1 ], adjustedBox);
+                        const currentTime = Date.now();
+
+                        // If orientation is negative (crossing the line) 
+                        // and enough time passed, increment carCount
+                        if (o < 0 && currentTime - lastIncrementTime > 250)
+                        {
+                            carCount++;
+                            lastIncrementTime = currentTime;
+                        }
+                    }
+
+                    // Draw a small blue point for the center
+                    ctx.strokeStyle = "blue";
+                    ctx.lineWidth = 4;
+                    ctx.strokeRect(adjustedBox.x, adjustedBox.y, 1, 1);
+                });
+
+                // Draw the current count on canvas
+                ctx.fillStyle = "#007bff";
+                ctx.font = "36px sans-serif";
+                ctx.fillText(`${carCount}`, canvas.width - 200, 40);
+
+                // Loop update on next animation frame
+                requestAnimationFrame(update);
+            }
+        }
+    </script>
+</body>
+
+</html>

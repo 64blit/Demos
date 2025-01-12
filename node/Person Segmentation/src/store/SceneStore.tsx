@@ -1,6 +1,5 @@
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
-import * as THREE from "three";
 
 interface SceneStoreState
 {
@@ -25,7 +24,7 @@ const store = (set, get): SceneStore => ({
 
 export const useSceneStore =
     create(
-        devtools(
-            store,
-        )
+            devtools(
+                store,
+            )
     );

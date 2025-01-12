@@ -46,7 +46,7 @@ export const VideoMesh = () =>
         if (videoRef.current.readyState < 2) { return; }
 
 
-        videoRef.current.crossOrigin = "anonymous"; // Add this line
+        videoRef.current.crossOrigin = "anonymous";
         const texture = new THREE.VideoTexture(videoRef.current);
         texture.generateMipmaps = true;
 
@@ -60,7 +60,6 @@ export const VideoMesh = () =>
         const aspect = videoRef.current.videoWidth / videoRef.current.videoHeight;
 
         setAspect(aspect);
-        // meshRef.current.scale.x = aspect;
 
         if (cameraRef.current)
         {
@@ -73,7 +72,6 @@ export const VideoMesh = () =>
 
             <CameraControls ref={cameraRef} />
             <Environment preset="city" resolution={512} />
-            {/* <pointLight position={[ 0, 0, 10 ]} decay={0} intensity={5} /> */}
 
             <mesh ref={meshRef} >
                 <planeGeometry args={[ aspect, 1, 1 ]} />

@@ -70,6 +70,7 @@ const WebcamMesh: React.FC<WebcamMeshProps> = () =>
         texture.generateMipmaps = true;
         texture.minFilter = THREE.LinearFilter;
         texture.magFilter = THREE.LinearFilter;
+    
         // fixes the blown out colors
         texture.colorSpace = THREE.LinearSRGBColorSpace;// THREE.SRGBColorSpace or THREE.LinearSRGBColorSpace.
         texture.needsUpdate = true;
@@ -83,7 +84,7 @@ const WebcamMesh: React.FC<WebcamMeshProps> = () =>
 
 
     return (
-        <mesh ref={boxMeshRef} visible={true} scale={1} position={[ 0, 0, -.01 ]} >
+        <mesh ref={boxMeshRef} visible={false} scale={1} position={[ 0, 0, -.01 ]} >
             <planeGeometry args={[ aspectRatio, 1 ]} />
 
             <meshBasicMaterial map={videoTexture} toneMapped={false} transparent={true} opacity={1} />

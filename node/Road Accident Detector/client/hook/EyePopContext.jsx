@@ -30,14 +30,12 @@ const EyePopProvider = ({ children }) =>
 
     const eyepopInference =
         `ep_infer id=1  category-name="vehicle"
-            model=eyepop-vehicle:EPVehicleB1_Vehicle_TorchScriptCuda_float32 threshold=0.5
-            ! ep_infer id=2
+            model=eyepop-vehicle:EPVehicleB1_Vehicle_TorchScriptCuda_float32 threshold=0.75
+        ! ep_infer id=2
             tracing=deepsort
-            model=legacy:reid-mobilenetv2_x1_4_ImageNet_TensorFlowLite_int8
             secondary-to-id=1
             secondary-for-class-ids=<0,1,2,3,4,5>
-            thread=true
-            ! ep_mixer name="meta_mixer"`;
+            thread=true`;
 
     // Initialize the EyePop.ai endpoint
     useEffect(() =>
@@ -112,7 +110,9 @@ const EyePopProvider = ({ children }) =>
 
             data.push(result);
             console.log('Inference length:', data.length);
+
             // await seekedPromise;
+
             if (videoRef.current)
             {
                 videoRef.current.currentTime = result.seconds;
